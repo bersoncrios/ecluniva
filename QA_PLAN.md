@@ -63,3 +63,13 @@ Validar consulta somente com oito dígitos; mapeamento da resposta; preservaçã
 ### Evidência do incremento ViaCEP — 15/11/2026
 
 Build HML aprovado. Testes unitários: 26/26 (18 existentes + 8 novos ViaCEP). Navegador: 2/2, com a jornada original e a nova jornada ViaCEP, usando Auth/Firestore locais e API interceptada. Cobertos formato incompleto/inválido sem requisição, auto preenchimento, deduplicação por CEP, preservação de número/complemento e edições pendentes, respostas concorrentes, CEP inexistente e repetição, timeout de 8 segundos, HTTP 503 com salvamento manual, edição de cadastro existente e descarte ao navegar para outro formulário. Sem exceções não tratadas nas páginas. Regras Firestore não mudaram e não foram reexecutadas neste incremento; 9 testes de regras aprovados na base anterior.
+
+## Incremento Diretoria anual — plano antes do código
+
+Testar validação de ano/cargo/identidade, relação com membro e ordenação da composição; isolamento de anos e preservação do histórico; criação e edição sem duplicar membro/ano; permitir inativos para histórico. Emulator: proprietário/terceiros/anônimo, referência a membro de outra sociedade/inexistente, ID adulterado, extras, tipos/limites, timestamps/criação imutáveis e exclusão de vínculo limitada ao proprietário. Browser: adicionar/editar/remover/cancelar, trocar ano e sociedade, atalho do cadastro, recarga, estados vazios e larguras320/390/1440. Nenhuma regra remota é publicada.
+
+### Resultado do incremento Diretoria anual — 15/11/2026
+
+Build HML aprovado. Unitários: 29/29; regras emulator: 14/14, incluindo 5 novos testes de diretoria; navegador: jornada do MVP, ViaCEP e diretoria aprovadas. Na jornada nova, o mesmo membro foi Presidente no ano atual e Tesoureiro no seguinte; edição, mudança de ano, recarga, membro inativo, remoção/cancelamento, cadastro preservado, atalho da edição e isolamento entre sociedades foram verificados. Layout sem overflow em320/390/1440px, quatro destinos mobile. Capturas de diretoria desktop/mobile em artifacts/browser/, inspecionadas visualmente.
+
+A primeira execução de navegador detectou uma leitura do teste feita após a atualização otimista e antes da confirmação de remoção. O teste passou a aguardar a mensagem de sucesso (emitida após deleteDoc confirmar), e a jornada dedicada passou no reteste. O código da aplicação não precisou de correção para esse caso. Testes de regras executados em série para que a limpeza de dados de um arquivo não interfira no outro. Nenhum projeto real ou regra remota foi alterado.

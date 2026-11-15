@@ -48,3 +48,7 @@ As referências sustentam a investigação de um fluxo centrado em perfis, consu
 ## Extensão autorizada — consulta de CEP (15/11/2026)
 
 Fonte primária: [documentação ViaCEP](https://viacep.com.br/), consultada antes da decisão de implementação. A API recebe oito dígitos em `https://viacep.com.br/ws/{cep}/json/`; formato inválido retorna HTTP 400 e CEP inexistente retorna propriedade `erro`. Mapeamento: logradouro → street, bairro → neighborhood, localidade → city, uf → state. O complemento retornado pode descrever trecho do logradouro e não identifica a unidade do membro; número e complemento residencial permanecem manuais. A documentação alerta contra uso massivo: consultar somente CEP completo alterado, sem consultas de base em lote.
+
+## Extensão diretoria anual — pesquisa prévia (15/11/2026)
+
+[Planning Center: campos personalizados](https://help.planningcenter.com/en/139171-common-uses-for-custom-fields.html) documenta o registro de participação e funções de pessoas. Esse padrão ajuda a distinguir cadastro pessoal de atuação organizacional, mas não define cargos nem mandatos das sociedades IPB. [Firestore: transações](https://firebase.google.com/docs/firestore/manage-data/transactions) fundamenta criação/atualização atômica de um vínculo com identidade estável. Inferência de produto: guardar cargo por membro e ano em registros separados, preservando anos anteriores, sem transformar o campo de ofício da igreja em cargo anual. Cargos sugeridos são atalhos editáveis, sem alegar padronização estatutária.

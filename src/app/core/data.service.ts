@@ -1,8 +1,9 @@
 import { Injectable, Injector, inject, runInInjectionContext, signal } from '@angular/core';
 import { Auth, GoogleAuthProvider, User, onAuthStateChanged, signInWithPopup, signInWithEmailAndPassword, signOut } from '@angular/fire/auth';
-import { Firestore, collection, query, where, onSnapshot, addDoc, doc, updateDoc, serverTimestamp, Unsubscribe } from '@angular/fire/firestore';
-import { Member, MemberInput, Society, SocietyType } from './models';
-import { normalizeMember } from './domain';
+import { Firestore, collection, query, where, onSnapshot, addDoc, doc, updateDoc, serverTimestamp, Unsubscribe, runTransaction, deleteDoc } from '@angular/fire/firestore';
+import { BoardAssignment, Member, MemberInput, Society, SocietyType } from './models';
+import { normalizeMember, todayISO } from './domain';
+import { boardAssignmentId, validBoardYear, validateBoardAssignment } from './board';
 import { environment } from '../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
@@ -19,6 +20,12 @@ export class DataService {
   readonly membersLoading = signal(false);
   readonly societiesError = signal('');
   readonly membersError = signal('');
+  readonly boardYear = signal(Number(todayISO().slice(0,4)));
+  readonly boardAssignments = signal<BoardAssignment[]>([]);
+  readonly boardLoading = signal(false);
+  readonly boardError = signal('');
+  private unsubscribeBoard?: Unsubscribe;
+  private boardVersion = 0;
   private unsubscribeSocieties?: Unsubscribe;
   private unsubscribeMembers?: Unsubscribe;
   private authVersion = 0;
@@ -90,9 +97,17 @@ export class DataService {
     this.clearSelection();
     this.selected.set(society);
     this.loadMembers();
+    this.loadBoard(this.boardYear());
   }
 
   clearSelection(): void {
+    this.boardVersion++;
+    this.unsubscribeBoard?.();
+    this.unsubscribeBoard = undefined;
+    this.boardAssignments.set([]);
+    this.boardError.set('');
+    this.boardLoading.set(false);
+    this.boardYear.set(Number(todayISO().slice(0,4)));
     this.memberVersion++;
     this.unsubscribeMembers?.();
     this.unsubscribeMembers = undefined;
@@ -151,6 +166,73 @@ export class DataService {
     const society = this.authorizedSociety();
     if (!this.members().some(item => item.id === member.id)) throw new Error('Cadastro indisponível.');
     await runInInjectionContext(this.injector, () => updateDoc(doc(this.firestore, `societies/${society.id}/members/${member.id}`), { status, updatedAt: serverTimestamp() }));
+  }
+
+  loadBoard(year: number): void {
+    this.boardVersion++;
+    this.unsubscribeBoard?.();
+    this.unsubscribeBoard = undefined;
+    this.boardAssignments.set([]);
+    this.boardError.set('');
+    this.boardLoading.set(false);
+    if (!validBoardYear(year)) {
+      this.boardError.set('Informe um ano entre 1900 e 2100.');
+      return;
+    }
+    this.boardYear.set(year);
+    const society = this.selected();
+    const uid = this.user()?.uid;
+    if (!society || society.ownerId !== uid) return;
+    const version = this.boardVersion;
+    this.boardLoading.set(true);
+    runInInjectionContext(this.injector, () => {
+      const ref = query(collection(this.firestore, `societies/${society.id}/boardAssignments`), where('year', '==', year));
+      this.unsubscribeBoard = onSnapshot(ref, snapshot => {
+        if (version !== this.boardVersion || society.id !== this.selected()?.id || uid !== this.user()?.uid) return;
+        this.boardAssignments.set(snapshot.docs.map(item => ({...item.data(),id:item.id}) as BoardAssignment));
+        this.boardLoading.set(false);
+      }, () => {
+        if (version !== this.boardVersion || society.id !== this.selected()?.id || uid !== this.user()?.uid) return;
+        this.boardAssignments.set([]);
+        this.boardLoading.set(false);
+        this.boardError.set('Não foi possível carregar a diretoria deste ano.');
+      });
+    });
+  }
+
+  async saveBoardAssignment(year: number, memberId: string, role: string): Promise<void> {
+    const society = this.authorizedSociety();
+    const uid = this.user()?.uid;
+    const version = this.authVersion;
+    const errors = validateBoardAssignment(year, memberId, role, this.members());
+    if (this.membersLoading() || this.membersError()) throw new Error('Aguarde o carregamento dos membros.');
+    if (Object.keys(errors).length) throw new Error(Object.values(errors)[0]);
+    const id = boardAssignmentId(year, memberId);
+    const assertContext = (): void => {
+      if (version !== this.authVersion || society.id !== this.selected()?.id || uid !== this.user()?.uid) throw new Error('A sociedade ou a sessão foi alterada.');
+    };
+    await runInInjectionContext(this.injector, () => {
+      const ref = doc(this.firestore, `societies/${society.id}/boardAssignments/${id}`);
+      const timestamp = serverTimestamp();
+      return runTransaction(this.firestore, async transaction => {
+        assertContext();
+        const existing = await transaction.get(ref);
+        assertContext();
+        if (existing.exists()) transaction.update(ref, {role:role.trim(), updatedAt:timestamp});
+        else transaction.set(ref, {year,memberId,role:role.trim(),createdAt:timestamp,updatedAt:timestamp});
+      });
+    });
+    assertContext();
+  }
+
+  async removeBoardAssignment(entry: BoardAssignment): Promise<void> {
+    const society = this.authorizedSociety();
+    const uid = this.user()?.uid;
+    const version = this.authVersion;
+    const id = boardAssignmentId(entry.year, entry.memberId);
+    if (entry.id !== id) throw new Error('Participação inválida.');
+    await runInInjectionContext(this.injector, () => deleteDoc(doc(this.firestore, `societies/${society.id}/boardAssignments/${id}`)));
+    if (version !== this.authVersion || society.id !== this.selected()?.id || uid !== this.user()?.uid) throw new Error('A sociedade ou a sessão foi alterada.');
   }
 
   private authorizedSociety(): Society {

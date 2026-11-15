@@ -10,7 +10,7 @@
     "build:prod": "node scripts/angular-env.mjs build prod",
     "build:vercel": "node scripts/vercel-build.mjs",
     "test": "node scripts/test-unit.mjs",
-    "test:rules": "node --test tests/emulator/*.test.mjs",
+    "test:rules": "node --test --test-concurrency=1 tests/emulator/*.test.mjs",
     "test:emulator": "firebase emulators:exec --project demo-societas --only auth,firestore \"npm run test:rules\"",
     "test:ui": "node --test tests/browser/*.test.mjs",
     "test:local": "firebase emulators:exec --project demo-societas --only auth,firestore \"node scripts/qa-local.mjs\""

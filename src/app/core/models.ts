@@ -7,3 +7,5 @@ export interface Address { postalCode: string; street: string; number: string; c
 export interface MemberInput { name: string; birthDate: string | null; receivedDate: string | null; office: string; address: Address; phone: string; email: string; status: MemberStatus; notes: string; }
 export interface Member extends MemberInput { id: string; }
 export interface BirthdayEvent { member: Member; date: string; daysAway: number; adapted: boolean; }
+export interface BoardAssignment { id: string; year: number; memberId: string; role: string; }
+export interface BoardEntry extends BoardAssignment { member: Member | null; }

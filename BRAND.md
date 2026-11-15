@@ -120,3 +120,7 @@ Vazio: “Não há membros neste resultado para exportar.” Falha: “Não foi 
 ## Consulta de endereço pelo CEP
 
 Ajuda: “Informe o CEP para buscar o endereço. Número e complemento são preenchidos por você.” Progresso: “Buscando endereço…” Sucesso: “Endereço encontrado. Confira os dados e informe número e complemento, se houver.” CEP inexistente: “CEP não encontrado. Confira o CEP ou preencha o endereço manualmente.” Falha: “Não foi possível consultar o CEP. Preencha o endereço manualmente ou tente novamente.” Ação de repetição: “Buscar endereço novamente”. Os avisos são apresentados junto ao CEP e anunciados em região de status.
+
+## Diretoria anual
+
+Navegação: “Diretoria”. Título: “Diretoria [ano]”. Ajuda: “Escolha o ano e indique os membros e seus cargos. Isso não altera o ofício na igreja.” Ações: “Adicionar à diretoria”, “Salvar participação”, “Editar cargo”, “Remover da diretoria”. Vazio: “A diretoria de [ano] ainda não foi definida”. Remoção: “[nome] deixará a diretoria de [ano]. O cadastro e as participações de outros anos serão mantidos.” Sucesso somente após persistência: “Participação salva.” / “Participação removida da diretoria.” Erro: “Não foi possível salvar a participação. Os dados continuam no formulário. Tente novamente.”

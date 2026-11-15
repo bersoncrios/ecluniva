@@ -3,6 +3,7 @@ import { Component, input } from '@angular/core';
 export class IconComponent {
   readonly name = input('grid');
   readonly paths: Record<string,string> = {
+    board:'M8 3h8v4H8z M12 7v5 M4 12h16 M4 12v5 M12 12v5 M20 12v5 M2 17h4v4H2z M10 17h4v4h-4z M18 17h4v4h-4z',
     grid:'M3 3h7v7H3z M14 3h7v7h-7z M3 14h7v7H3z M14 14h7v7h-7z',
     people:'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2 M15 3a4 4 0 0 1 0 8 M22 21v-2a4 4 0 0 0-3-3.87 M13 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0',
     calendar:'M8 2v4 M16 2v4 M3 10h18 M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2 M8 14h2 M14 14h2 M8 18h2',

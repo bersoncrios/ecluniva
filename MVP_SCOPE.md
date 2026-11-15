@@ -64,3 +64,11 @@ HML e PROD usam configurações locais separadas, ignoradas pelo Git, com `.env.
 ## Critério de conclusão
 
 Fluxos do backlog P0 implementados, erros e estados vazios definidos, identidade visual validada, build HML aprovado, testes unitários e emulator passando e exportações verificadas com acentos, datas, múltiplas páginas e textos semelhantes a fórmulas. Documentar qualquer verificação inviável. Produção permanece fora da conclusão do MVP local/HML até aprovação explícita.
+
+## Incremento autorizado — Diretoria por ano
+
+Página Diretoria com ano selecionável (1900–2100), padrão ano civil atual em America/Araguaina. Cada vínculo reúne membro cadastrado da sociedade, ano e cargo de 2–100 caracteres. Um membro possui no máximo um cargo por ano; o mesmo membro pode ter cargos diferentes em outros anos. Cargos são livres, com sugestões: Presidente, Vice-presidente, 1º Secretário, 2º Secretário e Tesoureiro. Mais de uma pessoa pode ter o mesmo cargo, pois não se presume exclusividade estatutária.
+
+O responsável adiciona, altera cargo e remove a participação de um ano com confirmação; remover vínculo não exclui o membro nem seus outros anos. Não há exclusão/alteração automática de diretorias na virada do ano. Ativos e inativos podem ser vinculados para recomposição de histórico; inativos são indicados com texto. Nomes são consultados do cadastro atual, sem cópia histórica de nome/contato. Não é um histórico de substituições dentro do mesmo ano, eleições, votação ou controle de acesso administrativo. Ser da diretoria não dá acesso ao sistema.
+
+A página lista cargo e nome, com consulta por ano. O cadastro de membro já salvo oferece acesso à diretoria com aquele membro pré-selecionado. Para membro novo, salvar o cadastro precede o vínculo; são ações independentes e explicitamente confirmadas. Ofício na igreja e cargo anual são conceitos separados. Exportações do rol permanecem com seus campos atuais; exportação específica da diretoria não foi solicitada. Consultas/erros/mudanças de ano, conta e sociedade não podem deixar dados da seleção anterior visíveis.

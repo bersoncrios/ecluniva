@@ -33,3 +33,7 @@ Pesquisa concluída precede decisões de produto. Designer entrega identidade e 
 ## Incremento autorizado — ViaCEP
 
 Como responsável, quero preencher o endereço pelo CEP para reduzir digitação. Critérios: consultar automaticamente somente CEP completo válido; preencher rua/bairro/cidade/UF sem alterar número/complemento; permitir edição manual e nova tentativa; manter dados em falha/CEP inexistente; cancelar/ignorar consultas obsoletas e preservar edições manuais durante a espera. Não consultar ao abrir um cadastro existente nem persistir automaticamente.
+
+## Incremento — Diretoria anual
+
+Como responsável, quero indicar quem integra a diretoria e qual cargo ocupa em cada ano, para consultar a composição atual e passada. Aceite: página Diretoria [ano] na navegação desktop/mobile; ano atual padrão e seleção de outro ano; adicionar membro cadastrado com cargo; editar cargo sem duplicar membro/ano; confirmar remoção do vínculo; preservar outros anos e dados do membro; exibir inativos; acesso pelo cadastro existente; regras isolam proprietário, validam membro da mesma sociedade, identidade e timestamps; estados de erro/vazio/carregamento e persistência após recarga testados.

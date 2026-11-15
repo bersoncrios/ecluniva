@@ -13,7 +13,7 @@ cp .env.example .env.hml
 npm start
 ```
 
-Abra `http://localhost:4200`. Na primeira entrada, use Google e crie uma sociedade com igreja, tipo e nome da unidade. O rol permite cadastrar, editar, inativar/reativar, buscar, filtrar e exportar. Ao completar o CEP, o ViaCEP busca logradouro, bairro, cidade e UF; número e complemento permanecem manuais. Todos os campos continuam editáveis, inclusive quando o serviço estiver indisponível. A consulta transmite somente o CEP e não salva o cadastro automaticamente. Os aniversariantes consideram somente ativos e usam o dia civil de America/Araguaina.
+Abra `http://localhost:4200`. Na primeira entrada, use Google e crie uma sociedade com igreja, tipo e nome da unidade. O rol permite cadastrar, editar, inativar/reativar, buscar, filtrar e exportar. Ao completar o CEP, o ViaCEP busca logradouro, bairro, cidade e UF; número e complemento permanecem manuais. Todos os campos continuam editáveis, inclusive quando o serviço estiver indisponível. A consulta transmite somente o CEP e não salva o cadastro automaticamente. Os aniversariantes consideram somente ativos e usam o dia civil de America/Araguaina. A página Diretoria organiza os membros e cargos por ano, mantendo composições de anos anteriores.
 
 ### Firebase HML
 
@@ -63,6 +63,7 @@ Saída: `dist/societas/browser`. `vercel.json` configura build, diretório está
 - `src/app/core/domain.ts`: validação, normalização, filtros e calendário.
 - `src/app/core/export.ts`: exportações PDF e XLSX carregadas sob demanda.
 - `src/app/core/viacep.ts`: consulta HTTPS ViaCEP, validação de formato e resposta; sem chave de API ou Cloud Functions.
+- `src/app/core/board.ts` e `src/app/features/board/`: vínculo anual de diretoria, validação e página de composição.
 - `scripts/angular-env.mjs`: lê `.env.hml`/`.env.prod`, ou variáveis do provedor, e gera environments ignorados.
 - `tests/`: testes unitários, emulator e navegador.
 
@@ -73,3 +74,9 @@ O código já está organizado nos caminhos de destino; não é necessário cria
 [Pesquisa](RESEARCH.md) · [Backlog](BACKLOG.md) · [Escopo](MVP_SCOPE.md) · [Design](DESIGN_SYSTEM.md) · [Wireframes](WIREFRAMES.md) · [Marca e textos](BRAND.md) · [Schema e regras](FIRESTORE_SCHEMA.md) · [Plano de QA](QA_PLAN.md) · [Andamento e verificação](STUDIO_STATUS.md)
 
 Limite inicial de suporte: 1.000 membros por sociedade, sem paginação de rede. As consultas carregam o rol da sociedade do proprietário para cálculos e busca locais. Validação automatizada com massa sintética não substitui avaliação de latência e custos no projeto real. O app não inclui importação, convites ou administração compartilhada.
+
+## Diretoria por ano
+
+Na página Diretoria, escolha o ano e adicione membros cadastrados com seus cargos. Há sugestões de cargos e espaço para escrever outro nome. Cada membro tem um cargo por ano; editar ou remover sua participação não altera outros anos nem o cadastro. Inativos podem constar para recompor histórico. Na edição de um membro, o atalho para definir participação abre a diretoria do ano atual com ele pré-selecionado; salve antes as alterações do cadastro. A ação da diretoria é independente do salvamento cadastral.
+
+O campo Ofício registra a função na igreja; cargo da diretoria é anual e não concede acesso ao sistema. Os nomes exibidos vêm do cadastro atual. Vínculos são armazenados em `societies/{societyId}/boardAssignments/{year}_{memberId}`. Nenhuma migração dos membros existentes é necessária. As regras locais foram estendidas para essa coleção; um projeto remoto precisa de regras equivalentes aplicadas pelo responsável antes de usar essa funcionalidade. Esta entrega mantém a política de não publicar regras remotas automaticamente.

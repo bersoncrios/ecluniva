@@ -7,11 +7,12 @@ import { emptyMember, validateMember, filterMembers, todayISO, displayDate, birt
 import { exportRoster } from './core/export';
 import { environment } from '../environments/environment';
 import { IconComponent } from './icon';
+import { BoardComponent } from './features/board/board.component';
 import { lookupPostalCode, postalCodeDigits, PostalCodeNotFoundError } from './core/viacep';
 
-type Page = 'overview' | 'members' | 'birthdays' | 'member';
+type Page = 'overview' | 'members' | 'birthdays' | 'member' | 'board';
 type DateParts = { day:string; month:string; year:string };
-@Component({ selector:'app-root', standalone:true, imports:[CommonModule, FormsModule, IconComponent], templateUrl:'./app.html' })
+@Component({ selector:'app-root', standalone:true, imports:[CommonModule, FormsModule, IconComponent, BoardComponent], templateUrl:'./app.html' })
 export class AppComponent {
   readonly data = inject(DataService);
   private readonly destroyRef = inject(DestroyRef);
@@ -20,6 +21,7 @@ export class AppComponent {
   readonly types = SOCIETY_TYPES;
   readonly states = STATES;
   readonly page = signal<Page>('overview');
+  readonly boardMemberId = signal<string|null>(null);
   readonly query = signal('');
   readonly status = signal<'all'|'active'|'inactive'>('active');
   readonly today = signal(todayISO());
@@ -65,6 +67,8 @@ export class AppComponent {
       if (context !== this.previousContext) {
         this.cancelPostalLookup();
         this.previousContext = context;
+        this.busy.set(false);
+        this.boardMemberId.set(null);
         this.page.set('overview');
         this.query.set('');
         this.status.set('active');
@@ -79,9 +83,11 @@ export class AppComponent {
     const refreshDay = ():void => { this.today.set(todayISO()); };
     const timer = window.setInterval(refreshDay, 30000);
     const navigateBack = ():void => {
+      if (this.busy() || this.exportBusy()) { history.pushState({}, '', `#${this.page()}`); return; }
+      this.boardMemberId.set(null);
       this.cancelPostalLookup();
       const hash = location.hash.slice(1);
-      const page = (['overview','members','birthdays'].includes(hash) ? hash : 'overview') as Page;
+      const page = (['overview','members','birthdays','board'].includes(hash) ? hash : 'overview') as Page;
       this.page.set(page);
       refreshDay();
     };
@@ -158,6 +164,7 @@ export class AppComponent {
     if (this.busy() || this.exportBusy()) return;
     this.cancelPostalLookup();
     this.page.set(page);
+    this.boardMemberId.set(null);
     this.today.set(todayISO());
     this.error.set('');
     history.pushState({}, '', `#${page}`);
@@ -204,6 +211,20 @@ export class AppComponent {
     } catch {
       if (societyId === this.data.selected()?.id) this.error.set('Não foi possível salvar. Seus dados continuam no formulário. Tente novamente.');
     } finally { this.busy.set(false); }
+  }
+
+  openBoardForMember(): void {
+    if (!this.editingId || this.busy() || this.exportBusy()) return;
+    const id = this.editingId;
+    const year = Number(todayISO().slice(0,4));
+    if (this.data.boardYear() !== year) this.data.loadBoard(year);
+    this.navigate('board');
+    this.boardMemberId.set(id);
+  }
+
+  currentBoardRole(): string|null {
+    if (this.data.boardYear() !== Number(this.today().slice(0,4)) || this.data.boardLoading() || this.data.boardError()) return null;
+    return this.data.boardAssignments().find(entry => entry.memberId === this.editingId)?.role ?? null;
   }
 
   postalCodeChanged(value: string): void {

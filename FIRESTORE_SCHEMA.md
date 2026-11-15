@@ -74,7 +74,7 @@ Não consultar todas as sociedades para filtrar depois: regras não são filtros
 
 ## Regras e ambientes
 
-firestore.rules nega anônimos, terceiros, documentos desconhecidos, chaves extras, ownerId imutável, tipos inválidos e exclusões. A subcoleção valida a propriedade lendo seu documento pai. Usuário que conhece o ID de uma sociedade não obtém acesso a ela. Não criar permissões públicas em fallback.
+firestore.rules nega anônimos, terceiros, documentos desconhecidos, chaves extras, ownerId imutável, tipos inválidos e exclusões de sociedades/membros. A remoção de vínculos anuais da diretoria tem permissão específica limitada ao proprietário. A subcoleção valida a propriedade lendo seu documento pai. Usuário que conhece o ID de uma sociedade não obtém acesso a ela. Não criar permissões públicas em fallback.
 
 firebase.json é configuração local dos emuladores Auth 127.0.0.1:9099, Firestore 127.0.0.1:8080 e UI 127.0.0.1:4000. Testar somente no projeto fictício demo-societas. Não há .firebaserc apontando para um projeto real e não há configuração de hosting ou functions. Para iniciar localmente: `firebase emulators:start --project demo-societas --only auth,firestore`. QA deve executar testes com `emulators:exec` e projeto demo-societas; nunca usar credenciais HML/PROD nos testes de regras.
 
@@ -86,3 +86,11 @@ As regras são entregues somente para local/emulator no MVP. Nenhuma implantaç�
 - [Condições e validação de dados](https://firebase.google.com/docs/firestore/security/rules-conditions)
 - [Referência de linguagem das regras](https://firebase.google.com/docs/reference/rules)
 - [Testes locais de regras](https://firebase.google.com/docs/rules/unit-tests)
+
+## Incremento — `societies/{societyId}/boardAssignments/{year}_{memberId}`
+
+Contrato documentado antes do código. Um vínculo por membro/ano, com ID determinístico `String(year) + '_' + memberId`. O documento tem exatamente `year` (inteiro 1900–2100), `memberId` (string não vazia de até128 caracteres, sem `/`, referenciando membro existente da mesma sociedade), `role` (texto com2–100 caracteres, sem espaços nas extremidades), `createdAt` e `updatedAt` (Timestamp servidor). `id` só existe no cliente. Na edição, year/memberId/createdAt são imutáveis. Uma transação lê o documento e cria ou atualiza preservando createdAt, evitando duplicação em gravações concorrentes.
+
+Acesso exclusivo ao proprietário da sociedade, sem relação entre cargo na diretoria e autorização administrativa. Ativos e inativos podem ser vinculados para recomposição histórica; inativar não remove vínculo. Cargos são livres e podem se repetir; ofício na igreja permanece no cadastro do membro. Consulta: `query(collection(firestore, 'societies', societyId, 'boardAssignments'), where('year', '==', year))`; ordenação de cargos e nomes no cliente, sem índice composto.
+
+Permite excluir somente o vínculo anual pelo proprietário; não exclui cadastro nem vínculos de outros anos. Não há cascata, migração de membros existentes, cargos automáticos na virada do ano ou gravações remotas nesta entrega. Troca de ano/sociedade/conta cancela a assinatura e limpa os resultados anteriores. O frontend usa `boardYear`, `boardAssignments`, `boardLoading`, `boardError`, `loadBoard(year)`, `saveBoardAssignment(year, memberId, role)` e `removeBoardAssignment(entry)` do DataService.

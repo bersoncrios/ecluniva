@@ -78,6 +78,19 @@ service cloud.firestore {
         && data.createdAt is timestamp && data.updatedAt is timestamp;
     }
 
+
+    function validBoardAssignment(data, societyId, assignmentId) {
+      return data.keys().hasAll(['year', 'memberId', 'role', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['year', 'memberId', 'role', 'createdAt', 'updatedAt'])
+        && data.year is int && data.year >= 1900 && data.year <= 2100
+        && data.memberId is string && data.memberId.size() > 0 && data.memberId.size() <= 128
+        && data.memberId.matches('^[^/]+$') && !(data.memberId in ['.', '..'])
+        && assignmentId == string(data.year) + '_' + data.memberId
+        && requiredName(data.role, 100)
+        && data.createdAt is timestamp && data.updatedAt is timestamp
+        && exists(/databases/$(database)/documents/societies/$(societyId)/members/$(data.memberId));
+    }
+
     match /societies/{societyId} {
       allow read: if signedIn() && resource.data.ownerId == request.auth.uid;
       allow create: if signedIn() && validSociety(request.resource.data)
@@ -90,6 +103,21 @@ service cloud.firestore {
         && request.resource.data.createdAt == resource.data.createdAt
         && request.resource.data.updatedAt == request.time;
       allow delete: if false;
+
+      match /boardAssignments/{assignmentId} {
+        allow read: if ownsSociety(societyId);
+        allow create: if ownsSociety(societyId)
+          && validBoardAssignment(request.resource.data, societyId, assignmentId)
+          && request.resource.data.createdAt == request.time
+          && request.resource.data.updatedAt == request.time;
+        allow update: if ownsSociety(societyId)
+          && validBoardAssignment(request.resource.data, societyId, assignmentId)
+          && request.resource.data.year == resource.data.year
+          && request.resource.data.memberId == resource.data.memberId
+          && request.resource.data.createdAt == resource.data.createdAt
+          && request.resource.data.updatedAt == request.time;
+        allow delete: if ownsSociety(societyId);
+      }
 
       match /members/{memberId} {
         allow read: if ownsSociety(societyId);

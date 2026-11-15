@@ -10,7 +10,7 @@ const run = args => new Promise((resolve,reject) => {
 });
 let server;
 try {
-  await run(['--test','tests/emulator/*.test.mjs']);
+  await run(['--test','--test-concurrency=1','tests/emulator/*.test.mjs']);
   generate('emulator');
   server = spawn(process.execPath,['node_modules/@angular/cli/bin/ng.js','serve','--host','127.0.0.1','--port','4200'], {stdio:'inherit',env:{...process.env,NG_BUILD_MAX_WORKERS:'1'}});
   server.on('error',error=>console.error(error.message));

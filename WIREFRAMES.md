@@ -42,3 +42,7 @@ Diálogo amplo ou folha móvel: igreja, sociedade, filtros aplicados e quantidad
 ## Estados transversais
 
 Sessão expirada retorna à entrada; saída limpa dados apresentados. Troca de sociedade retorna à seleção e limpa contexto anterior. Falha de consulta não apresenta zero como resultado. Teclado e leitor de tela devem alcançar todos os destinos e ações. Layout alvo desde 320 px, sem sobreposição da navegação com os controles finais.
+
+## Diretoria anual
+
+Novo destino Diretoria, mantendo a identidade aprovada. Cabeçalho “Diretoria [ano]” e descrição “Quem serve na organização da sociedade neste ano”. Controle rotulado Ano da diretoria, com ação Ver diretoria. Composição em cartões: cargo em destaque, nome, indicação de inativo se aplicável, Editar cargo e Remover da diretoria. Formulário com membro cadastrado e cargo livre com sugestões; salvar/cancelar, erro preservando conteúdo. Remoção em diálogo: especifica membro e ano e informa que cadastro e outros anos serão mantidos. Vazio: “A diretoria de [ano] ainda não foi definida”. Na edição do membro, seção contextual com atalho para configurar participação, sem misturar com Ofício. Mobile mantém quatro destinos legíveis, alvos44px e sem rolagem horizontal desde320px.
