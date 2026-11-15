@@ -91,6 +91,60 @@ service cloud.firestore {
         && exists(/databases/$(database)/documents/societies/$(societyId)/members/$(data.memberId));
     }
 
+    function minuteZoneOffset(zone) {
+      return zone == 'America/Noronha' ? 2 : (zone == 'America/Manaus' ? 4 : (zone == 'America/Rio_Branco' ? 5 : 3));
+    }
+
+    function validMinuteDay(data) {
+      let parts = data.date.split('-');
+      return data.timeZone in ['America/Araguaina', 'America/Sao_Paulo', 'America/Recife', 'America/Fortaleza', 'America/Bahia', 'America/Belem', 'America/Noronha', 'America/Manaus', 'America/Rio_Branco']
+        && data.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && data.dayStart is timestamp && data.dayEnd is timestamp
+        && data.dayStart.year() == int(parts[0])
+        && data.dayStart.month() == int(parts[1])
+        && data.dayStart.day() == int(parts[2])
+        && data.dayStart.hours() == minuteZoneOffset(data.timeZone)
+        && data.dayStart.minutes() == 0 && data.dayStart.seconds() == 0
+        && data.dayStart.nanos() == 0
+        && data.dayEnd == data.dayStart + duration.value(24, 'h');
+    }
+
+    function minuteIsToday(data) {
+      return request.time >= data.dayStart && request.time < data.dayEnd;
+    }
+
+    function validMinute(data) {
+      return data.keys().hasAll(['number','year','type','date','timeZone','startTime','endTime','churchName','societyName','templeAddress','logoDataUrl','convocation','scripture','preacher','openingPrayer','devotionalTime','deliberations','newMembers','hymn','closingPrayer','presidentId','secretaryId','attendance','status','revision','dayStart','dayEnd','createdAt','updatedAt','concludedAt','finalText'])
+        && data.keys().hasOnly(['number','year','type','date','timeZone','startTime','endTime','churchName','societyName','templeAddress','logoDataUrl','convocation','scripture','preacher','openingPrayer','devotionalTime','deliberations','newMembers','hymn','closingPrayer','presidentId','secretaryId','attendance','status','revision','dayStart','dayEnd','createdAt','updatedAt','concludedAt','finalText'])
+        && data.number is int && data.number >= 1 && data.number <= 999999
+        && data.year is int && data.year >= 2020 && data.year <= 2100
+        && data.year == int(data.date.split('-')[0]) && validMinuteDay(data)
+        && requiredName(data.type,100) && requiredName(data.churchName,160)
+        && requiredName(data.societyName,160) && requiredName(data.templeAddress,500)
+        && text(data.logoDataUrl,250000)
+        && text(data.startTime,5) && text(data.endTime,5) && text(data.devotionalTime,5)
+        && text(data.convocation,4000) && text(data.scripture,1000)
+        && text(data.preacher,120) && text(data.openingPrayer,120)
+        && text(data.deliberations,40000) && text(data.newMembers,10000)
+        && text(data.hymn,500) && text(data.closingPrayer,120)
+        && text(data.presidentId,128) && text(data.secretaryId,128)
+        && data.attendance is list && data.attendance.size() <= 500
+        && data.status in ['scheduled','in_progress','concluded']
+        && data.revision is int && data.revision >= 0
+        && data.createdAt is timestamp && data.updatedAt == request.time
+        && text(data.finalText,100000)
+        && (data.status == 'concluded' ? data.concludedAt == request.time && data.finalText.size() > 0
+          && data.attendance.size() > 0 && data.presidentId != '' && data.secretaryId != ''
+          && data.presidentId != data.secretaryId && data.logoDataUrl.size() > 0
+          && data.startTime.matches('^([01][0-9]|2[0-3]):[0-5][0-9]$')
+          && data.endTime.matches('^([01][0-9]|2[0-3]):[0-5][0-9]$')
+          && data.devotionalTime.matches('^([01][0-9]|2[0-3]):[0-5][0-9]$')
+          && data.startTime <= data.devotionalTime && data.devotionalTime <= data.endTime
+          && data.convocation.size() > 0 && data.scripture.size() > 0 && data.preacher.size() > 0
+          && data.openingPrayer.size() > 0 && data.deliberations.size() > 0 && data.hymn.size() > 0 && data.closingPrayer.size() > 0
+          : data.concludedAt == null && data.finalText == '');
+    }
+
     match /societies/{societyId} {
       allow read: if signedIn() && resource.data.ownerId == request.auth.uid;
       allow create: if signedIn() && validSociety(request.resource.data)
@@ -103,6 +157,44 @@ service cloud.firestore {
         && request.resource.data.createdAt == resource.data.createdAt
         && request.resource.data.updatedAt == request.time;
       allow delete: if false;
+
+
+      match /minuteCounters/{yearId} {
+        allow read: if ownsSociety(societyId);
+        allow create, update: if ownsSociety(societyId)
+          && request.resource.data.keys().hasAll(['year','value','minuteId','updatedAt'])
+          && request.resource.data.keys().hasOnly(['year','value','minuteId','updatedAt'])
+          && request.resource.data.year is int && yearId == string(request.resource.data.year)
+          && request.resource.data.value is int
+          && request.resource.data.value == (resource == null ? 1 : resource.data.value + 1)
+          && request.resource.data.minuteId == yearId + '_' + string(request.resource.data.value)
+          && request.resource.data.updatedAt == request.time
+          && !exists(/databases/$(database)/documents/societies/$(societyId)/minutes/$(request.resource.data.minuteId))
+          && getAfter(/databases/$(database)/documents/societies/$(societyId)/minutes/$(request.resource.data.minuteId)).data.number == request.resource.data.value;
+        allow delete: if false;
+      }
+      match /minutes/{minuteId} {
+        allow read: if ownsSociety(societyId);
+        allow create: if ownsSociety(societyId) && validMinute(request.resource.data)
+          && minuteId == string(request.resource.data.year) + '_' + string(request.resource.data.number)
+          && request.resource.data.createdAt == request.time
+          && request.resource.data.revision == 0 && request.resource.data.status == 'scheduled'
+          && request.resource.data.attendance.size() == 0
+          && request.resource.data.presidentId == '' && request.resource.data.secretaryId == ''
+          && request.time < request.resource.data.dayEnd
+          && getAfter(/databases/$(database)/documents/societies/$(societyId)/minuteCounters/$(string(request.resource.data.year))).data.value == request.resource.data.number
+          && getAfter(/databases/$(database)/documents/societies/$(societyId)/minuteCounters/$(string(request.resource.data.year))).data.minuteId == minuteId
+          && getAfter(/databases/$(database)/documents/societies/$(societyId)/minuteCounters/$(string(request.resource.data.year))).data.updatedAt == request.time;
+        allow update: if ownsSociety(societyId) && resource.data.status != 'concluded'
+          && validMinute(request.resource.data)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['type','startTime','endTime','churchName','societyName','templeAddress','logoDataUrl','convocation','scripture','preacher','openingPrayer','devotionalTime','deliberations','newMembers','hymn','closingPrayer','presidentId','secretaryId','attendance','status','revision','updatedAt','concludedAt','finalText'])
+          && request.resource.data.revision == resource.data.revision + 1
+          && (request.time < resource.data.dayStart
+            ? request.resource.data.status == 'scheduled' && request.resource.data.presidentId == '' && request.resource.data.secretaryId == ''
+            : request.resource.data.status in ['in_progress','concluded'])
+          && (minuteIsToday(resource.data) || request.resource.data.attendance == resource.data.attendance);
+        allow delete: if false;
+      }
 
       match /boardAssignments/{assignmentId} {
         allow read: if ownsSociety(societyId);

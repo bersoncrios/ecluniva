@@ -128,7 +128,7 @@
         (click)="navigate('birthdays')" [disabled]="busy() || exportBusy()"><app-icon
           name="calendar" />Aniversariantes</button><button [class.active]="page() === 'board'"
         [attr.aria-current]="page() === 'board' ? 'page' : null" (click)="navigate('board')"
-        [disabled]="busy() || exportBusy()"><app-icon name="board" />Diretoria</button></nav>
+        [disabled]="busy() || exportBusy()"><app-icon name="board" />Diretoria</button><button [class.active]="page() === 'minutes'" [attr.aria-current]="page() === 'minutes' ? 'page' : null" (click)="navigate('minutes')" [disabled]="busy() || exportBusy()"><app-icon name="calendar" />Atas e plenárias</button></nav>
     <div class="sidebar-bottom">
       <div class="sidebar-note"><app-icon name="heart" /><span>Seu rol organizado.</span></div><button
         class="switch-button" (click)="switchSociety()" [disabled]="busy() || exportBusy()"><app-icon
@@ -204,6 +204,8 @@
         <p>Verifique a conexão e tente novamente.</p><button class="button" (click)="data.loadMembers()">Tentar
           novamente</button>
       </div>
+      } @else if (page() === 'minutes') {
+      <app-minutes (savingChange)="busy.set($event)" />
       } @else if (page() === 'board') {
       <app-board [initialMemberId]="boardMemberId()" (savingChange)="busy.set($event)"
         (returnToMembers)="navigate('members')" />
@@ -527,7 +529,7 @@
         (click)="navigate('birthdays')" [disabled]="busy() || exportBusy()"><app-icon
           name="calendar" /><span>Aniversários</span></button><button [class.active]="page() === 'board'"
         [attr.aria-current]="page() === 'board' ? 'page' : null" (click)="navigate('board')"
-        [disabled]="busy() || exportBusy()"><app-icon name="board" /><span>Diretoria</span></button></nav>
+        [disabled]="busy() || exportBusy()"><app-icon name="board" /><span>Diretoria</span></button><button [class.active]="page() === 'minutes'" [attr.aria-current]="page() === 'minutes' ? 'page' : null" (click)="navigate('minutes')" [disabled]="busy() || exportBusy()"><app-icon name="calendar" /><span>Atas</span></button></nav>
   </div>
 </div>
 }

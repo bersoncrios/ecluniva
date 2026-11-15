@@ -80,3 +80,7 @@ Limite inicial de suporte: 1.000 membros por sociedade, sem paginação de rede.
 Na página Diretoria, escolha o ano e adicione membros cadastrados com seus cargos. Há sugestões de cargos e espaço para escrever outro nome. Cada membro tem um cargo por ano; editar ou remover sua participação não altera outros anos nem o cadastro. Inativos podem constar para recompor histórico. Na edição de um membro, o atalho para definir participação abre a diretoria do ano atual com ele pré-selecionado; salve antes as alterações do cadastro. A ação da diretoria é independente do salvamento cadastral.
 
 O campo Ofício registra a função na igreja; cargo da diretoria é anual e não concede acesso ao sistema. Os nomes exibidos vêm do cadastro atual. Vínculos são armazenados em `societies/{societyId}/boardAssignments/{year}_{memberId}`. Nenhuma migração dos membros existentes é necessária. As regras locais foram estendidas para essa coleção; um projeto remoto precisa de regras equivalentes aplicadas pelo responsável antes de usar essa funcionalidade. Esta entrega mantém a política de não publicar regras remotas automaticamente.
+
+### Atas e plenárias
+
+O menu **Atas e plenárias** reúne agendamento, chamada no dia civil da reunião, diretoria anual, recepção de novos sócios, redação com prévia e exportação PDF A4. A lavratura congela o documento e os presentes. Consulte [regras e limitações do módulo](docs/ATAS.md), incluindo a comparação pendente com o original da ATA 025.

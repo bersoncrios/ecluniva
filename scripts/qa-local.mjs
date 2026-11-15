@@ -21,7 +21,7 @@ try {
     await new Promise(resolve=>setTimeout(resolve,1000));
   }
   if(!ready) throw new Error('Servidor não ficou disponível para testes.');
-  await run(['--test','tests/browser/*.test.mjs']);
+  await run(['--test','--test-concurrency=1','tests/browser/*.test.mjs']);
 } catch(error) { console.error(error.message);process.exitCode=1; }
 finally {
   if(server && server.exitCode === null) { server.kill('SIGINT'); await new Promise(resolve=>{server.once('exit',resolve);setTimeout(()=>{server.kill('SIGKILL');resolve();},5000).unref();}); }
