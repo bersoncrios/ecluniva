@@ -116,3 +116,7 @@ Vazio: “Não há membros neste resultado para exportar.” Falha: “Não foi 
 - Mensagens de erro devem indicar a próxima ação, sem expor códigos Firebase ao usuário.
 - Identificar dados fictícios somente em demonstrações; não preencher o produto real com pessoas inventadas.
 - Textos de carregamento e sucesso devem ser anunciados por região de status; erros importantes por alerta acessível.
+
+## Consulta de endereço pelo CEP
+
+Ajuda: “Informe o CEP para buscar o endereço. Número e complemento são preenchidos por você.” Progresso: “Buscando endereço…” Sucesso: “Endereço encontrado. Confira os dados e informe número e complemento, se houver.” CEP inexistente: “CEP não encontrado. Confira o CEP ou preencha o endereço manualmente.” Falha: “Não foi possível consultar o CEP. Preencha o endereço manualmente ou tente novamente.” Ação de repetição: “Buscar endereço novamente”. Os avisos são apresentados junto ao CEP e anunciados em região de status.

@@ -9,6 +9,7 @@
   },
   "include": [
     "src/app/core/models.ts",
-    "src/app/core/domain.ts"
+    "src/app/core/domain.ts",
+    "src/app/core/viacep.ts"
   ]
 }

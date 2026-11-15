@@ -63,6 +63,7 @@ test('MVP browser journey, responsive layout and actual exports against local em
   await signInWithEmailAndPassword(auth,email,password);
   const browser=await chromium.launch({executablePath:chromePath,headless:true});
   const context=await browser.newContext({viewport:{width:1440,height:1000},acceptDownloads:true});
+  await context.route('https://viacep.com.br/ws/**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({cep:'77000-000',logradouro:'',bairro:'',localidade:'Palmas',uf:'TO'})}));
   const page=await context.newPage();
   const pageErrors=[];
   page.on('pageerror',error=>pageErrors.push(error.message));

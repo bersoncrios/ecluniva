@@ -42,7 +42,7 @@ ID automático e estável. Não usar nome como chave; nomes iguais são aceitos.
 | createdAt | Timestamp | serverTimestamp na criação e imutável na edição |
 | updatedAt | Timestamp | serverTimestamp em toda gravação |
 
-`address` contém exatamente `postalCode` (vazio ou 8 dígitos), `street` (até 160), `number` (até 20; aceita s/n), `complement` (até 100), `neighborhood` (até 100), `city` (até 100) e `state` (vazio ou uma das 27 UFs). Campos parciais são permitidos. Nenhuma consulta de CEP.
+`address` contém exatamente `postalCode` (vazio ou 8 dígitos), `street` (até 160), `number` (até 20; aceita s/n), `complement` (até 100), `neighborhood` (até 100), `city` (até 100) e `state` (vazio ou uma das 27 UFs). Campos parciais são permitidos. ViaCEP auxilia o preenchimento no frontend; não altera o schema nem a autorização. Apenas CEP é enviado ao serviço externo; nome, contato e outros dados do membro não são enviados.
 
 Todas as chaves do membro são obrigatórias, inclusive os campos opcionais ao usuário. Normalização: textos opcionais ausentes viram `''`; datas ausentes viram `null`; endereço ausente vira mapa com sete strings vazias. Retirar espaços nas extremidades de textos no frontend, sem remover acentos nem converter nomes para maiúsculas. Nome não pode ter espaços nas extremidades também nas regras. Telefone e CEP são persistidos somente como dígitos. Não gravar undefined, strings de datas vazias ou campos id.
 

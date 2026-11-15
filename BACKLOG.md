@@ -29,3 +29,7 @@ QA deve cobrir o ciclo Google/sociedade → cadastrar → buscar/filtrar → edi
 ## Entregáveis e dependências
 
 Pesquisa concluída precede decisões de produto. Designer entrega identidade e wireframes; a aprovação visual é a pausa antes de Copywriter, Backend, Frontend e QA seguirem suas entregas. O schema e as regras locais devem documentar e validar os contratos deste escopo. Ajustes posteriores de escopo exigem atualizar os documentos e critérios afetados.
+
+## Incremento autorizado — ViaCEP
+
+Como responsável, quero preencher o endereço pelo CEP para reduzir digitação. Critérios: consultar automaticamente somente CEP completo válido; preencher rua/bairro/cidade/UF sem alterar número/complemento; permitir edição manual e nova tentativa; manter dados em falha/CEP inexistente; cancelar/ignorar consultas obsoletas e preservar edições manuais durante a espera. Não consultar ao abrir um cadastro existente nem persistir automaticamente.

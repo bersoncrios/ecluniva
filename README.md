@@ -13,7 +13,7 @@ cp .env.example .env.hml
 npm start
 ```
 
-Abra `http://localhost:4200`. Na primeira entrada, use Google e crie uma sociedade com igreja, tipo e nome da unidade. O rol permite cadastrar, editar, inativar/reativar, buscar, filtrar e exportar. Os aniversariantes consideram somente ativos e usam o dia civil de America/Araguaina.
+Abra `http://localhost:4200`. Na primeira entrada, use Google e crie uma sociedade com igreja, tipo e nome da unidade. O rol permite cadastrar, editar, inativar/reativar, buscar, filtrar e exportar. Ao completar o CEP, o ViaCEP busca logradouro, bairro, cidade e UF; número e complemento permanecem manuais. Todos os campos continuam editáveis, inclusive quando o serviço estiver indisponível. A consulta transmite somente o CEP e não salva o cadastro automaticamente. Os aniversariantes consideram somente ativos e usam o dia civil de America/Araguaina.
 
 ### Firebase HML
 
@@ -62,6 +62,7 @@ Saída: `dist/societas/browser`. `vercel.json` configura build, diretório está
 - `src/app/core/models.ts`: contrato TypeScript dos registros.
 - `src/app/core/domain.ts`: validação, normalização, filtros e calendário.
 - `src/app/core/export.ts`: exportações PDF e XLSX carregadas sob demanda.
+- `src/app/core/viacep.ts`: consulta HTTPS ViaCEP, validação de formato e resposta; sem chave de API ou Cloud Functions.
 - `scripts/angular-env.mjs`: lê `.env.hml`/`.env.prod`, ou variáveis do provedor, e gera environments ignorados.
 - `tests/`: testes unitários, emulator e navegador.
 

@@ -55,4 +55,10 @@ Em `artifacts/browser/` (ignorado pelo Git): capturas de dashboard desktop, form
 - Autenticação Google real, domínios autorizados, regras remotas e conectividade com HML/PROD não foram exercitados. As configurações recebidas não comprovam que esses serviços estejam configurados.
 - Sem Cloud Functions. Regras Firebase entregues somente para local/emulator, conforme instrução do dono; nenhuma publicação de regras foi executada.
 - Nenhum deploy Vercel, configuração de conta externa ou promoção para produção foi realizado. PROD continua exigindo aprovação explícita do dono; o build Vercel também exige SOCIETAS_PROD_APPROVED=true.
-- O ambiente impediu criar `.git`. Os arquivos estão entregues no diretório de trabalho, mas não há commit/branch/remoto criados. Exclusão de ambientes foi verificada pelos padrões do .gitignore, sem git check-ignore disponível.
+- O dono inicializou o repositório e a base foi publicada em main no GitHub (first commit 3458394). Os arquivos de ambiente foram confirmados ignorados por git check-ignore. O incremento ViaCEP descrito abaixo está entregue no diretório de trabalho.
+
+## Incremento ViaCEP — 15/11/2026
+
+Solicitado pelo dono após o MVP: consulta automática de CEP no cadastro/edição, sem Cloud Functions ou mudança do schema. Fonte oficial consultada e documentos atualizados antes do código. O app preenche logradouro, bairro, cidade e UF ao completar oito dígitos; preserva número/complemento e alterações manuais durante a consulta. Abrir edição não dispara consulta. Respostas antigas são canceladas/descartadas na troca de CEP, formulário, sessão/tela e ao salvar. Falha, CEP inexistente e timeout de 8 segundos permitem preenchimento manual e repetição. Somente o CEP é enviado ao ViaCEP; não há gravação automática.
+
+Build HML aprovado; 26 testes unitários e 2 jornadas de navegador aprovadas nesta rodada. ViaCEP interceptado nos testes para simular respostas concorrentes, sucesso, CEP inexistente, timeout e HTTP503, sem consultas externas em lote. A jornada do MVP também passou, com PDF/XLSX. Não houve alteração das regras Firestore nem sua republicação. Nenhuma implantação Vercel foi realizada neste incremento. Servidor e emuladores de QA encerrados pelo harness, com environment local restaurado para HML.

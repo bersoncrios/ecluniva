@@ -7,6 +7,7 @@ import { emptyMember, validateMember, filterMembers, todayISO, displayDate, birt
 import { exportRoster } from './core/export';
 import { environment } from '../environments/environment';
 import { IconComponent } from './icon';
+import { lookupPostalCode, postalCodeDigits, PostalCodeNotFoundError } from './core/viacep';
 
 type Page = 'overview' | 'members' | 'birthdays' | 'member';
 type DateParts = { day:string; month:string; year:string };
@@ -38,6 +39,9 @@ export class AppComponent {
   readonly exportBusy = signal(false);
   readonly dialogError = signal('');
   readonly dialogKind = signal<'status'|'export'|null>(null);
+  readonly postalLoading = signal(false);
+  readonly postalMessage = signal('');
+  readonly postalRetry = signal(false);
   readonly date = displayDate;
   member: MemberInput = emptyMember();
   editingId: string|null = null;
@@ -51,11 +55,15 @@ export class AppComponent {
   @ViewChild('confirmation') private confirmation?: ElementRef<HTMLDialogElement>;
   private previousFocus: HTMLElement|null = null;
   private previousContext = '';
+  private postalController: AbortController | null = null;
+  private postalVersion = 0;
+  private lastPostalCode: string | null = null;
 
   constructor() {
     effect(() => {
       const context = `${this.data.user()?.uid ?? ''}/${this.data.selected()?.id ?? ''}`;
       if (context !== this.previousContext) {
+        this.cancelPostalLookup();
         this.previousContext = context;
         this.page.set('overview');
         this.query.set('');
@@ -71,6 +79,7 @@ export class AppComponent {
     const refreshDay = ():void => { this.today.set(todayISO()); };
     const timer = window.setInterval(refreshDay, 30000);
     const navigateBack = ():void => {
+      this.cancelPostalLookup();
       const hash = location.hash.slice(1);
       const page = (['overview','members','birthdays'].includes(hash) ? hash : 'overview') as Page;
       this.page.set(page);
@@ -79,6 +88,7 @@ export class AppComponent {
     window.addEventListener('popstate', navigateBack);
     document.addEventListener('visibilitychange', refreshDay);
     this.destroyRef.onDestroy(() => {
+      this.cancelPostalLookup();
       window.clearInterval(timer);
       window.removeEventListener('popstate', navigateBack);
       document.removeEventListener('visibilitychange', refreshDay);
@@ -104,6 +114,7 @@ export class AppComponent {
 
   async logout(): Promise<void> {
     if (this.busy() || this.exportBusy()) return;
+    this.cancelPostalLookup();
     this.error.set('');
     this.member = emptyMember();
     this.closeDialog(true);
@@ -119,6 +130,7 @@ export class AppComponent {
 
   switchSociety(): void {
     if (this.busy() || this.exportBusy()) return;
+    this.cancelPostalLookup();
     this.data.clearSelection();
     this.createMode.set(false);
     this.churchName = ''; this.societyName = ''; this.societyErrors.set({});
@@ -144,6 +156,7 @@ export class AppComponent {
 
   navigate(page: Page): void {
     if (this.busy() || this.exportBusy()) return;
+    this.cancelPostalLookup();
     this.page.set(page);
     this.today.set(todayISO());
     this.error.set('');
@@ -153,6 +166,7 @@ export class AppComponent {
   }
 
   newMember(): void {
+    this.cancelPostalLookup();
     this.member = emptyMember(); this.editingId = null;
     this.birth = {day:'',month:'',year:''}; this.received = {day:'',month:'',year:''};
     this.fieldErrors.set({}); this.notice.set('');
@@ -160,6 +174,7 @@ export class AppComponent {
   }
 
   editMember(member: Member): void {
+    this.cancelPostalLookup();
     this.member = { name:member.name, birthDate:member.birthDate, receivedDate:member.receivedDate,
       office:member.office,address:{...member.address},phone:member.phone,email:member.email,status:member.status,notes:member.notes };
     this.editingId = member.id;
@@ -170,6 +185,7 @@ export class AppComponent {
 
   async saveMember(): Promise<void> {
     if (this.busy()) return;
+    this.cancelPostalLookup();
     this.member.birthDate = this.iso(this.birth);
     this.member.receivedDate = this.iso(this.received);
     this.fieldErrors.set(validateMember(this.member, this.today()));
@@ -188,6 +204,65 @@ export class AppComponent {
     } catch {
       if (societyId === this.data.selected()?.id) this.error.set('Não foi possível salvar. Seus dados continuam no formulário. Tente novamente.');
     } finally { this.busy.set(false); }
+  }
+
+  postalCodeChanged(value: string): void {
+    this.member.address.postalCode = value;
+    const code = postalCodeDigits(value);
+    if (code && code === this.lastPostalCode) return;
+    this.cancelPostalLookup();
+    if (code && this.page() === 'member' && !this.busy()) void this.findPostalAddress(code);
+  }
+
+  retryPostalLookup(): void {
+    const code = postalCodeDigits(this.member.address.postalCode);
+    if (!code || this.busy() || this.postalLoading() || this.page() !== 'member') return;
+    this.cancelPostalLookup();
+    void this.findPostalAddress(code);
+  }
+
+  private async findPostalAddress(code: string): Promise<void> {
+    const controller = new AbortController();
+    this.postalController = controller;
+    const version = ++this.postalVersion;
+    const member = this.member;
+    const before = {...member.address};
+    const societyId = this.data.selected()?.id;
+    const uid = this.data.user()?.uid;
+    const current = (): boolean => version === this.postalVersion && this.member === member
+      && this.page() === 'member' && this.data.selected()?.id === societyId && this.data.user()?.uid === uid
+      && postalCodeDigits(this.member.address.postalCode) === code;
+    this.lastPostalCode = code;
+    this.postalLoading.set(true); this.postalRetry.set(false); this.postalMessage.set('Buscando endereço…');
+    const timeout = window.setTimeout(() => controller.abort(), 8000);
+    try {
+      const address = await lookupPostalCode(code, controller.signal);
+      if (!current()) return;
+      if (controller.signal.aborted) throw new Error('Consulta de CEP cancelada por tempo limite.');
+      for (const field of ['street', 'neighborhood', 'city', 'state'] as const) {
+        if (member.address[field] === before[field]) member.address[field] = address[field];
+      }
+      this.postalMessage.set(!address.street || !address.neighborhood
+        ? 'CEP encontrado. Complete o logradouro e o bairro, se necessário, e confira os demais dados.'
+        : 'Endereço encontrado. Confira os dados e informe número e complemento, se houver.');
+    } catch (error: unknown) {
+      if (!current()) return;
+      this.postalRetry.set(true);
+      this.postalMessage.set(error instanceof PostalCodeNotFoundError
+        ? 'CEP não encontrado. Confira o CEP ou preencha o endereço manualmente.'
+        : 'Não foi possível consultar o CEP. Preencha o endereço manualmente ou tente novamente.');
+    } finally {
+      window.clearTimeout(timeout);
+      if (current()) { this.postalLoading.set(false); this.postalController = null; }
+    }
+  }
+
+  private cancelPostalLookup(): void {
+    this.postalVersion++;
+    this.postalController?.abort();
+    this.postalController = null;
+    this.lastPostalCode = null;
+    this.postalLoading.set(false); this.postalMessage.set(''); this.postalRetry.set(false);
   }
 
   requestStatus(member: Member): void {

@@ -44,3 +44,7 @@ Estas perguntas não bloqueiam a elaboração inicial dos documentos: significad
 ## Conclusão para o estúdio
 
 As referências sustentam a investigação de um fluxo centrado em perfis, consulta filtrada e exportação contextual, com formulários que expliquem campos e recuperação de erros. Não há evidência nesta pesquisa de preferência dos usuários IPB por paleta, tipografia ou disposição específica de telas; essas escolhas deverão ser apresentadas como proposta do Designer e submetidas à validação visual solicitada pelo dono do produto.
+
+## Extensão autorizada — consulta de CEP (15/11/2026)
+
+Fonte primária: [documentação ViaCEP](https://viacep.com.br/), consultada antes da decisão de implementação. A API recebe oito dígitos em `https://viacep.com.br/ws/{cep}/json/`; formato inválido retorna HTTP 400 e CEP inexistente retorna propriedade `erro`. Mapeamento: logradouro → street, bairro → neighborhood, localidade → city, uf → state. O complemento retornado pode descrever trecho do logradouro e não identifica a unidade do membro; número e complemento residencial permanecem manuais. A documentação alerta contra uso massivo: consultar somente CEP completo alterado, sem consultas de base em lote.

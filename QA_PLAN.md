@@ -55,3 +55,11 @@ Limite: assinatura e contagem de páginas do PDF não comprovam, sozinhas, integ
 Execução concluída pelo orquestrador: 18 testes unitários/ambientes, 9 de regras e 1 jornada completa de navegador aprovados (28/28), além do build HML estrito. PDF real de 3 páginas e XLSX com 46 registros verificados; primeira página do PDF e capturas de interface inspecionadas visualmente. Testes de largura: 320, 390 e 1440 px. O PDF é rasterizado; assinatura e páginas foram verificadas automaticamente, sem afirmar acessibilidade semântica do documento exportado.
 
 `npm run test:local` gerencia regras + servidor Angular emulator + browser sob emulators:exec. `SOCIETAS_CHROME_PATH` seleciona o executável do Chrome; o padrão é o Chrome instalado no macOS. Evidências em artifacts/browser/, ignoradas pelo Git. A execução deste ambiente usou CLI15.36/Firestore Emulator1.22 disponíveis; os detalhes e limites externos estão em STUDIO_STATUS.md. Login Google real e publicação não integram esta evidência local.
+
+## Incremento ViaCEP
+
+Validar consulta somente com oito dígitos; mapeamento da resposta; preservação de número/complemento e edições manuais pendentes; CEP inexistente, falha HTTP, timeout e JSON inesperado; cancelamento na troca de CEP/formulário/tela/sessão e ao salvar. Testes de navegador interceptam a API, sem depender de rede externa ou consumir consultas reais em lote. Verificar cadastro e edição.
+
+### Evidência do incremento ViaCEP — 15/11/2026
+
+Build HML aprovado. Testes unitários: 26/26 (18 existentes + 8 novos ViaCEP). Navegador: 2/2, com a jornada original e a nova jornada ViaCEP, usando Auth/Firestore locais e API interceptada. Cobertos formato incompleto/inválido sem requisição, auto preenchimento, deduplicação por CEP, preservação de número/complemento e edições pendentes, respostas concorrentes, CEP inexistente e repetição, timeout de 8 segundos, HTTP 503 com salvamento manual, edição de cadastro existente e descarte ao navegar para outro formulário. Sem exceções não tratadas nas páginas. Regras Firestore não mudaram e não foram reexecutadas neste incremento; 9 testes de regras aprovados na base anterior.

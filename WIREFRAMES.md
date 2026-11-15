@@ -25,7 +25,7 @@ Título, contagem do resultado e ações Cadastrar membro/Exportar rol. Campo �
 
 ## 5. Cadastro e edição
 
-Página com Voltar ao rol, título e indicação de campos opcionais. Seções: Identificação (nome, nascimento); Vínculo (recebimento, ofício com ajuda); Contato (telefone, e-mail); Endereço (CEP, logradouro, número, complemento, bairro, cidade e UF); Observações. Nome obrigatório; demais conforme escopo. Rótulos permanecem visíveis. Datas em dia/mês/ano digitáveis. Salvar membro e Cancelar ao final. Na edição, status atual e ação secundária Inativar ou Reativar. Salvar não muda o ID. Falha mantém valores; resumo de erros recebe foco quando inválido.
+Página com Voltar ao rol, título e indicação de campos opcionais. Seções: Identificação (nome, nascimento); Vínculo (recebimento, ofício com ajuda); Contato (telefone, e-mail); Endereço (CEP, logradouro, número, complemento, bairro, cidade e UF); Observações. Nome obrigatório; demais conforme escopo. Rótulos permanecem visíveis. Datas em dia/mês/ano digitáveis. No CEP, ajuda informa busca automática ao completar oito dígitos. Exibir progresso, resultado ou falha junto ao campo em região de status; falha permite nova tentativa e preenchimento manual. Logradouro, bairro, cidade e UF recebem o retorno; número e complemento são manuais. Todos os controles permanecem editáveis. Salvar membro e Cancelar ao final. Na edição, status atual e ação secundária Inativar ou Reativar. Salvar não muda o ID. Falha mantém valores; resumo de erros recebe foco quando inválido.
 
 ## 6. Confirmar inativação
 
