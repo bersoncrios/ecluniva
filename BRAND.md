@@ -5,7 +5,7 @@ Base: MVP_SCOPE.md, DESIGN_SYSTEM.md e WIREFRAMES.md. Direção visual liberada 
 
 ## Marca e tom
 
-**Quadrei** ajuda responsáveis a organizar o rol das sociedades internas e acompanhar as pessoas da comunidade. Assinatura: **Seu rol organizado. Sua comunidade por perto.**
+**Quadrei** ajuda responsáveis a organizar o rol das sociedades internas e acompanhar as pessoas da comunidade. Assinatura: **Seu rol organizado.
 
 Falar em português brasileiro, com acolhimento, clareza e respeito. Usar frases curtas, verbos conhecidos e ações concretas. Evitar jargão técnico, culpa, promessas de segurança absoluta, alegações de vínculo oficial com a IPB e linguagem que confunda inativação na sociedade com desligamento da igreja. Não incluir versículos, títulos religiosos ou saudações litúrgicas como requisito para usar o app.
 
