@@ -1,4 +1,4 @@
-# Societas — contrato Cloud Firestore
+# Quadrei — contrato Cloud Firestore
 
 Responsável: AGENTE BACKEND ENGINEER · 15/11/2026  
 Base: MVP_SCOPE.md, BACKLOG.md e BRAND.md. Identidade visual liberada para continuidade. Este contrato precede as regras e o código de persistência.
@@ -76,7 +76,7 @@ Não consultar todas as sociedades para filtrar depois: regras não são filtros
 
 firestore.rules nega anônimos, terceiros, documentos desconhecidos, chaves extras, ownerId imutável, tipos inválidos e exclusões de sociedades/membros. A remoção de vínculos anuais da diretoria tem permissão específica limitada ao proprietário. A subcoleção valida a propriedade lendo seu documento pai. Usuário que conhece o ID de uma sociedade não obtém acesso a ela. Não criar permissões públicas em fallback.
 
-firebase.json é configuração local dos emuladores Auth 127.0.0.1:9099, Firestore 127.0.0.1:8080 e UI 127.0.0.1:4000. Testar somente no projeto fictício demo-societas. Não há .firebaserc apontando para um projeto real e não há configuração de hosting ou functions. Para iniciar localmente: `firebase emulators:start --project demo-societas --only auth,firestore`. QA deve executar testes com `emulators:exec` e projeto demo-societas; nunca usar credenciais HML/PROD nos testes de regras.
+firebase.json é configuração local dos emuladores Auth 127.0.0.1:9099, Firestore 127.0.0.1:8080 e UI 127.0.0.1:4000. Testar somente no projeto fictício demo-quadrei. Não há .firebaserc apontando para um projeto real e não há configuração de hosting ou functions. Para iniciar localmente: `firebase emulators:start --project demo-quadrei --only auth,firestore`. QA deve executar testes com `emulators:exec` e projeto demo-quadrei; nunca usar credenciais HML/PROD nos testes de regras.
 
 As regras são entregues somente para local/emulator no MVP. Nenhuma implantação de regras ou gravação nos projetos reais faz parte desta entrega. Receber as configurações de Firebase não confirma que Google Sign-In, domínios autorizados ou regras remotas estejam configurados. Não considerar ambiente remoto pronto para dados reais antes de validar esses itens com o proprietário. Promoção para produção exige aprovação explícita.
 

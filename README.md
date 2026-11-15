@@ -1,4 +1,4 @@
-# Societas
+# Quadrei
 
 Gestão do rol das sociedades internas IPB: UPH, SAF, UMP, UCP e UPA. Angular 20 standalone, Signals, AngularFire, Firebase Auth/Firestore e Tailwind CSS. Sem Cloud Functions.
 
@@ -30,17 +30,17 @@ npm run test:emulator
 npm run test:local
 ```
 
-Os testes unitários compilam as funções TypeScript reais para `.test-dist/` e executam Node `--test`. Os testes de regras usam somente `demo-societas`, sem credenciais reais, exigindo Java e as portas 9099/8080 livres.
+Os testes unitários compilam as funções TypeScript reais para `.test-dist/` e executam Node `--test`. Os testes de regras usam somente `demo-quadrei`, sem credenciais reais, exigindo Java e as portas 9099/8080 livres.
 
 Para testar a interface inteira com Auth/Firestore locais, use terminais separados:
 
 ```sh
-npx firebase emulators:start --project demo-societas --only auth,firestore
+npx firebase emulators:start --project demo-quadrei --only auth,firestore
 node scripts/angular-env.mjs serve emulator --host 127.0.0.1 --port 4200
 npm run test:ui
 ```
 
-O formulário de acesso exclusivo do modo emulator recebe contas criadas pelo teste no Auth emulator. Não aparece em HML/PROD. Os testes de navegador usam Google Chrome instalado; `SOCIETAS_CHROME_PATH` pode selecionar outro executável quando suportado pelo teste. Não mantenha dados reais nos emuladores.
+O formulário de acesso exclusivo do modo emulator recebe contas criadas pelo teste no Auth emulator. Não aparece em HML/PROD. Os testes de navegador usam Google Chrome instalado; `QUADREI_CHROME_PATH` (ou `SOCIETAS_CHROME_PATH`) pode selecionar outro executável quando suportado pelo teste. Não mantenha dados reais nos emuladores.
 
 ## Builds e Vercel
 
@@ -49,11 +49,11 @@ npm run build:hml
 npm run build:vercel
 ```
 
-Saída: `dist/societas/browser`. `vercel.json` configura build, diretório estático, navegação SPA e cabeçalhos básicos. Na Vercel, configure as variáveis `FIREBASE_*` de `.env.example` no ambiente correspondente: HML em Preview e PROD em Production. Os arquivos `.env.*` não devem ser enviados ao provedor nem ao Git.
+Saída: `dist/quadrei/browser`. `vercel.json` configura build, diretório estático, navegação SPA e cabeçalhos básicos. Na Vercel, configure as variáveis `FIREBASE_*` de `.env.example` no ambiente correspondente: HML em Preview e PROD em Production. Os arquivos `.env.*` não devem ser enviados ao provedor nem ao Git.
 
 `scripts/vercel-build.mjs` usa `VERCEL_GIT_COMMIT_REF` (ou branch Git local). `develop`/`hml` → HML; `main`/`master` → PROD; outra branch falha com mensagem. O script valida o projectId esperado. Use a branch develop para HML.
 
-**Produção exige aprovação explícita do dono.** Além da branch correta e configuração PROD, o build Vercel exige `SOCIETAS_PROD_APPROVED=true`, que deve ser configurado somente após essa aprovação. Receber a configuração de produção não autoriza publicação. `npm run build:prod` compila um artefato local; não implanta nem publica regras.
+**Produção exige aprovação explícita do dono.** Além da branch correta e configuração PROD, o build Vercel exige `QUADREI_PROD_APPROVED=true`, que deve ser configurado somente após essa aprovação. Receber a configuração de produção não autoriza publicação. `npm run build:prod` compila um artefato local; não implanta nem publica regras.
 
 ## Estrutura
 

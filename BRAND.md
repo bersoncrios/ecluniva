@@ -1,15 +1,15 @@
-# Societas — identidade verbal e microcopy
+# Quadrei — identidade verbal e microcopy
 
 Responsável: AGENTE COPYWRITER & BRAND STRATEGIST · 15/11/2026  
 Base: MVP_SCOPE.md, DESIGN_SYSTEM.md e WIREFRAMES.md. Direção visual liberada para continuidade pelo dono do produto.
 
 ## Marca e tom
 
-**Societas** ajuda responsáveis a organizar o rol das sociedades internas e acompanhar as pessoas da comunidade. Assinatura: **Seu rol organizado. Sua comunidade por perto.**
+**Quadrei** ajuda responsáveis a organizar o rol das sociedades internas e acompanhar as pessoas da comunidade. Assinatura: **Seu rol organizado. Sua comunidade por perto.**
 
 Falar em português brasileiro, com acolhimento, clareza e respeito. Usar frases curtas, verbos conhecidos e ações concretas. Evitar jargão técnico, culpa, promessas de segurança absoluta, alegações de vínculo oficial com a IPB e linguagem que confunda inativação na sociedade com desligamento da igreja. Não incluir versículos, títulos religiosos ou saudações litúrgicas como requisito para usar o app.
 
-Preferir “membro”, “sociedade”, “igreja”, “responsável” e “rol de membros”. Usar “cadastro” para o registro de uma pessoa. Escrever UPH, SAF, UMP, UCP e UPA em maiúsculas. Manter “Societas” como nome próprio; marca visual pode usar minúsculas conforme o design.
+Preferir “membro”, “sociedade”, “igreja”, “responsável” e “rol de membros”. Usar “cadastro” para o registro de uma pessoa. Escrever UPH, SAF, UMP, UCP e UPA em maiúsculas. Manter “Quadrei” como nome próprio; marca visual pode usar minúsculas conforme o design.
 
 ## Entrada e primeiro acesso
 

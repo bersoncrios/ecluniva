@@ -1,4 +1,4 @@
-# Societas — backlog priorizado
+# Quadrei — backlog priorizado
 
 Responsável: AGENTE PRODUCT OWNER · 15/11/2026  
 Regras detalhadas em [MVP_SCOPE.md](MVP_SCOPE.md). P0 compõe o MVP; P1 e P2 ficam fora dele. Ordem considera dependências.

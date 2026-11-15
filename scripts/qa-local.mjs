@@ -1,8 +1,8 @@
 import { spawn } from 'node:child_process';
 import { generate } from './angular-env.mjs';
 
-if (!/^127\.0\.0\.1:\d+$/.test(process.env.FIRESTORE_EMULATOR_HOST || '') || process.env.GCLOUD_PROJECT !== 'demo-societas') {
-  throw new Error('Execute este script via emulators:exec --project demo-societas.');
+if (!/^127\.0\.0\.1:\d+$/.test(process.env.FIRESTORE_EMULATOR_HOST || '') || !['demo-societas', 'demo-quadrei'].includes(process.env.GCLOUD_PROJECT)) {
+  throw new Error('Execute este script via emulators:exec --project demo-quadrei.');
 }
 const run = args => new Promise((resolve,reject) => {
   const child = spawn(process.execPath,args,{stdio:'inherit',env:process.env});

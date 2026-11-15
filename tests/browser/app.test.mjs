@@ -8,12 +8,12 @@ import { initializeApp, deleteApp } from 'firebase/app';
 import { getAuth, connectAuthEmulator, signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { getFirestore, connectFirestoreEmulator, collection, getDocs, query, where, writeBatch, doc, serverTimestamp, terminate } from 'firebase/firestore';
 
-const baseUrl=process.env.SOCIETAS_BASE_URL || 'http://127.0.0.1:4200';
-const chromePath=process.env.SOCIETAS_CHROME_PATH || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+const baseUrl=process.env.QUADREI_BASE_URL || process.env.SOCIETAS_BASE_URL || 'http://127.0.0.1:4200';
+const chromePath=process.env.QUADREI_CHROME_PATH || process.env.SOCIETAS_CHROME_PATH || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 const artifacts=path.resolve('artifacts/browser');
 const unique=String(Date.now());
 const email=`qa-${unique}@example.test`;
-const password='SocietasQA123!';
+const password='QuadreiQA123!';
 const church=`Igreja Presbiteriana QA ${unique}`;
 const societyName=`Unidade QA ${unique}`;
 

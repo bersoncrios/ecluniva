@@ -1,4 +1,4 @@
-# Societas — wireframes por tela
+# Quadrei — wireframes por tela
 
 Responsável: AGENTE UX/UI DESIGNER · 15/11/2026  
 Direção visual liberada para implementação em 15/11/2026. Conteúdo verbal detalhado em BRAND.md.
@@ -9,7 +9,7 @@ Entrar com Google → selecionar sociedade (ou criar a primeira) → visão gera
 
 ## 1. Entrada
 
-Marca Societas, título curto sobre organizar o rol, explicação do acesso do responsável e botão “Entrar com Google”. Mostrar progresso, cancelamento recuperável e falha com nova tentativa. Sem campos de senha própria.
+Marca Quadrei, título curto sobre organizar o rol, explicação do acesso do responsável e botão “Entrar com Google”. Mostrar progresso, cancelamento recuperável e falha com nova tentativa. Sem campos de senha própria.
 
 ## 2. Selecionar ou criar sociedade
 

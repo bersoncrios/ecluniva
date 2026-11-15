@@ -22,5 +22,5 @@ bootstrapApplication(AppComponent, {
     }),
   ],
 }).catch(() => {
-  document.body.textContent = 'Não foi possível iniciar o Societas. Atualize a página para tentar novamente.';
+  document.body.textContent = 'Não foi possível iniciar o Quadrei. Atualize a página para tentar novamente.';
 });

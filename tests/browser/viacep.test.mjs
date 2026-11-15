@@ -2,8 +2,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
 
-const baseUrl = process.env.SOCIETAS_BASE_URL || 'http://127.0.0.1:4200';
-const chromePath = process.env.SOCIETAS_CHROME_PATH || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+const baseUrl = process.env.QUADREI_BASE_URL || process.env.SOCIETAS_BASE_URL || 'http://127.0.0.1:4200';
+const chromePath = process.env.QUADREI_CHROME_PATH || process.env.SOCIETAS_CHROME_PATH || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 const waitFor = async (predicate,message,timeout=15000) => {
   const deadline=Date.now()+timeout;
   while(Date.now()<deadline) { if(await predicate()) return; await new Promise(resolve=>setTimeout(resolve,50)); }

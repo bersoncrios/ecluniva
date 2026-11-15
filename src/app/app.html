@@ -1,10 +1,10 @@
 <a class="skip-link" href="#main">Pular para o conteúdo</a>
 @if (!isProduction) { <div class="environment-bar">{{ isEmulator ? 'Ambiente local de testes' : 'Ambiente de homologação' }}</div> }
 @if (!data.ready()) {
-  <main id="main" class="initial-loading"><div class="brand"><span class="brand-mark">S</span>societas</div><p class="muted" role="status">Preparando seu espaço…</p></main>
+  <main id="main" class="initial-loading"><div class="brand"><span class="brand-mark">Q</span>quadrei</div><p class="muted" role="status">Preparando seu espaço…</p></main>
 } @else if (!data.user()) {
   <div class="login-page">
-    <header class="public-header"><a class="brand" href="#"><span class="brand-mark">S</span>societas</a><span class="public-label">GESTÃO DE SOCIEDADES</span></header>
+    <header class="public-header"><a class="brand" href="#"><span class="brand-mark">Q</span>quadrei</a><span class="public-label">GESTÃO DE SOCIEDADES</span></header>
     <main id="main" class="login-layout">
       <section class="login-intro">
         <div class="eyebrow"><span class="small-line"></span> PESSOAS NO CENTRO</div>
@@ -15,7 +15,7 @@
       </section>
       <section class="login-card">
         <div class="card-symbol"><app-icon name="church"/></div>
-        <span class="eyebrow">BEM-VINDO AO SOCIETAS</span>
+        <span class="eyebrow">BEM-VINDO AO QUADREI</span>
         <h2>Organize o rol da sua sociedade</h2>
         <p class="muted">Cadastre membros, acompanhe aniversários e tenha o rol à mão para a rotina da igreja.</p>
         @if (error()) { <div class="alert error" role="alert">{{ error() }}</div> }
@@ -27,11 +27,11 @@
         }
       </section>
     </main>
-    <footer class="public-footer"><span>Societas</span><p>Seu rol organizado. Sua comunidade por perto.</p></footer>
+    <footer class="public-footer"><span>Quadrei</span><p>Seu rol organizado. Sua comunidade por perto.</p></footer>
   </div>
 } @else if (!data.selected()) {
   <div class="selection-page">
-    <header class="selection-header"><a class="brand" href="#"><span class="brand-mark">S</span>societas</a><button class="button subtle" (click)="logout()" [disabled]="busy()"><app-icon name="logout"/>Sair</button></header>
+    <header class="selection-header"><a class="brand" href="#"><span class="brand-mark">Q</span>quadrei</a><button class="button subtle" (click)="logout()" [disabled]="busy()"><app-icon name="logout"/>Sair</button></header>
     <main id="main" class="selection-main">
       <div class="eyebrow">SEU ESPAÇO DE ORGANIZAÇÃO</div>
       <h1 tabindex="-1">{{ createMode() || (!data.societies().length && !data.societiesLoading() && !data.societiesError()) ? 'Vamos começar pela sua sociedade' : 'Suas sociedades' }}</h1>
@@ -54,12 +54,12 @@
         <div class="society-grid">@for (society of data.societies(); track society.id) { <button class="society-choice panel" (click)="select(society)"><span class="society-type">{{ society.type }}</span><strong>{{ society.name }}</strong><span class="muted">{{ society.churchName }}</span><span class="choice-action">Organizar sociedade<app-icon name="arrow"/></span></button> }<button class="society-choice create-choice" (click)="createMode.set(true)"><app-icon name="plus"/><strong>Criar sociedade</strong><span class="muted">Organize outra unidade local.</span></button></div>
       }
     </main>
-    <footer class="public-footer"><span>Societas</span><p>Um espaço para cada sociedade.</p></footer>
+    <footer class="public-footer"><span>Quadrei</span><p>Um espaço para cada sociedade.</p></footer>
   </div>
 } @else {
   <div class="app-layout">
     <aside class="sidebar" aria-label="Navegação principal">
-      <a class="brand" href="#overview" (click)="$event.preventDefault(); navigate('overview')"><span class="brand-mark">S</span>societas</a>
+      <a class="brand" href="#overview" (click)="$event.preventDefault(); navigate('overview')"><span class="brand-mark">Q</span>quadrei</a>
       <div class="sidebar-caption">GESTÃO DE SOCIEDADES</div>
       <nav><button [class.active]="page() === 'overview'" [attr.aria-current]="page() === 'overview' ? 'page' : null" (click)="navigate('overview')" [disabled]="busy() || exportBusy()"><app-icon name="grid"/>Visão geral</button><button [class.active]="page() === 'members' || page() === 'member'" [attr.aria-current]="page() === 'members' || page() === 'member' ? 'page' : null" (click)="navigate('members')" [disabled]="busy() || exportBusy()"><app-icon name="people"/>Membros</button><button [class.active]="page() === 'birthdays'" [attr.aria-current]="page() === 'birthdays' ? 'page' : null" (click)="navigate('birthdays')" [disabled]="busy() || exportBusy()"><app-icon name="calendar"/>Aniversariantes</button><button [class.active]="page() === 'board'" [attr.aria-current]="page() === 'board' ? 'page' : null" (click)="navigate('board')" [disabled]="busy() || exportBusy()"><app-icon name="board"/>Diretoria</button></nav>
       <div class="sidebar-bottom"><div class="sidebar-note"><app-icon name="heart"/><span>Seu rol organizado.<br>Sua comunidade por perto.</span></div><button class="switch-button" (click)="switchSociety()" [disabled]="busy() || exportBusy()"><app-icon name="switch"/>Trocar sociedade</button><button class="sidebar-account" (click)="logout()" [disabled]="busy() || exportBusy()"><span class="avatar">{{ initials(data.user()?.displayName || data.user()?.email || 'Conta') }}</span><span><strong>{{ data.user()?.displayName || 'Minha conta' }}</strong><small>Sair da conta</small></span><app-icon name="logout"/></button></div>
@@ -107,7 +107,7 @@
             <div class="member-form-footer"><div class="form-actions"><button type="submit" class="button" [disabled]="busy()"><app-icon name="check"/>{{ busy() ? 'Salvando…' : 'Salvar membro' }}</button><button type="button" class="button secondary" (click)="navigate('members')" [disabled]="busy()">Cancelar</button></div>@if (editingId) { <button type="button" class="button" [class.danger-outline]="member.status === 'active'" [class.secondary]="member.status === 'inactive'" (click)="requestEditingStatus()" [disabled]="busy()">{{ member.status === 'active' ? 'Inativar membro' : 'Reativar membro' }}</button> }</div>
           </form>
         }
-        <footer class="workspace-footer"><span>Societas</span><span>{{ data.selected()?.type }} · {{ data.selected()?.name }}</span></footer>
+        <footer class="workspace-footer"><span>Quadrei</span><span>{{ data.selected()?.type }} · {{ data.selected()?.name }}</span></footer>
       </main>
       <nav class="mobile-nav" aria-label="Navegação principal"><button [class.active]="page() === 'overview'" [attr.aria-current]="page() === 'overview' ? 'page' : null" (click)="navigate('overview')" [disabled]="busy() || exportBusy()"><app-icon name="grid"/><span>Início</span></button><button [class.active]="page() === 'members' || page() === 'member'" [attr.aria-current]="page() === 'members' || page() === 'member' ? 'page' : null" (click)="navigate('members')" [disabled]="busy() || exportBusy()"><app-icon name="people"/><span>Membros</span></button><button [class.active]="page() === 'birthdays'" [attr.aria-current]="page() === 'birthdays' ? 'page' : null" (click)="navigate('birthdays')" [disabled]="busy() || exportBusy()"><app-icon name="calendar"/><span>Aniversários</span></button><button [class.active]="page() === 'board'" [attr.aria-current]="page() === 'board' ? 'page' : null" (click)="navigate('board')" [disabled]="busy() || exportBusy()"><app-icon name="board"/><span>Diretoria</span></button></nav>
     </div>

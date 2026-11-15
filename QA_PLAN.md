@@ -1,11 +1,11 @@
-# Societas — plano de qualidade
+# Quadrei — plano de qualidade
 
 Responsável: AGENTE QA ENGINEER · 15/11/2026  
 Estado inicial: plano escrito antes dos testes. A execução e seus resultados serão registrados pelo orquestrador; presença de testes não significa aprovação.
 
 ## Estratégia
 
-Node `--test` nativo executa testes de domínio compilado com TypeScript estrito e integração das Security Rules no Firestore Emulator. Dados de teste são fictícios e o projeto é exclusivamente `demo-societas`. Nenhuma consulta, escrita ou implantação remota é necessária.
+Node `--test` nativo executa testes de domínio compilado com TypeScript estrito e integração das Security Rules no Firestore Emulator. Dados de teste são fictícios e o projeto é exclusivamente `demo-quadrei`. Nenhuma consulta, escrita ou implantação remota é necessária.
 
 | Feature | Critérios e evidências |
 | --- | --- |
@@ -40,9 +40,9 @@ Build HML, testes unitários e regras aprovados; erros encontrados corrigidos e 
 
 `tests/browser/app.test.mjs` usa Node `--test` + Playwright com Chrome instalado. Não inicia serviços nem baixa navegador. Pré-requisitos:
 
-1. Auth/Firestore Emulator ativos com projeto `demo-societas` (9099/8080).
+1. Auth/Firestore Emulator ativos com projeto `demo-quadrei` (9099/8080).
 2. Angular servido com environment `emulator`, por exemplo `node scripts/angular-env.mjs serve emulator --host 127.0.0.1 --port 4200`.
-3. `npm run test:ui`. URL opcional por `SOCIETAS_BASE_URL` (somente localhost/127.0.0.1); executável Chrome opcional por `SOCIETAS_CHROME_PATH`.
+3. `npm run test:ui`. URL opcional por `QUADREI_BASE_URL` (somente localhost/127.0.0.1); executável Chrome opcional por `QUADREI_CHROME_PATH`.
 
 A suíte falha explicitamente se os serviços não estiverem disponíveis ou se o app não mostrar “Ambiente local de testes”. Cria uma conta fictícia pelo Auth Emulator e uma sociedade pelo próprio app. Valida formulário inválido, cadastro completo, busca sem acentos, edição, preservação de campos, cancelamento/Escape/restauração de foco, inativação/reativação e aniversariante de hoje. Em seguida semeia 45 membros fictícios pelo SDK autenticado, exercitando as regras locais e a atualização da lista.
 
@@ -54,7 +54,7 @@ Limite: assinatura e contagem de páginas do PDF não comprovam, sozinhas, integ
 
 Execução concluída pelo orquestrador: 18 testes unitários/ambientes, 9 de regras e 1 jornada completa de navegador aprovados (28/28), além do build HML estrito. PDF real de 3 páginas e XLSX com 46 registros verificados; primeira página do PDF e capturas de interface inspecionadas visualmente. Testes de largura: 320, 390 e 1440 px. O PDF é rasterizado; assinatura e páginas foram verificadas automaticamente, sem afirmar acessibilidade semântica do documento exportado.
 
-`npm run test:local` gerencia regras + servidor Angular emulator + browser sob emulators:exec. `SOCIETAS_CHROME_PATH` seleciona o executável do Chrome; o padrão é o Chrome instalado no macOS. Evidências em artifacts/browser/, ignoradas pelo Git. A execução deste ambiente usou CLI15.36/Firestore Emulator1.22 disponíveis; os detalhes e limites externos estão em STUDIO_STATUS.md. Login Google real e publicação não integram esta evidência local.
+`npm run test:local` gerencia regras + servidor Angular emulator + browser sob emulators:exec. `QUADREI_CHROME_PATH` (ou `SOCIETAS_CHROME_PATH`) seleciona o executável do Chrome; o padrão é o Chrome instalado no macOS. Evidências em artifacts/browser/, ignoradas pelo Git. A execução deste ambiente usou CLI15.36/Firestore Emulator1.22 disponíveis; os detalhes e limites externos estão em STUDIO_STATUS.md. Login Google real e publicação não integram esta evidência local.
 
 ## Incremento ViaCEP
 

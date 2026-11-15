@@ -23,9 +23,9 @@ export function configFor(mode, values) {
     firebase.projectId = 'demo-societas';
     firebase.authDomain = 'demo-societas.firebaseapp.com';
   }
-  if (mode === 'hml' && firebase.projectId !== 'societas-hml') throw new Error('HML deve usar societas-hml.');
-  if (mode === 'prod' && firebase.projectId !== 'societas-prd') throw new Error('PROD deve usar societas-prd.');
-  return { production: mode === 'prod', mode, useEmulators: mode === 'emulator', firebase };
+  if (mode === 'hml' && !['societas-hml', 'quadrei-hml'].includes(firebase.projectId)) throw new Error('HML deve usar quadrei-hml ou societas-hml.');
+  if (mode === 'prod' && !['societas-prd', 'quadrei-prd'].includes(firebase.projectId)) throw new Error('PROD deve usar quadrei-prd ou societas-prd.');
+  return { appName: 'Quadrei', production: mode === 'prod', mode, useEmulators: mode === 'emulator', firebase };
 }
 export function generate(mode) {
   let local = {};

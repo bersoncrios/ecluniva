@@ -6,8 +6,8 @@ import { initializeApp, deleteApp } from 'firebase/app';
 import { getAuth, connectAuthEmulator, signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { getFirestore, connectFirestoreEmulator, collection, doc, addDoc, updateDoc, getDocs, serverTimestamp, terminate } from 'firebase/firestore';
 
-const baseUrl=process.env.SOCIETAS_BASE_URL || 'http://127.0.0.1:4200';
-const chromePath=process.env.SOCIETAS_CHROME_PATH || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+const baseUrl=process.env.QUADREI_BASE_URL || process.env.SOCIETAS_BASE_URL || 'http://127.0.0.1:4200';
+const chromePath=process.env.QUADREI_CHROME_PATH || process.env.SOCIETAS_CHROME_PATH || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 const waitFor=async(predicate,message,timeout=15000)=>{const deadline=Date.now()+timeout;while(Date.now()<deadline){if(await predicate())return;await new Promise(resolve=>setTimeout(resolve,75));}assert.fail(message);};
 const civilYear=()=>Number(new Intl.DateTimeFormat('en-US',{timeZone:'America/Araguaina',year:'numeric'}).format(new Date()));
 const payload=name=>({name,birthDate:null,receivedDate:null,office:'Diácono',address:{postalCode:'',street:'',number:'',complement:'',neighborhood:'',city:'',state:''},phone:'',email:'',notes:'',status:'active',createdAt:serverTimestamp(),updatedAt:serverTimestamp()});
