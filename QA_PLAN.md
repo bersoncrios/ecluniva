@@ -1,0 +1,57 @@
+# Societas — plano de qualidade
+
+Responsável: AGENTE QA ENGINEER · 15/11/2026  
+Estado inicial: plano escrito antes dos testes. A execução e seus resultados serão registrados pelo orquestrador; presença de testes não significa aprovação.
+
+## Estratégia
+
+Node `--test` nativo executa testes de domínio compilado com TypeScript estrito e integração das Security Rules no Firestore Emulator. Dados de teste são fictícios e o projeto é exclusivamente `demo-societas`. Nenhuma consulta, escrita ou implantação remota é necessária.
+
+| Feature | Critérios e evidências |
+| --- | --- |
+| Cadastro e edição | Obrigatoriedade do nome, limites, normalização, campos opcionais, telefone/CEP, UF/e-mail, calendário real, datas futuras e recebimento anterior ao nascimento. UI: valores preservados em falha, duplo envio bloqueado, sucesso apenas depois de confirmação remota. |
+| Busca e status | Pesquisa por trecho sem acentos/caixa, combinação com ativos/inativos/todos, ordenação em português, sem mutação dos dados. Resumo independente dos filtros. |
+| Aniversariantes | Mês inteiro separado da janela hoje…+29 dias; exclusão de +30 dias, inativos e datas ausentes; virada de ano; empate por nome; adaptação de 29/02; fuso America/Araguaina. |
+| Exportação | Linhas ordenadas a partir do filtro, acentos, datas e campos ausentes, observações excluídas, valores semelhantes a fórmulas mantidos como dados. UI: PDF e XLSX reais, multipágina com cabeçalhos e linhas intactas; arquivo vazio indisponível. |
+| Capacidade | Massa de 1.000 registros sem truncar a consulta derivada, com contagem, busca e exportação consistentes. O teste funcional não substitui medição de UX em aparelhos reais. |
+| Ambientes | Parser sem efeitos colaterais; variáveis obrigatórias; projectId HML/PROD exato; mapeamento develop/hml e main/master; branch desconhecida e produção sem aprovação bloqueadas. |
+| Autorização | Proprietário pode criar/ler/listar/editar sua sociedade e seus membros. Anônimo e terceiro não podem ler, listar ou escrever. Consulta de sociedades exige ownerId. IDs conhecidos não dão acesso. |
+| Integridade das regras | Negar ownerId forjado/alterado, createdAt alterado, timestamp cliente, chaves extras/ausentes, status/tipos inválidos, datas impossíveis/futuras, campos fora dos limites e exclusão. Permitir inativação/reativação válidas. |
+
+## Comandos
+
+- `npm test`: compila domínio em `.test-dist` e roda `tests/*.test.mjs`.
+- `npm run test:emulator`: inicia Auth/Firestore com projeto demo e roda `tests/emulator/*.test.mjs`; precisa de Java e Firebase CLI.
+- `npm run build:hml`: compila a aplicação com configuração HML.
+
+Os testes de regras falham com mensagem explícita se `FIRESTORE_EMULATOR_HOST` não estiver definido; não devem cair silenciosamente para um projeto remoto. A suíte limpa os dados entre os casos e fecha conexões ao terminar. O Node de referência do projeto é 22.12+ compatível com Angular 20.
+
+## Inspeção da interface após implementação
+
+Fluxo principal: entrar → criar/selecionar sociedade → cadastrar membro → buscar/filtrar → editar → inativar/reativar → conferir aniversariantes → exportar PDF/XLSX → trocar sociedade → sair.
+
+Verificar em 320, 390, 768 e 1440 px: ausência de rolagem horizontal de página; formulários e navegação sem sobreposição; rótulos, foco e teclado; cancelamento e restauração de foco em diálogos; saída e troca sem dados anteriores. Diferenciar carregamento, erro e vazio. Testar Google Sign-In com cancelamento e falha e confirmar a configuração remota com o dono antes de receber dados reais. Testes automatizados de regras não comprovam configuração de provedores/domínios no Firebase remoto.
+
+## Critério de aprovação
+
+Build HML, testes unitários e regras aprovados; erros encontrados corrigidos e retestados; fluxo crítico e exportações verificados em navegador quando disponível. Documentar verificações não executadas e limitações. Nenhuma aprovação de qualidade autoriza promoção para produção, que exige decisão explícita do dono do produto.
+
+## Automação de navegador local
+
+`tests/browser/app.test.mjs` usa Node `--test` + Playwright com Chrome instalado. Não inicia serviços nem baixa navegador. Pré-requisitos:
+
+1. Auth/Firestore Emulator ativos com projeto `demo-societas` (9099/8080).
+2. Angular servido com environment `emulator`, por exemplo `node scripts/angular-env.mjs serve emulator --host 127.0.0.1 --port 4200`.
+3. `npm run test:ui`. URL opcional por `SOCIETAS_BASE_URL` (somente localhost/127.0.0.1); executável Chrome opcional por `SOCIETAS_CHROME_PATH`.
+
+A suíte falha explicitamente se os serviços não estiverem disponíveis ou se o app não mostrar “Ambiente local de testes”. Cria uma conta fictícia pelo Auth Emulator e uma sociedade pelo próprio app. Valida formulário inválido, cadastro completo, busca sem acentos, edição, preservação de campos, cancelamento/Escape/restauração de foco, inativação/reativação e aniversariante de hoje. Em seguida semeia 45 membros fictícios pelo SDK autenticado, exercitando as regras locais e a atualização da lista.
+
+Verifica downloads reais: planilha com 46 membros, células de texto sem fórmulas, acentos/datas e exclusão de observações; PDF com assinatura `%PDF-`, tamanho plausível e pelo menos duas páginas. Faz inspeção automatizada de overflow em 320/390/1440 px e capturas em `artifacts/browser/` (ignorado pelo Git). Finaliza com troca de sociedade, saída e recarga, confirmando ausência dos dados anteriores e de exceções não tratadas no navegador.
+
+Limite: assinatura e contagem de páginas do PDF não comprovam, sozinhas, integridade visual de todas as linhas; abrir o artefato gerado complementa a verificação. Teste do login Google real e validação em aparelhos reais permanecem verificações distintas do acesso exclusivo de emulador usado nesta suíte.
+
+## Resultado final — 15/11/2026
+
+Execução concluída pelo orquestrador: 18 testes unitários/ambientes, 9 de regras e 1 jornada completa de navegador aprovados (28/28), além do build HML estrito. PDF real de 3 páginas e XLSX com 46 registros verificados; primeira página do PDF e capturas de interface inspecionadas visualmente. Testes de largura: 320, 390 e 1440 px. O PDF é rasterizado; assinatura e páginas foram verificadas automaticamente, sem afirmar acessibilidade semântica do documento exportado.
+
+`npm run test:local` gerencia regras + servidor Angular emulator + browser sob emulators:exec. `SOCIETAS_CHROME_PATH` seleciona o executável do Chrome; o padrão é o Chrome instalado no macOS. Evidências em artifacts/browser/, ignoradas pelo Git. A execução deste ambiente usou CLI15.36/Firestore Emulator1.22 disponíveis; os detalhes e limites externos estão em STUDIO_STATUS.md. Login Google real e publicação não integram esta evidência local.

@@ -1,0 +1,15 @@
+node_modules/
+dist/
+.angular/
+.env
+.env.*
+!.env.example
+src/environments/environment*.ts
+!.gitkeep
+.firebase/
+*-debug.log
+.vercel/
+out-tsc/
+.test-dist/
+artifacts/
+.DS_Store

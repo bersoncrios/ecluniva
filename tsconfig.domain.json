@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": ".test-dist",
+    "rootDir": "src/app/core",
+    "module": "ES2022",
+    "moduleResolution": "bundler",
+    "declaration": false
+  },
+  "include": [
+    "src/app/core/models.ts",
+    "src/app/core/domain.ts"
+  ]
+}
