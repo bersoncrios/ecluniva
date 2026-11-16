@@ -17,6 +17,7 @@
 <div class="minutes-list" aria-label="Histórico de atas">@for(minute of service.minutes();track minute.id){<article class="panel minute-card" [class.active]="current()?.id===minute.id"><div><span class="badge" [class.inactive]="minute.status==='concluded'">{{status(minute)}}</span><h2>Ata {{minute.number.toString().padStart(3,'0')}} · {{minute.type}}</h2><p>{{date(minute.date)}} · {{minute.startTime||'Horário a definir'}} · {{minute.timeZone}}</p><p class="countdown">{{countdown(minute)}}</p></div><button class="button secondary" type="button" (click)="open(minute)" [disabled]="busy()">{{minute.status==='concluded'?'Consultar ata':'Abrir plenária'}}</button></article>}</div>
 @if(current();as minute){
 <div class="minute-editor"><section class="panel minute-form" aria-label="Redação da ata"><h2>Ata {{minute.number.toString().padStart(3,'0')}}</h2><p>{{date(minute.date)}} · {{status(minute)}}</p>
+@defer(on immediate){<app-attendance-panel [minute]="minute" [disabled]="busy()" />}
 @if(minute.status==='concluded'){<div class="alert success">Ata lavrada. Os nomes e cargos abaixo pertencem ao registro histórico da reunião.</div><h3>Presentes · {{minute.attendance.length}}</h3><ul class="completed-attendance">@for(person of minute.attendance;track person.memberId){<li>{{personName(person)}}{{person.role?' — '+person.role:''}}</li>}</ul>}
 @else{
 @if(!available()){<div class="alert" role="status">Lista de presença indisponível. A marcação é permitida somente em {{date(minute.date)}}, a partir das 00h00, no fuso {{minute.timeZone}}.</div>}

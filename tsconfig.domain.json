@@ -17,6 +17,7 @@
     "src/app/core/notices.ts",
     "src/app/core/notices-export.ts",
     "src/app/core/communication.ts",
+    "src/app/core/attendance.ts",
     "src/app/core/birthday-card.ts"
   ]
 }

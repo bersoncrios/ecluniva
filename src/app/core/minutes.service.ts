@@ -91,6 +91,7 @@ export class MinutesService {
       if (minute.number !== previous.number || minute.year !== previous.year || minute.date !== previous.date || minute.timeZone !== previous.timeZone) throw new Error('A identificação da ata não pode ser alterada.');
       if (previous.status === 'concluded') throw new Error('A ata lavrada não pode ser alterada.');
       if (previous.revision !== minute.revision) throw new Error('A ata foi atualizada em outra sessão. Reabra-a antes de salvar.');
+      const presenceSession=conclude?await transaction.get(doc(this.firestore,`societies/${societyId}/attendanceSessions/${minute.id}`)):null;
       const today = attendanceAvailable(previous);
       if (!today && JSON.stringify(minute.attendance) !== JSON.stringify(previous.attendance)) throw new Error('A chamada só pode ser alterada no dia da plenária.');
       const future = previous.date > civilDate(new Date(),previous.timeZone);
@@ -102,6 +103,7 @@ export class MinutesService {
       this.assertContext(context);
       const editable = ['type','startTime','endTime','churchName','societyName','meetingLocation','templeAddress','logoDataUrl','convocation','scripture','preacher','openingPrayer','devotionalTime','deliberations','newMembers','hymn','closingPrayer','presidentId','secretaryId','attendance','status'] as const;
       const payload = Object.fromEntries(editable.map(key=>[key,content[key]]));
+      if(presenceSession?.exists())transaction.update(doc(this.firestore,`plenaryAttendance/${presenceSession.data()['token']}`),{open:false});
       transaction.update(ref,{...payload,revision:previous.revision+1,updatedAt:serverTimestamp(),concludedAt:conclude ? serverTimestamp() : null,finalText:conclude ? minuteText(content) : ''});
       return {...content,revision:previous.revision+1};
     }));

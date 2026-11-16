@@ -92,3 +92,7 @@ O menu **Convocações** permite criar documentos para reuniões plenárias, da 
 ### Comunicação e cartões de aniversário
 
 Em **Aniversariantes → Comunicação e publicações**, convide a equipe por e-mail, compartilhe apenas nomes e dia/mês, acompanhe publicações e gere cartões PNG para feed e story. O destinatário entra com o Google do endereço convidado e aceita o acesso. O responsável configura cores, logotipo e mensagem padrão e pode revogar o acesso. O convite pode ser copiado ou aberto como e-mail pronto para envio no cliente do usuário. Consulte [Comunicação e permissões](docs/COMUNICACAO.md).
+
+### Presença por QR Code
+
+Abra uma plenária no dia da reunião e gere seu link e QR Code. Os participantes informam nome completo e código, sem conta. O secretário acompanha a vinculação com os membros ativos, revisa homônimos e usa a mesma chamada na ata. Mantenha a plenária aberta para a conferência automática. Consulte [Presença nas plenárias](docs/PRESENCA_PLENARIAS.md).

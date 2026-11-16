@@ -1,7 +1,9 @@
-<a class="skip-link" href="#main">Pular para o conteúdo</a>
+<a class="skip-link" href="#main" (click)="skipToMain($event)">Pular para o conteúdo</a>
 @if (!isProduction) { <div class="environment-bar">{{ isEmulator ? 'Ambiente local de testes' : 'Ambiente de
   homologação' }}</div> }
-@if (!data.ready()) {
+@if (presenceEntry()) {
+@defer(on immediate){<app-public-attendance />}
+} @else if (!data.ready()) {
 <main id="main" class="initial-loading">
   <div class="brand"><span class="brand-mark">Q</span>quadrei</div>
   <p class="muted" role="status">Preparando seu espaço…</p>

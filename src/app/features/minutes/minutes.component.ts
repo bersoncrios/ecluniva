@@ -3,10 +3,11 @@ import { FormsModule } from '@angular/forms';
 import { DataService } from '../../core/data.service';
 import { MinutesService } from '../../core/minutes.service';
 import { Minute, MinuteInput, attendanceAvailable, civilDate, emptyMinute, minuteSegments, minutePersonName, minuteStatus, snapshotAttendance, suggestedOfficers, validateMinute } from '../../core/minutes';
+import { AttendancePanelComponent } from '../attendance/attendance-panel.component';
 import { exportMinutePdf } from '../../core/minutes-pdf';
 import { exportMinuteDocx } from '../../core/minutes-docx';
 
-@Component({selector:'app-minutes',standalone:true,imports:[FormsModule],templateUrl:'./minutes.component.html',styleUrl:'./minutes.component.css'})
+@Component({selector:'app-minutes',standalone:true,imports:[FormsModule,AttendancePanelComponent],templateUrl:'./minutes.component.html',styleUrl:'./minutes.component.css'})
 export class MinutesComponent {
   readonly data=inject(DataService);
   readonly service=inject(MinutesService);
@@ -41,12 +42,27 @@ export class MinutesComponent {
   schedule:MinuteInput=emptyMinute();
   admissionName='';
   @ViewChild('concludeDialog') dialog?:ElementRef<HTMLDialogElement>;
+  private baseline:Minute|null=null;
   private context='';
   private destroyed=false;
   constructor(){
     effect(()=>{
       const context=`${this.data.user()?.uid??''}/${this.data.selected()?.id??''}`;
       if(context!==this.context){this.context=context;this.current.set(null);this.scheduleOpen.set(false);this.failure.set('');this.message.set('');this.errors.set({});this.search.set('');this.dialog?.nativeElement.close();}
+    });
+    effect(()=>{
+      const draft=this.current();
+      const latest=this.service.minutes().find(item=>item.id===draft?.id);
+      const base=this.baseline;
+      if(!draft||!latest||!base||base.id!==draft.id||latest.revision<=base.revision)return;
+      const textChanged=this.fields.some(field=>latest[field.key]!==base[field.key]);
+      if(textChanged)return;
+      if(latest.status==='concluded'){this.baseline=structuredClone(latest);this.current.set(structuredClone(latest));return;}
+      const removed=new Set(base.attendance.filter(person=>!draft.attendance.some(item=>item.memberId===person.memberId)).map(person=>person.memberId));
+      const additions=draft.attendance.filter(person=>!base.attendance.some(item=>item.memberId===person.memberId));
+      const attendance=[...latest.attendance.filter(person=>!removed.has(person.memberId)),...additions.filter(person=>!latest.attendance.some(item=>item.memberId===person.memberId))].sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
+      this.baseline=structuredClone(latest);
+      this.current.set({...draft,attendance,revision:latest.revision,status:latest.status,presidentId:draft.presidentId===base.presidentId?latest.presidentId:draft.presidentId,secretaryId:draft.secretaryId===base.secretaryId?latest.secretaryId:draft.secretaryId});
     });
     const timer=window.setInterval(()=>this.clock.set(new Date()),1000);
     inject(DestroyRef).onDestroy(()=>{window.clearInterval(timer);this.destroyed=true;this.savingChange.emit(false);this.dialog?.nativeElement.close();});
@@ -56,14 +72,14 @@ export class MinutesComponent {
   countdown(minute:Minute):string{const today=civilDate(this.clock(),minute.timeZone);if(minute.status==='concluded')return 'Documento e presenças congelados';if(minute.date===today)return 'Chamada liberada hoje';if(minute.date<today)return 'Dia da reunião encerrado · chamada indisponível';const days=Math.round((Date.parse(minute.date+'T12:00:00Z')-Date.parse(today+'T12:00:00Z'))/86400000);return `Em ${days} ${days===1?'dia':'dias'} · chamada às 00h00 de ${this.date(minute.date)}`;}
   newSchedule():void{const society=this.data.selected();const draft=emptyMinute();this.schedule={...draft,number:Math.max(0,...this.service.minutes().filter(minute=>minute.year===draft.year).map(minute=>minute.number))+1,churchName:society?.churchName??'',societyName:society?`${society.type} ${society.name}`:''};this.errors.set({});this.failure.set('');this.scheduleOpen.set(true);}
   async create():Promise<void>{this.schedule.year=Number(this.schedule.date.slice(0,4));this.errors.set(validateMinute(this.schedule));if(Object.keys(this.errors()).length)return;await this.perform(async()=>{const context=this.context;const id=await this.service.schedule(this.schedule);if(!this.validContext(context))return;this.scheduleOpen.set(false);this.message.set('Plenária agendada com o número de ata informado.');const minute=this.service.minutes().find(item=>item.id===id);if(minute)this.open(minute);});}
-  open(minute:Minute):void{if(this.busy())return;this.current.set(structuredClone(minute));this.errors.set({});this.failure.set('');this.message.set('');this.search.set('');this.admissionName='';if(minute.status!=='concluded'&&this.data.boardYear()!==minute.year)this.data.loadBoard(minute.year);}
+  open(minute:Minute):void{if(this.busy())return;this.baseline=structuredClone(minute);this.current.set(structuredClone(minute));this.errors.set({});this.failure.set('');this.message.set('');this.search.set('');this.admissionName='';if(minute.status!=='concluded'&&this.data.boardYear()!==minute.year)this.data.loadBoard(minute.year);}
   update(key:TextKey,value:string):void{this.current.update(minute=>minute?{...minute,[key]:value}:null);}
   officer(key:'presidentId'|'secretaryId',value:string):void{this.current.update(minute=>minute?{...minute,[key]:value}:null);}
   present(id:string):boolean{return this.current()?.attendance.some(person=>person.memberId===id)??false;}
   role(id:string):string{return this.data.boardAssignments().find(assignment=>assignment.year===this.current()?.year&&assignment.memberId===id)?.role??'';}
   toggle(id:string):void{const minute=this.current();if(!minute||!this.available()||this.busy()||this.data.boardLoading()||this.data.membersLoading())return;const ids=minute.attendance.map(person=>person.memberId);const attendance=snapshotAttendance(this.data.members(),this.data.boardAssignments(),ids.includes(id)?ids.filter(value=>value!==id):[...ids,id],minute.year);const suggestions=suggestedOfficers(attendance);this.current.set({...minute,attendance,presidentId:attendance.some(person=>person.memberId===minute.presidentId)?minute.presidentId:suggestions.presidentId,secretaryId:attendance.some(person=>person.memberId===minute.secretaryId)?minute.secretaryId:suggestions.secretaryId});}
   async save():Promise<void>{const minute=this.current();if(!minute)return;this.errors.set(validateMinute(minute));if(Object.keys(this.errors()).length)return;await this.perform(async()=>{const context=this.context;await this.service.save(minute);if(!this.validContext(context))return;this.refresh(minute.id);this.message.set('Rascunho e chamada salvos.');});}
-  async admit():Promise<void>{const minute=this.current();if(!minute||!this.available())return;if(this.admissionName.trim().length<2){this.failure.set('Informe o nome completo do novo sócio.');return;}await this.perform(async()=>{const context=this.context;await this.service.admit(minute,this.admissionName.trim());if(!this.validContext(context))return;const latest=this.service.minutes().find(item=>item.id===minute.id);if(latest)this.current.set({...minute,revision:latest.revision,attendance:latest.attendance,newMembers:latest.newMembers,status:latest.status});this.admissionName='';this.message.set('Sócio recebido, cadastrado e incluído entre os presentes.');});}
+  async admit():Promise<void>{const minute=this.current();if(!minute||!this.available())return;if(this.admissionName.trim().length<2){this.failure.set('Informe o nome completo do novo sócio.');return;}await this.perform(async()=>{const context=this.context;await this.service.admit(minute,this.admissionName.trim());if(!this.validContext(context))return;const latest=this.service.minutes().find(item=>item.id===minute.id);if(latest){this.baseline=structuredClone(latest);this.current.set({...minute,revision:latest.revision,attendance:latest.attendance,newMembers:latest.newMembers,status:latest.status});}this.admissionName='';this.message.set('Sócio recebido, cadastrado e incluído entre os presentes.');});}
   maxLength(key:TextKey):number{return key==='deliberations'?40000:key==='newMembers'?10000:key==='convocation'?4000:key==='scripture'?1000:['templeAddress','hymn'].includes(key)?500:['preacher','openingPrayer','closingPrayer'].includes(key)?120:160;}
   async pdf():Promise<void>{const minute=this.current();if(minute)await this.perform(async()=>{const context=this.context;await exportMinutePdf(minute);if(!this.validContext(context))return;this.message.set('PDF gerado. Confira os downloads do navegador.');});}
   async docx():Promise<void>{const minute=this.current();if(minute)await this.perform(async()=>{const context=this.context;await exportMinuteDocx(minute);if(!this.validContext(context))return;this.message.set('DOCX gerado. Confira os downloads do navegador.');});}
@@ -71,7 +87,7 @@ export class MinutesComponent {
   closeConfirmation(event?:Event):void{event?.preventDefault();if(!this.busy())this.dialog?.nativeElement.close();}
   async conclude():Promise<void>{const minute=this.current();if(!minute)return;await this.perform(async()=>{const context=this.context;await this.service.conclude(minute);if(!this.validContext(context))return;this.refresh(minute.id);this.dialog?.nativeElement.close();this.message.set('Ata lavrada. O documento e o histórico de presença foram congelados.');});}
   private validContext(context:string):boolean{return !this.destroyed&&this.context===context;}
-  private refresh(id:string):void{const minute=this.service.minutes().find(item=>item.id===id);if(minute)this.current.set(structuredClone(minute));}
+  private refresh(id:string):void{const minute=this.service.minutes().find(item=>item.id===id);if(minute){this.baseline=structuredClone(minute);this.current.set(structuredClone(minute));}}
   private async perform(action:()=>Promise<void>):Promise<void>{if(this.busy())return;const context=this.context;this.busy.set(true);this.savingChange.emit(true);this.failure.set('');this.message.set('');try{await action();}catch(error){if(context===this.context&&!this.destroyed)this.failure.set(error instanceof Error?error.message:'Não foi possível concluir a operação. Tente novamente.');}finally{this.busy.set(false);if(!this.destroyed)this.savingChange.emit(false);}}
 }
 type TextKey={ [K in keyof MinuteInput]:MinuteInput[K] extends string?K:never }[keyof MinuteInput];

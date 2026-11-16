@@ -85,3 +85,13 @@ Compilação HML concluída após a revisão, sem erros.
 ## Comunicação compartilhada — 16/11/2026
 
 47 unitários, 33 testes de regras e oito jornadas de navegador aprovados. A jornada nova usa duas contas com e-mail confirmado pelo Auth Emulator e verifica convite, aceite, dados mínimos sem ano de nascimento/contato, bloqueio de navegação privada, acompanhamento, seis cartões PNG, identidade, inativação/reativação e revogação em tempo real. A interface de Comunicação foi conferida em 320/390/768/1024/1440 px; a auditoria geral passou nas 24 telas/estados × 15 resoluções. Detalhes e requisitos de publicação em [COMUNICACAO.md](docs/COMUNICACAO.md). Testes exclusivamente locais, sem e-mails reais.
+
+## Presença pública em plenárias — 16/11/2026
+
+50 testes unitários aprovados. Os 33 testes de regras existentes e os cinco novos cenários de presença foram verificados: abertura privada, metadados públicos mínimos, código e timestamps, revisão dos envios, encerramento/data/conclusão e preparação antecipada de link fechado.
+
+As oito jornadas de navegador existentes passaram. A jornada nova passou após corrigir a preparação do cadastro inativo no teste, incluindo leitura efetiva do QR Code com decodificador independente, código incorreto, acesso sem conta, correspondência por nome, duplicidades, homônimos, inativos, revisão manual, persistência do comprovante, cópia do link, preservação da redação, admissão seguida de confirmação automática, encerramento e lavratura. Interface conferida em 320/390/768/1024/1440 px. Auditoria geral: 24 telas × 15 resoluções, sem problemas.
+
+Os testes usam exclusivamente Auth/Firestore locais. Não houve publicação de regras nem gravação remota. Uso e arquitetura em [PRESENCA_PLENARIAS.md](docs/PRESENCA_PLENARIAS.md).
+
+Verificação final de presença e atas: 5/5 regras e 2/2 jornadas aprovadas após o ajuste de sincronização na admissão. Compilação HML aprovada; carregamento inicial de 846,03 kB, dentro do limite de aviso de 850 kB, com telas de presença e QR Code carregadas sob demanda.

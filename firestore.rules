@@ -285,6 +285,52 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // Capability links expose meeting metadata, never the membership roster.
+    match /plenaryAttendance/{token} {
+      function linkedMinute(data) {
+        return get(/databases/$(database)/documents/societies/$(data.societyId)/minutes/$(data.minuteId)).data;
+      }
+      function validSession(data) {
+        let minute = linkedMinute(data);
+        return data.keys().hasAll(['societyId','minuteId','title','date','timeZone','open'])
+          && data.keys().hasOnly(['societyId','minuteId','title','date','timeZone','open'])
+          && text(data.title,220) && data.date == minute.date && data.timeZone == minute.timeZone && data.open is bool
+          && getAfter(/databases/$(database)/documents/societies/$(data.societyId)/attendanceSessions/$(data.minuteId)).data.token == token
+          && (!data.open || (minuteIsToday(minute) && minute.status != 'concluded'));
+      }
+      allow get: if token.matches('^[a-f0-9]{48}$');
+      allow list, delete: if false;
+      allow create: if token.matches('^[a-f0-9]{48}$') && ownsSociety(request.resource.data.societyId) && validSession(request.resource.data);
+      allow update: if ownsSociety(resource.data.societyId) && validSession(request.resource.data)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['open']);
+      match /requests/{requestId} {
+        function session() {return get(/databases/$(database)/documents/plenaryAttendance/$(token)).data;}
+        function requestOwner() {return ownsSociety(session().societyId);}
+        function accepting() {
+          let data = session();
+          let minute = linkedMinute(data);
+          return data.open && minuteIsToday(minute) && minute.status != 'concluded';
+        }
+        allow get: if token.matches('^[a-f0-9]{48}$') && requestId.matches('^[a-f0-9]{48}$');
+        allow list: if requestOwner();
+        allow create: if requestId.matches('^[a-f0-9]{48}$') && accepting()
+          && request.resource.data.keys().hasAll(['name','code','status','memberId','createdAt','processedAt'])
+          && request.resource.data.keys().hasOnly(['name','code','status','memberId','createdAt','processedAt'])
+          && requiredName(request.resource.data.name,120) && request.resource.data.name.matches('.*\\s+.*')
+          && request.resource.data.code == get(/databases/$(database)/documents/societies/$(session().societyId)/attendanceSessions/$(session().minuteId)).data.code
+          && request.resource.data.status == 'pending' && request.resource.data.memberId == ''
+          && request.resource.data.createdAt == request.time && request.resource.data.processedAt == null;
+        allow update: if requestOwner() && resource.data.status == 'pending'
+          && minuteIsToday(linkedMinute(session())) && linkedMinute(session()).status != 'concluded'
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','memberId','processedAt'])
+          && request.resource.data.status in ['confirmed','duplicate','rejected']
+          && text(request.resource.data.memberId,128) && request.resource.data.processedAt == request.time
+          && (request.resource.data.status == 'rejected' ? request.resource.data.memberId == ''
+            : getAfter(/databases/$(database)/documents/societies/$(session().societyId)/members/$(request.resource.data.memberId)).data.status == 'active');
+        allow delete: if false;
+      }
+    }
+
     match /societies/{societyId} {
       allow get: if ownsSociety(societyId) || communicationAccess(societyId);
       allow list: if signedIn() && resource.data.ownerId == request.auth.uid;
@@ -300,6 +346,18 @@ service cloud.firestore {
       allow delete: if false;
 
 
+      match /attendanceSessions/{minuteId} {
+        allow read: if ownsSociety(societyId);
+        allow create: if ownsSociety(societyId)
+          && request.resource.data.keys().hasAll(['token','code']) && request.resource.data.keys().hasOnly(['token','code'])
+          && request.resource.data.token.matches('^[a-f0-9]{48}$') && request.resource.data.code.matches('^[0-9]{6}$')
+          && request.time < get(/databases/$(database)/documents/societies/$(societyId)/minutes/$(minuteId)).data.dayEnd
+          && get(/databases/$(database)/documents/societies/$(societyId)/minutes/$(minuteId)).data.status != 'concluded'
+          && getAfter(/databases/$(database)/documents/plenaryAttendance/$(request.resource.data.token)).data.societyId == societyId
+          && getAfter(/databases/$(database)/documents/plenaryAttendance/$(request.resource.data.token)).data.minuteId == minuteId;
+        allow update: if ownsSociety(societyId) && request.resource.data == resource.data;
+        allow delete: if false;
+      }
       match /minuteCounters/{yearId} {
         allow read: if ownsSociety(societyId);
         allow create, update: if ownsSociety(societyId)

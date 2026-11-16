@@ -11,12 +11,13 @@ import { BoardComponent } from './features/board/board.component';
 import { MinutesComponent } from './features/minutes/minutes.component';
 import { CommunicationComponent } from './features/communication/communication.component';
 import { CommunicationInvite } from './core/communication';
+import { PublicAttendanceComponent } from './features/attendance/public-attendance.component';
 import { NoticesComponent } from './features/notices/notices.component';
 import { lookupPostalCode, postalCodeDigits, PostalCodeNotFoundError } from './core/viacep';
 
 type Page = 'overview' | 'members' | 'birthdays' | 'member' | 'board' | 'minutes' | 'notices' | 'communication';
 type DateParts = { day:string; month:string; year:string };
-@Component({ selector:'app-root', standalone:true, imports:[CommonModule, FormsModule, IconComponent, BoardComponent, MinutesComponent, NoticesComponent, CommunicationComponent], templateUrl:'./app.html' })
+@Component({ selector:'app-root', standalone:true, imports:[CommonModule, FormsModule, IconComponent, BoardComponent, MinutesComponent, NoticesComponent, CommunicationComponent, PublicAttendanceComponent], templateUrl:'./app.html' })
 export class AppComponent {
   readonly data = inject(DataService);
   private readonly destroyRef = inject(DestroyRef);
@@ -26,6 +27,7 @@ export class AppComponent {
   readonly states = STATES;
   readonly page = signal<Page>('overview');
   readonly pendingInvites=computed(()=>this.data.incomingInvites().filter(invite=>invite.status==='pending'));
+  readonly presenceEntry=signal(location.hash.startsWith('#presenca/'));
   readonly inviteEntry=location.hash==='#convites';
   readonly boardMemberId = signal<string|null>(null);
   readonly query = signal('');
@@ -91,6 +93,7 @@ export class AppComponent {
     const refreshDay = ():void => { this.today.set(todayISO()); };
     const timer = window.setInterval(refreshDay, 30000);
     const navigateBack = ():void => {
+      this.presenceEntry.set(location.hash.startsWith('#presenca/'));
       if (this.busy() || this.exportBusy()) { history.pushState({}, '', `#${this.page()}`); return; }
       this.boardMemberId.set(null);
       this.cancelPostalLookup();
@@ -109,6 +112,7 @@ export class AppComponent {
     });
   }
 
+  skipToMain(event:Event):void{if(!this.presenceEntry())return;event.preventDefault();const main=document.getElementById('main');main?.setAttribute('tabindex','-1');main?.focus();}
   reloadApp():void{location.reload();}
 
   async login(emulator = false): Promise<void> {
