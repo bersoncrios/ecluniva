@@ -10,9 +10,11 @@ O módulo pertence ao proprietário da sociedade autenticado. O histórico fica 
 
 A chamada só aceita alterações durante o dia civil agendado, desde 00h00 inclusive até 00h00 do dia seguinte exclusive, no fuso registrado na plenária. O horário do dispositivo habilita a interface; `request.time` do Firestore controla a autorização real. Uma ata não concluída cujo dia passou permanece pendente de lavratura, sem reabrir a chamada retroativamente.
 
-A diretoria considera o ano civil da plenária. Apenas sócios ativos entram na chamada. Os cargos são os vínculos anuais, e não o campo de ofício eclesiástico. Presidente e secretário são sugeridos entre os presentes; o responsável pode escolher outros presentes para conduzir a sessão. Uma admissão durante a reunião cria o cadastro ativo e registra a recepção e presença na plenária.
+A diretoria considera o ano civil da plenária. Apenas sócios ativos entram na chamada. O ofício na igreja é preservado no retrato da presença e acompanha o nome na redação, nas orações e na presidência. Os cargos são os vínculos anuais, e não o campo de ofício eclesiástico. Presidente e secretário são sugeridos entre os presentes; o responsável pode escolher outros presentes para conduzir a sessão. Uma admissão durante a reunião cria o cadastro ativo e registra a recepção e presença na plenária.
 
 ## Documento
+
+O hino é opcional: informe somente seu número para incluir o trecho na ata. Sem número, o trecho é omitido.
 
 O local da reunião é informado separadamente do endereço completo e pode identificar o templo, a casa de um irmão ou outro espaço.
 

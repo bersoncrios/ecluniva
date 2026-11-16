@@ -20,7 +20,7 @@ test('snapshot deduplicates presence, excludes inactive members and uses only th
   assert.equal(snapshot.length,2);assert.equal(snapshot[1].role,'1º Secretário');
   assert.deepEqual(suggestedOfficers(snapshot),{presidentId:'a',secretaryId:'b'});
   members[0].name='Alterado';assignments[0].role='Outro';
-  assert.deepEqual(snapshot[0],{memberId:'a',name:'Ana',role:'Presidente'});
+  assert.deepEqual(snapshot[0],{memberId:'a',name:'Ana',role:'Presidente',office:''});
   const text=minuteText({...emptyMinute(),attendance:snapshot,presidentId:'a',secretaryId:'b'});
   assert.ok(text.includes('2 sócios'));assert.ok(text.includes('Ana (Presidente)'));assert.ok(!text.includes('\n'));
   const canonical=minuteText({...emptyMinute(),societyName:'UPH Palmas Norte',churchName:'Igreja Presbiteriana Palmas Norte',endTime:'11:30',closingPrayer:'Sandro Junior',secretaryId:'secretary',attendance:[{memberId:'secretary',name:'Guilherme Taveira Berson',role:'Secretário'}]});
@@ -36,7 +36,7 @@ test('conclusion requires devotional, closing and present distinct session offic
   assert.ok(validateMinute({...minute,year:2025}).year);
   assert.ok(validateMinute({...minute,timeZone:'invalid'}).timeZone);
   const attendance=[{memberId:'a',name:'Ana',role:'Presidente'},{memberId:'b',name:'Bruno',role:'Secretário'}];
-  const complete={...minute,attendance,presidentId:'a',secretaryId:'b',startTime:'19:00',devotionalTime:'19:05',endTime:'20:00',convocation:'segunda',scripture:'Salmo 23',preacher:'Ana',openingPrayer:'Bruno',deliberations:'Foi aprovada a proposta.',hymn:'Hino da UPH',closingPrayer:'Ana',logoDataUrl:''};
+  const complete={...minute,attendance,presidentId:'a',secretaryId:'b',startTime:'19:00',devotionalTime:'19:05',endTime:'20:00',convocation:'segunda',scripture:'Salmo 23',preacher:'Ana',openingPrayer:'Bruno',deliberations:'Foi aprovada a proposta.',hymn:'',closingPrayer:'Ana',logoDataUrl:''};
   assert.deepEqual(validateMinute(complete,true),{});
   assert.ok(validateMinute({...complete,endTime:'18:59'},true).endTime);
   assert.ok(validateMinute({...complete,devotionalTime:'20:01'},true).devotionalTime);
@@ -74,4 +74,27 @@ test('local da reunião é separado do endereço e aceita residência',()=>{
   assert.ok(validateMinute({...minute,meetingLocation:''}).meetingLocation);
   assert.ok(validateMinute({...minute,meetingLocation:'a'.repeat(161)}).meetingLocation);
   assert.ok(minuteText({...minute,meetingLocation:undefined,status:'concluded'}).includes('no templo situado à Rua da Paz, 25.'));
+});
+
+test('ofícios acompanham nomes na presidência, redação, orações e exposição, sem duplicar títulos',()=>{
+  const members=[{...emptyMember(),id:'a',name:'João Silva',office:'Diacono'},{...emptyMember(),id:'b',name:'José Lima',office:'Presbítero'}];
+  const attendance=snapshotAttendance(members,[],['a','b'],2026);
+  const minute={...emptyMinute(),attendance,presidentId:'a',secretaryId:'b',openingPrayer:'joao silva',preacher:'José Lima',closingPrayer:'Irmão João Silva'};
+  const text=minuteText(minute);
+  for(const part of ['presidência de Diácono João Silva','oração inicial por Diácono João Silva','exposição por Presbítero José Lima','oração pelo Diácono João Silva','E eu Presbítero José Lima'])assert.ok(text.includes(part),part);
+  assert.ok(!text.includes('Irmão Diácono'));
+  assert.ok(!minuteText({...minute,closingPrayer:'Diácono João Silva'}).includes('Diácono Diácono'));
+  members[0].office='Presbítero';members[1].name='Outro nome';
+  assert.equal(minuteText(minute),text);
+  assert.ok(minuteText({...minute,attendance:attendance.map(({office,...person})=>person)}).includes('presidência de João Silva'));
+});
+test('hino só aparece quando o número é preenchido e pode ficar em branco',()=>{
+  const minute=emptyMinute();
+  for(const hymn of ['', '   ']) {
+    assert.ok(!minuteText({...minute,hymn}).includes('hino'));
+    assert.equal(validateMinute({...minute,hymn},true).hymn,undefined);
+  }
+  assert.ok(minuteText({...minute,hymn:'123'}).includes('Foi entoado o hino nº 123.'));
+  assert.ok(validateMinute({...minute,hymn:'Hino de teste'}).hymn);
+  assert.ok(validateMinute({...minute,hymn:'0'}).hymn);
 });

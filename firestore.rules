@@ -142,7 +142,7 @@ service cloud.firestore {
           && data.devotionalTime.matches('^([01][0-9]|2[0-3]):[0-5][0-9]$')
           && data.startTime <= data.devotionalTime && data.devotionalTime <= data.endTime
           && data.convocation.size() > 0 && data.scripture.size() > 0 && data.preacher.size() > 0
-          && data.openingPrayer.size() > 0 && data.deliberations.size() > 0 && data.hymn.size() > 0 && data.closingPrayer.size() > 0
+          && data.openingPrayer.size() > 0 && data.deliberations.size() > 0 && data.closingPrayer.size() > 0
           : data.concludedAt == null && data.finalText == '');
     }
 

@@ -73,7 +73,7 @@ export class MinutesService {
       const member = await transaction.get(doc(this.firestore,`societies/${societyId}/members/${id}`));
       const board = await transaction.get(doc(this.firestore,`societies/${societyId}/boardAssignments/${minute.year}_${id}`));
       if (!member.exists() || member.data()['status'] !== 'active') throw new Error('A chamada contém um sócio inativo ou indisponível. Atualize a lista.');
-      result.push({memberId:id,name:String(member.data()['name']),role:board.exists() ? String(board.data()['role']) : ''});
+      result.push({memberId:id,name:String(member.data()['name']),office:String(member.data()['office'] || ''),role:board.exists() ? String(board.data()['role']) : ''});
     }
     return result.sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
   }
@@ -121,7 +121,7 @@ export class MinutesService {
       if (previous.revision !== minute.revision || !attendanceAvailable(previous)) throw new Error('Atualize a ata antes de receber o novo sócio.');
       const memberRef = doc(collection(this.firestore,`societies/${societyId}/members`));
       const attendance = await this.snapshot(transaction,societyId,minute);
-      attendance.push({memberId:memberRef.id,name:name.trim(),role:''});
+      attendance.push({memberId:memberRef.id,name:name.trim(),office:'',role:''});
       this.assertContext(context);
       transaction.set(memberRef,{...emptyMember(),name:name.trim(),receivedDate:previous.date,createdAt:serverTimestamp(),updatedAt:serverTimestamp()});
       const editable = ['type','startTime','endTime','churchName','societyName','meetingLocation','templeAddress','logoDataUrl','convocation','scripture','preacher','openingPrayer','devotionalTime','deliberations','hymn','closingPrayer','presidentId','secretaryId'] as const;

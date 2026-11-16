@@ -1,7 +1,7 @@
 import type { BoardAssignment, Member } from './models.js';
 
 export type MinuteStatus = 'scheduled' | 'in_progress' | 'concluded';
-export interface AttendanceSnapshot { memberId: string; name: string; role: string; }
+export interface AttendanceSnapshot { memberId: string; name: string; role: string; office?: string; }
 export interface MinuteInput {
   number: number; year: number; type: string; date: string; timeZone: string;
   startTime: string; endTime: string; churchName: string; societyName: string;
@@ -29,7 +29,7 @@ export function minuteStatus(minute: Pick<MinuteInput,'date'|'timeZone'|'status'
 export function snapshotAttendance(members: readonly Member[], assignments: readonly BoardAssignment[], ids: readonly string[], year: number): AttendanceSnapshot[] {
   const selected = new Set(ids);
   return members.filter(member => member.status === 'active' && selected.has(member.id)).map(member => ({
-    memberId:member.id, name:member.name,
+    memberId:member.id, name:member.name, office:member.office,
     role:assignments.filter(assignment => assignment.year === year && assignment.memberId === member.id).map(assignment => assignment.role).join(', ')
   })).sort((a,b) => a.name.localeCompare(b.name,'pt-BR'));
 }
@@ -45,9 +45,22 @@ export function emptyMinute(date = civilDate()): MinuteInput {
 }
 const prose = (value: string): string => value.trim().replace(/\s+/g,' ');
 const sentence = (value: string): string => { const text = prose(value); return text && /[.!?]$/.test(text) ? text : text + '.'; };
+const normalizedName = (value: string): string => prose(value).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR');
+export function minutePersonName(person: AttendanceSnapshot): string {
+  const office = prose(person.office || '');
+  const title = ({diacono:'Diácono',presbitero:'Presbítero'} as Record<string,string>)[normalizedName(office)] || office;
+  return title && !normalizedName(person.name).startsWith(normalizedName(title)+' ') ? `${title} ${person.name}` : person.name;
+}
+const bareName = (value: string): string => normalizedName(value).replace(/^(irmao|irma|diacono|presbitero|pastor|pastora|diaconisa|presbitera)\s+/, '');
+function participantName(value: string, attendance: readonly AttendanceSnapshot[]): string {
+  const text = prose(value);
+  const matches = attendance.filter(person => bareName(person.name) === bareName(text));
+  return matches.length === 1 && matches[0].office ? minutePersonName(matches[0]) : text;
+}
+const hymnNumber = (value: string): boolean => /^\d{1,6}$/.test(prose(value)) && Number(value) > 0;
 export function minuteSegments(minute: MinuteInput): MinuteSegment[] {
   const date = /^\d{4}-\d{2}-\d{2}$/.test(minute.date) ? new Intl.DateTimeFormat('pt-BR',{dateStyle:'long',timeZone:'UTC'}).format(new Date(minute.date+'T12:00:00Z')) : '[data]';
-  const name = (id: string, fallback: string) => minute.attendance.find(person => person.memberId === id)?.name || fallback;
+  const name = (id: string, fallback: string) => { const person=minute.attendance.find(person => person.memberId === id); return person ? minutePersonName(person) : fallback; };
   const segments: MinuteSegment[] = [];
   const add = (text: string, bold = false) => segments.push({text,bold});
   add(`ATA Nº ${String(minute.number).padStart(3,'0')}`,true);
@@ -63,14 +76,16 @@ export function minuteSegments(minute: MinuteInput): MinuteSegment[] {
   add(['primeira','segunda'].includes(minute.convocation) ? `Em ${minute.convocation} chamada, ` : minute.status === 'concluded' && minute.convocation ? sentence(minute.convocation)+' ' : 'Em [chamada]. ');
   add(['primeira','segunda'].includes(minute.convocation) ? 'sob a presidência de ' : 'Sob a presidência de '); add(name(minute.presidentId,'[presidente da sessão]'),true);
   add(', com a presença de '); add(`${minute.attendance.length} sócios`,true);
-  add(minute.attendance.length ? `: ${minute.attendance.map(person => `${person.name}${person.role ? ` (${person.role})` : ''}`).join('; ')}. ` : '. ');
-  add(`O momento devocional teve início às ${minute.devotionalTime || '[horário devocional]'}, com oração inicial por ${prose(minute.openingPrayer) || '[responsável]'}, leitura de ${prose(minute.scripture) || '[passagem bíblica]'} e exposição por ${prose(minute.preacher) || '[pregador]'}. `);
+  add(minute.attendance.length ? `: ${minute.attendance.map(person => `${minutePersonName(person)}${person.role ? ` (${person.role})` : ''}`).join('; ')}. ` : '. ');
+  add(`O momento devocional teve início às ${minute.devotionalTime || '[horário devocional]'}, com oração inicial por ${participantName(minute.openingPrayer,minute.attendance) || '[responsável]'}, leitura de ${prose(minute.scripture) || '[passagem bíblica]'} e exposição por ${participantName(minute.preacher,minute.attendance) || '[pregador]'}. `);
   if (prose(minute.newMembers)) add(`Foram recebidos os seguintes novos sócios: ${sentence(minute.newMembers)} `);
   add(sentence(minute.deliberations || '[deliberações]')+' ');
-  add(`Foi entoado o hino oficial ${prose(minute.hymn) || '[hino]'}. Não havendo mais nada para ser tratado, encerrou-se a presente às `);
+  if (hymnNumber(minute.hymn)) add(`Foi entoado o hino nº ${prose(minute.hymn)}. `);
+  else if (minute.status === 'concluded' && prose(minute.hymn)) add(`Foi entoado o hino oficial ${prose(minute.hymn)}. `);
+  add('Não havendo mais nada para ser tratado, encerrou-se a presente às ');
   add(minute.endTime ? minute.endTime.replace(':','h') + 'min' : '[horário final]',true);
-  const prayer = prose(minute.closingPrayer) || '[responsável]';
-  const prayerTitle = /^irmã\s/i.test(prayer) ? `pela ${prayer}` : `pelo ${/^irmão\s/i.test(prayer) ? prayer : 'Irmão ' + prayer}`;
+  const prayer = participantName(minute.closingPrayer,minute.attendance) || '[responsável]';
+  const prayerTitle = /^(irmã|diaconisa|presbítera|pastora)\s/i.test(prayer) ? `pela ${prayer}` : `pelo ${/^(irmão|di[aá]cono|presb[ií]tero|pastor)\s/i.test(prayer) ? prayer : 'Irmão ' + prayer}`;
   add(` com uma oração ${prayerTitle}. E eu `);
   add(name(minute.secretaryId,'[secretário redator]'),true);
   const society = /^UPH(?:\s|$)/i.test(prose(minute.societyName)) ? 'União Presbiteriana de Homens' : prose(minute.societyName) || '[sociedade]';
@@ -88,12 +103,13 @@ export function validateMinute(minute: MinuteInput, concluding = false): Record<
   if (!prose(minute.meetingLocation || '') || minute.meetingLocation.length > 160) errors['meetingLocation']='Informe o local da reunião com até 160 caracteres.';
   if (new Set(minute.attendance.map(person=>person.memberId)).size !== minute.attendance.length) errors['attendance']='Há presenças duplicadas.';
   if (minute.attendance.length > 500) errors['attendance']='A ata admite até 500 sócios presentes.';
+  if (prose(minute.hymn) && !hymnNumber(minute.hymn)) errors['hymn']='Informe apenas o número do hino ou deixe em branco.';
   if (concluding) {
     if (!['primeira','segunda'].includes(minute.convocation)) errors['convocation']='Selecione primeira ou segunda chamada.';
     for (const key of ['startTime','endTime','devotionalTime'] as const) if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(minute[key])) errors[key]='Informe um horário válido.';
     if (!errors['startTime'] && !errors['endTime'] && minute.endTime < minute.startTime) errors['endTime']='O encerramento deve ocorrer após a abertura, na mesma data civil.';
     if (!errors['startTime'] && !errors['devotionalTime'] && !errors['endTime'] && (minute.devotionalTime < minute.startTime || minute.devotionalTime > minute.endTime)) errors['devotionalTime']='O devocional deve ocorrer entre a abertura e o encerramento.';
-    for (const key of ['scripture','preacher','openingPrayer','deliberations','hymn','closingPrayer'] as const) if (!prose(minute[key])) errors[key]='Preencha este campo antes de lavrar.';
+    for (const key of ['scripture','preacher','openingPrayer','deliberations','closingPrayer'] as const) if (!prose(minute[key])) errors[key]='Preencha este campo antes de lavrar.';
     for (const key of ['presidentId','secretaryId'] as const) if (!minute.attendance.some(person => person.memberId === minute[key])) errors[key]='Escolha um membro presente.';
     if (minute.presidentId && minute.presidentId === minute.secretaryId) errors['secretaryId']='Presidente e secretário devem ser pessoas distintas.';
     if (!minute.attendance.length) errors['attendance']='Registre os presentes antes de lavrar.';

@@ -27,8 +27,8 @@ test('plenaries enforce civil-day attendance, preserve annual officers and issue
   await signInWithEmailAndPassword(auth,email,password);
   const societyName=`Plenárias ${unique}`;
   const society=await addDoc(collection(database,'societies'),{ownerId:signup.localId,churchName:'Igreja Presbiteriana QA Plenárias',type:'UPH',name:societyName,createdAt:serverTimestamp(),updatedAt:serverTimestamp()});
-  const ana=await addDoc(collection(database,'societies',society.id,'members'),payload('Ana Presidente'));
-  const bruno=await addDoc(collection(database,'societies',society.id,'members'),payload('Bruno Secretário'));
+  const ana=await addDoc(collection(database,'societies',society.id,'members'),{...payload('Ana Presidente'),office:'Presbítero'});
+  const bruno=await addDoc(collection(database,'societies',society.id,'members'),{...payload('Bruno Secretário'),office:'Diácono'});
   const inactive=await addDoc(collection(database,'societies',society.id,'members'),payload('Carlos Inativo'));
   await updateDoc(inactive,{status:'inactive',updatedAt:serverTimestamp()});
   const today=civilDate(),year=Number(today.slice(0,4));
@@ -88,7 +88,7 @@ test('plenaries enforce civil-day attendance, preserve annual officers and issue
   const admitted=memberDocs.docs.find(item=>item.data().name==='Débora Admitida');
   assert.ok(admitted);assert.equal(admitted.data().receivedDate,today);assert.equal(admitted.data().status,'active');
   await editor.locator('#draft-convocation').selectOption('segunda');
-  for(const [id,value] of Object.entries({startTime:'19:00',devotionalTime:'19:05',scripture:'Salmo 23',preacher:'Ana Presidente',openingPrayer:'Bruno Secretário',hymn:'Hino oficial da UPH',endTime:'21:00',closingPrayer:'Débora Admitida'}))await editor.locator(`#draft-${id}`).fill(value);
+  for(const [id,value] of Object.entries({startTime:'19:00',devotionalTime:'19:05',scripture:'Salmo 23',preacher:'Ana Presidente',openingPrayer:'Bruno Secretário',hymn:'123',endTime:'21:00',closingPrayer:'Débora Admitida'}))await editor.locator(`#draft-${id}`).fill(value);
   const deliberations='Foi aprovada, por unanimidade, a contribuição destinada às atividades da sociedade. A diretoria apresentou o planejamento anual e foram deliberadas as ações de visitação e assistência aos sócios. '.repeat(32);
   await editor.locator('#draft-deliberations').fill(deliberations);
   assert.equal(await editor.locator('input[type="file"]').count(),0);
@@ -96,12 +96,19 @@ test('plenaries enforce civil-day attendance, preserve annual officers and issue
   assert.ok((await preview.textContent()).includes('3 sócios'));
   assert.ok((await preview.textContent()).includes('Débora Admitida'));
   assert.ok((await preview.textContent()).includes('Salmo 23'));
+  for(const part of ['presidência de Presbítero Ana Presidente','oração inicial por Diácono Bruno Secretário','exposição por Presbítero Ana Presidente','E eu Diácono Bruno Secretário','hino nº 123'])assert.ok((await preview.textContent()).includes(part),part);
+  await editor.locator('#draft-closingPrayer').fill('Bruno Secretário');
+  assert.ok((await preview.textContent()).includes('oração pelo Diácono Bruno Secretário'));
+  await editor.locator('#draft-hymn').fill('');
+  assert.ok(!(await preview.textContent()).includes('hino'));
   await editor.getByRole('button',{name:'Salvar rascunho e chamada',exact:true}).click();
   await page.getByText('Rascunho e chamada salvos.',{exact:true}).waitFor();
   const persisted=(await getDoc(todayStored.ref)).data();
   assert.equal(persisted.attendance.length,3);assert.equal(persisted.presidentId,ana.id);assert.equal(persisted.secretaryId,bruno.id);
   assert.equal(persisted.attendance.find(person=>person.memberId===ana.id).role,'Presidente');
   assert.equal(persisted.deliberations,deliberations);
+  assert.equal(persisted.attendance.find(person=>person.memberId===bruno.id).office,'Diácono');
+  assert.equal(persisted.hymn,'');
   for(const width of [320,390,1440]) {
     await page.setViewportSize({width,height:900});
     const dimensions=await page.evaluate(()=>({scroll:document.documentElement.scrollWidth,client:document.documentElement.clientWidth}));
@@ -123,13 +130,13 @@ test('plenaries enforce civil-day attendance, preserve annual officers and issue
   assert.equal(concluded.status,'concluded');assert.equal(concluded.attendance.length,3);assert.ok(concluded.finalText.includes('3 sócios'));
   await assert.rejects(updateDoc(todayStored.ref,{deliberations:'Alteração indevida',updatedAt:serverTimestamp()}),/permission|denied/i);
   // Later member/board edits must not rewrite the concluded document or PDF source.
-  await updateDoc(ana,{name:'Ana Nome Alterado',updatedAt:serverTimestamp()});
+  await updateDoc(ana,{name:'Ana Nome Alterado',office:'Diácono',updatedAt:serverTimestamp()});
   await updateDoc(doc(database,'societies',society.id,'boardAssignments',`${year}_${ana.id}`),{role:'Tesoureiro',updatedAt:serverTimestamp()});
   const frozen=(await getDoc(todayStored.ref)).data();
   assert.deepEqual(frozen.attendance,concluded.attendance);assert.equal(frozen.finalText,concluded.finalText);
   await page.reload({waitUntil:'domcontentloaded'});await selectSociety();
   await todayCard.getByRole('button',{name:'Consultar ata',exact:true}).click();
-  await editor.getByText('Ana Presidente — Presidente',{exact:true}).waitFor();
+  await editor.getByText('Presbítero Ana Presidente — Presidente',{exact:true}).waitFor();
   assert.equal(await editor.getByText('Ana Nome Alterado',{exact:true}).count(),0);
   const downloading=page.waitForEvent('download',{timeout:60000});
   await editor.getByRole('button',{name:'Baixar PDF da ata',exact:true}).click();

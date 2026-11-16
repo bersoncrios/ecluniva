@@ -2,7 +2,7 @@ import { Component, DestroyRef, ElementRef, ViewChild, computed, effect, inject,
 import { FormsModule } from '@angular/forms';
 import { DataService } from '../../core/data.service';
 import { MinutesService } from '../../core/minutes.service';
-import { Minute, MinuteInput, attendanceAvailable, civilDate, emptyMinute, minuteSegments, minuteStatus, snapshotAttendance, suggestedOfficers, validateMinute } from '../../core/minutes';
+import { Minute, MinuteInput, attendanceAvailable, civilDate, emptyMinute, minuteSegments, minutePersonName, minuteStatus, snapshotAttendance, suggestedOfficers, validateMinute } from '../../core/minutes';
 import { exportMinutePdf } from '../../core/minutes-pdf';
 
 @Component({selector:'app-minutes',standalone:true,imports:[FormsModule],templateUrl:'./minutes.component.html',styleUrl:'./minutes.component.css'})
@@ -25,6 +25,7 @@ export class MinutesComponent {
   readonly available=computed(()=>{const minute=this.current();return !!minute && attendanceAvailable(minute,this.clock());});
   readonly canConclude=computed(()=>{const minute=this.current();return !!minute&&minute.status!=='concluded'&&minute.date<=civilDate(this.clock(),minute.timeZone);});
   readonly segments=computed(()=>{const minute=this.current();return minute ? minuteSegments(minute):[];});
+  readonly personName=minutePersonName;
   readonly fields: {key:TextKey;label:string;type?:string;wide?:boolean}[]=[
     {key:'churchName',label:'Igreja'},{key:'societyName',label:'Sociedade'},
     {key:'meetingLocation',label:'Local da reunião'},
@@ -32,7 +33,7 @@ export class MinutesComponent {
     {key:'convocation',label:'Chamada'},{key:'startTime',label:'Horário de abertura',type:'time'},
     {key:'devotionalTime',label:'Horário do devocional',type:'time'},{key:'scripture',label:'Passagem bíblica'},
     {key:'preacher',label:'Pregador'},{key:'openingPrayer',label:'Responsável pela oração inicial'},
-    {key:'hymn',label:'Hino oficial entoado'},{key:'newMembers',label:'Recepção de novos sócios (relato)',wide:true},
+    {key:'hymn',label:'Número do hino (opcional)'},{key:'newMembers',label:'Recepção de novos sócios (relato)',wide:true},
     {key:'deliberations',label:'Deliberações em prosa: eleições, contribuições e assuntos gerais',wide:true},
     {key:'endTime',label:'Horário de encerramento',type:'time'},{key:'closingPrayer',label:'Responsável pela oração final'}
   ];
