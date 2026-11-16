@@ -54,8 +54,8 @@ export function minuteSegments(minute: MinuteInput): MinuteSegment[] {
   add(`. Aos ${date}, às `); add(minute.startTime || '[horário inicial]',true);
   add(`, reuniu-se em plenária ${prose(minute.type).toLowerCase()} a `); add(prose(minute.societyName) || '[sociedade]',true);
   add(`, da ${prose(minute.churchName) || '[igreja]'}, no templo situado à ${prose(minute.templeAddress) || '[endereço completo]'}. `);
-  add(sentence(minute.convocation || 'A reunião foi regularmente convocada')+' ');
-  add('Sob a presidência de '); add(name(minute.presidentId,'[presidente da sessão]'),true);
+  add(['primeira','segunda'].includes(minute.convocation) ? `Em ${minute.convocation} chamada, ` : minute.status === 'concluded' && minute.convocation ? sentence(minute.convocation)+' ' : 'Em [chamada]. ');
+  add(['primeira','segunda'].includes(minute.convocation) ? 'sob a presidência de ' : 'Sob a presidência de '); add(name(minute.presidentId,'[presidente da sessão]'),true);
   add(', com a presença de '); add(`${minute.attendance.length} sócios`,true);
   add(minute.attendance.length ? `: ${minute.attendance.map(person => `${person.name}${person.role ? ` (${person.role})` : ''}`).join('; ')}. ` : '. ');
   add(`O momento devocional teve início às ${minute.devotionalTime || '[horário devocional]'}, com oração inicial por ${prose(minute.openingPrayer) || '[responsável]'}, leitura de ${prose(minute.scripture) || '[passagem bíblica]'} e exposição por ${prose(minute.preacher) || '[pregador]'}. `);
@@ -82,10 +82,11 @@ export function validateMinute(minute: MinuteInput, concluding = false): Record<
   if (new Set(minute.attendance.map(person=>person.memberId)).size !== minute.attendance.length) errors['attendance']='Há presenças duplicadas.';
   if (minute.attendance.length > 500) errors['attendance']='A ata admite até 500 sócios presentes.';
   if (concluding) {
+    if (!['primeira','segunda'].includes(minute.convocation)) errors['convocation']='Selecione primeira ou segunda chamada.';
     for (const key of ['startTime','endTime','devotionalTime'] as const) if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(minute[key])) errors[key]='Informe um horário válido.';
     if (!errors['startTime'] && !errors['endTime'] && minute.endTime < minute.startTime) errors['endTime']='O encerramento deve ocorrer após a abertura, na mesma data civil.';
     if (!errors['startTime'] && !errors['devotionalTime'] && !errors['endTime'] && (minute.devotionalTime < minute.startTime || minute.devotionalTime > minute.endTime)) errors['devotionalTime']='O devocional deve ocorrer entre a abertura e o encerramento.';
-    for (const key of ['convocation','scripture','preacher','openingPrayer','deliberations','hymn','closingPrayer'] as const) if (!prose(minute[key])) errors[key]='Preencha este campo antes de lavrar.';
+    for (const key of ['scripture','preacher','openingPrayer','deliberations','hymn','closingPrayer'] as const) if (!prose(minute[key])) errors[key]='Preencha este campo antes de lavrar.';
     for (const key of ['presidentId','secretaryId'] as const) if (!minute.attendance.some(person => person.memberId === minute[key])) errors[key]='Escolha um membro presente.';
     if (minute.presidentId && minute.presidentId === minute.secretaryId) errors['secretaryId']='Presidente e secretário devem ser pessoas distintas.';
     if (!minute.attendance.length) errors['attendance']='Registre os presentes antes de lavrar.';

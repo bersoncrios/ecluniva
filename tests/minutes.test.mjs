@@ -36,7 +36,7 @@ test('conclusion requires devotional, closing, logo and present distinct session
   assert.ok(validateMinute({...minute,year:2025}).year);
   assert.ok(validateMinute({...minute,timeZone:'invalid'}).timeZone);
   const attendance=[{memberId:'a',name:'Ana',role:'Presidente'},{memberId:'b',name:'Bruno',role:'Secretário'}];
-  const complete={...minute,attendance,presidentId:'a',secretaryId:'b',startTime:'19:00',devotionalTime:'19:05',endTime:'20:00',convocation:'Convocada',scripture:'Salmo 23',preacher:'Ana',openingPrayer:'Bruno',deliberations:'Foi aprovada a proposta.',hymn:'Hino da UPH',closingPrayer:'Ana',logoDataUrl:'data:image/png;base64,example'};
+  const complete={...minute,attendance,presidentId:'a',secretaryId:'b',startTime:'19:00',devotionalTime:'19:05',endTime:'20:00',convocation:'segunda',scripture:'Salmo 23',preacher:'Ana',openingPrayer:'Bruno',deliberations:'Foi aprovada a proposta.',hymn:'Hino da UPH',closingPrayer:'Ana',logoDataUrl:'data:image/png;base64,example'};
   assert.deepEqual(validateMinute(complete,true),{});
   assert.ok(validateMinute({...complete,endTime:'18:59'},true).endTime);
   assert.ok(validateMinute({...complete,devotionalTime:'20:01'},true).devotionalTime);
@@ -46,4 +46,15 @@ test('conclusion requires devotional, closing, logo and present distinct session
   const largeRoster=Array.from({length:501},(_,index)=>({memberId:String(index),name:'Sócio '+index,role:''}));
   assert.match(validateMinute({...minute,attendance:largeRoster}).attendance,/500/);
   assert.equal(validateMinute({...minute,attendance:largeRoster.slice(0,500)}).attendance,undefined);
+});
+
+test('ata registra primeira ou segunda chamada e exige a escolha para lavrar',()=>{
+  const minute=emptyMinute();
+  for(const call of ['primeira','segunda']) {
+    assert.ok(minuteText({...minute,convocation:call}).includes(`Em ${call} chamada, sob a presidência de `));
+    assert.equal(validateMinute({...minute,convocation:call},true).convocation,undefined);
+  }
+  assert.ok(validateMinute(minute,true).convocation);
+  assert.ok(validateMinute({...minute,convocation:'Convocada'},true).convocation);
+  assert.ok(minuteText({...minute,status:'concluded',convocation:'Convocada regularmente.'}).includes('Convocada regularmente.'));
 });

@@ -28,7 +28,7 @@ export class MinutesComponent {
   readonly fields: {key:TextKey;label:string;type?:string;wide?:boolean}[]=[
     {key:'churchName',label:'Igreja'},{key:'societyName',label:'Sociedade'},
     {key:'templeAddress',label:'Endereço completo do templo (logradouro, número, complemento, bairro, cidade, UF e CEP)',wide:true},
-    {key:'convocation',label:'Convocação',wide:true},{key:'startTime',label:'Horário de abertura',type:'time'},
+    {key:'convocation',label:'Chamada'},{key:'startTime',label:'Horário de abertura',type:'time'},
     {key:'devotionalTime',label:'Horário do devocional',type:'time'},{key:'scripture',label:'Passagem bíblica'},
     {key:'preacher',label:'Pregador'},{key:'openingPrayer',label:'Responsável pela oração inicial'},
     {key:'hymn',label:'Hino oficial entoado'},{key:'newMembers',label:'Recepção de novos sócios (relato)',wide:true},

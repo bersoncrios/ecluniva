@@ -87,7 +87,8 @@ test('plenaries enforce civil-day attendance, preserve annual officers and issue
   const memberDocs=await getDocs(collection(database,'societies',society.id,'members'));
   const admitted=memberDocs.docs.find(item=>item.data().name==='Débora Admitida');
   assert.ok(admitted);assert.equal(admitted.data().receivedDate,today);assert.equal(admitted.data().status,'active');
-  for(const [id,value] of Object.entries({convocation:'Reunião convocada pela presidência para deliberação dos assuntos da sociedade.',startTime:'19:00',devotionalTime:'19:05',scripture:'Salmo 23',preacher:'Ana Presidente',openingPrayer:'Bruno Secretário',hymn:'Hino oficial da UPH',endTime:'21:00',closingPrayer:'Débora Admitida'}))await editor.locator(`#draft-${id}`).fill(value);
+  await editor.locator('#draft-convocation').selectOption('segunda');
+  for(const [id,value] of Object.entries({startTime:'19:00',devotionalTime:'19:05',scripture:'Salmo 23',preacher:'Ana Presidente',openingPrayer:'Bruno Secretário',hymn:'Hino oficial da UPH',endTime:'21:00',closingPrayer:'Débora Admitida'}))await editor.locator(`#draft-${id}`).fill(value);
   const deliberations='Foi aprovada, por unanimidade, a contribuição destinada às atividades da sociedade. A diretoria apresentou o planejamento anual e foram deliberadas as ações de visitação e assistência aos sócios. '.repeat(32);
   await editor.locator('#draft-deliberations').fill(deliberations);
   // Official logo upload fixture: actual local raster file, no remote image request.
