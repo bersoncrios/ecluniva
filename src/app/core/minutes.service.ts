@@ -1,5 +1,5 @@
 import { Injectable, Injector, effect, inject, runInInjectionContext, signal } from '@angular/core';
-import { Firestore, Timestamp, collection, doc, onSnapshot, query, runTransaction, serverTimestamp, where, type Transaction, type Unsubscribe } from '@angular/fire/firestore';
+import { Firestore, Timestamp, collection, doc, getDocs, onSnapshot, query, runTransaction, serverTimestamp, where, type Transaction, type Unsubscribe } from '@angular/fire/firestore';
 import { DataService } from './data.service';
 import { sharedBirthday } from './communication';
 import { emptyMember } from './domain';
@@ -58,21 +58,23 @@ export class MinutesService {
     if (Object.keys(errors).length) throw new Error(Object.values(errors)[0]);
     if (!(input.timeZone in ZONES)) throw new Error('Escolha um dos fusos brasileiros disponíveis.');
     if (input.date < civilDate(new Date(), input.timeZone)) throw new Error('Agende a plenária para hoje ou uma data futura.');
+    const candidates = await runInInjectionContext(this.injector, () => getDocs(query(collection(this.firestore,`societies/${societyId}/minutes`),where('year','==',input.year),where('number','==',input.number))));
     return runInInjectionContext(this.injector, () => runTransaction(this.firestore, async transaction => {
       this.assertContext(context);
       const number = input.number;
       const numberId = `${input.year}_${number}`;
       const numberRef = doc(this.firestore,`societies/${societyId}/minuteNumbers/${numberId}`);
-      const matching = await transaction.get(query(collection(this.firestore,`societies/${societyId}/minutes`),where('year','==',input.year),where('number','==',number)));
+      // Web transactions accept document references; reread query results transactionally.
+      const matching = {docs:await Promise.all(candidates.docs.map(item=>transaction.get(item.ref)))};
       const reservation = await transaction.get(numberRef);
-      const staleReservation=reservation.exists()&&matching.docs.some(item=>item.id===reservation.data()['minuteId']&&!!item.data()['deletedAt']);
-      if((reservation.exists()&&!staleReservation)||matching.docs.some(item=>!item.data()['deletedAt']))throw new Error('Já existe uma ata ativa com este número neste ano.');
+      const staleReservation=reservation.exists()&&matching.docs.some(item=>item.id===reservation.data()['minuteId']&&!!item.data()?.['deletedAt']);
+      if((reservation.exists()&&!staleReservation)||matching.docs.some(item=>item.exists()&&!item.data()?.['deletedAt']))throw new Error('Já existe uma ata ativa com este número neste ano.');
       const baseId = `${input.year}_${number}`;
       const baseRef = doc(this.firestore,`societies/${societyId}/minutes/${baseId}`);
-      const base = matching.docs.find(item=>item.id===baseId);
+      const base = matching.docs.find(item=>item.id===baseId&&item.exists());
       const id = base ? doc(collection(this.firestore,`societies/${societyId}/minutes`)).id : baseId;
       const ref = doc(this.firestore,`societies/${societyId}/minutes/${id}`);
-      if(base && !base.data()['deletedAt'])throw new Error('Já existe uma ata ativa com este número neste ano.');
+      if(base && !base.data()?.['deletedAt'])throw new Error('Já existe uma ata ativa com este número neste ano.');
       if(!base && (await transaction.get(baseRef)).exists())throw new Error('Não foi possível reservar este número. Atualize a lista e tente novamente.');
       this.assertContext(context);
       const dayStart = Timestamp.fromDate(new Date(`${input.date}T${String(ZONES[input.timeZone]).padStart(2,'0')}:00:00.000Z`));
