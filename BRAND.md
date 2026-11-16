@@ -5,7 +5,7 @@ Base: MVP_SCOPE.md, DESIGN_SYSTEM.md e WIREFRAMES.md. Direção visual liberada 
 
 ## Marca e tom
 
-**Quadrei** ajuda responsáveis a organizar o rol das sociedades internas e acompanhar as pessoas da comunidade. Assinatura: **Seu rol organizado.
+**Quadrei** reúne a rotina das sociedades internas: membros, aniversários, diretoria, reuniões e atas. Assinatura: **Sua sociedade, em um só lugar.** Texto de apoio: **Pessoas, encontros e história.**
 
 Falar em português brasileiro, com acolhimento, clareza e respeito. Usar frases curtas, verbos conhecidos e ações concretas. Evitar jargão técnico, culpa, promessas de segurança absoluta, alegações de vínculo oficial com a IPB e linguagem que confunda inativação na sociedade com desligamento da igreja. Não incluir versículos, títulos religiosos ou saudações litúrgicas como requisito para usar o app.
 
@@ -15,8 +15,8 @@ Preferir “membro”, “sociedade”, “igreja”, “responsável” e “ro
 
 | Elemento | Texto |
 | --- | --- |
-| Título de entrada | Organize o rol da sua sociedade |
-| Apoio | Cadastre membros, acompanhe aniversários e tenha o rol à mão para a rotina da igreja. |
+| Título de entrada | Cuide da rotina da sua sociedade |
+| Apoio | Organize os membros, acompanhe a diretoria e registre as reuniões e atas da sua sociedade. |
 | Acesso | Entrar com Google |
 | Ajuda do acesso | Use sua conta Google para acessar as sociedades sob sua responsabilidade. |
 | Em andamento | Entrando… |

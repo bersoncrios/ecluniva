@@ -9,12 +9,12 @@
 } @else if (!data.user()) {
 <div class="login-page">
   <header class="public-header"><a class="brand" href="#"><span class="brand-mark">Q</span>quadrei</a><span
-      class="public-label">GESTÃO DE SOCIEDADES</span></header>
+      class="public-label">PESSOAS, ENCONTROS E HISTÓRIA</span></header>
   <main id="main" class="login-layout">
     <section class="login-intro">
       <div class="eyebrow"><span class="small-line"></span> PESSOAS NO CENTRO</div>
-      <h1 tabindex="-1">Seu rol organizado.<br><em>Sua comunidade<br>por perto.</em></h1>
-      <p class="lead">Mais simplicidade para cuidar de quem faz parte da sua sociedade.</p>
+      <h1 tabindex="-1">Sua sociedade,<br><em>em um só lugar.</em></h1>
+      <p class="lead">Membros, diretoria, reuniões e atas para acompanhar a vida da sua sociedade.</p>
       <div class="society-pills"><span>UPH</span><span>SAF</span><span>UMP</span><span>UCP</span><span>UPA</span></div>
       <div class="intro-bottom"><app-icon name="heart" />
         <p>Feito para a rotina de quem serve<br>e organiza a vida em comunidade.</p>
@@ -23,17 +23,17 @@
     <section class="login-card">
       <div class="card-symbol"><app-icon name="church" /></div>
       <span class="eyebrow">BEM-VINDO AO QUADREI</span>
-      <h2>Organize o rol da sua sociedade</h2>
-      <p class="muted">Cadastre membros, acompanhe aniversários e tenha o rol à mão para a rotina da igreja.</p>
+      <h2>Cuide da rotina da sua sociedade</h2>
+      <p class="muted">Organize os membros, acompanhe a diretoria e registre as reuniões e atas da sua sociedade.</p>
       @if (error()) { <div class="alert error" role="alert">{{ error() }}</div> }
       <button class="google-button" (click)="login()" [disabled]="loginBusy()"><span class="google-g"
           aria-hidden="true">G</span>{{ loginBusy() ? 'Entrando…' : 'Entrar com Google' }}<app-icon
           name="arrow" /></button>
       <p class="help">Use sua conta Google para acessar as sociedades sob sua responsabilidade.</p>
       <div class="login-features">
-        <div><app-icon name="check" />Cadastro simples</div>
-        <div><app-icon name="check" />Aniversários por perto</div>
-        <div><app-icon name="check" />Rol em PDF e planilha</div>
+        <div><app-icon name="check" />Membros e aniversários</div>
+        <div><app-icon name="check" />Diretoria por ano</div>
+        <div><app-icon name="check" />Reuniões e atas</div>
       </div>
       @if (isEmulator) {
       <details class="emulator-login">
@@ -49,7 +49,7 @@
     </section>
   </main>
   <footer class="public-footer"><span>Quadrei</span>
-    <p>Seu rol organizado. \</p>
+    <p>Sua sociedade, em um só lugar.</p>
   </footer>
 </div>
 } @else if (!data.selected()) {
@@ -110,7 +110,7 @@
     }
   </main>
   <footer class="public-footer"><span>Quadrei</span>
-    <p>Um espaço para cada sociedade.</p>
+    <p>Sua sociedade, em um só lugar.</p>
   </footer>
 </div>
 } @else {
@@ -118,7 +118,7 @@
   <aside class="sidebar" aria-label="Navegação principal">
     <a class="brand" href="#overview" (click)="$event.preventDefault(); navigate('overview')"><span
         class="brand-mark">Q</span>quadrei</a>
-    <div class="sidebar-caption">GESTÃO DE SOCIEDADES</div>
+    <div class="sidebar-caption">PESSOAS, ENCONTROS E HISTÓRIA</div>
     <nav><button [class.active]="page() === 'overview'" [attr.aria-current]="page() === 'overview' ? 'page' : null"
         (click)="navigate('overview')" [disabled]="busy() || exportBusy()"><app-icon name="grid" />Visão
         geral</button><button [class.active]="page() === 'members' || page() === 'member'"
@@ -130,7 +130,7 @@
         [attr.aria-current]="page() === 'board' ? 'page' : null" (click)="navigate('board')"
         [disabled]="busy() || exportBusy()"><app-icon name="board" />Diretoria</button><button [class.active]="page() === 'minutes'" [attr.aria-current]="page() === 'minutes' ? 'page' : null" (click)="navigate('minutes')" [disabled]="busy() || exportBusy()"><app-icon name="calendar" />Atas e plenárias</button></nav>
     <div class="sidebar-bottom">
-      <div class="sidebar-note"><app-icon name="heart" /><span>Seu rol organizado.</span></div><button
+      <div class="sidebar-note"><app-icon name="heart" /><span>Sua sociedade, em um só lugar.</span></div><button
         class="switch-button" (click)="switchSociety()" [disabled]="busy() || exportBusy()"><app-icon
           name="switch" />Trocar sociedade</button><button class="sidebar-account" (click)="logout()"
         [disabled]="busy() || exportBusy()"><span class="avatar">{{ initials(data.user()?.displayName ||

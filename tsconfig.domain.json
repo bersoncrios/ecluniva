@@ -12,6 +12,7 @@
     "src/app/core/domain.ts",
     "src/app/core/viacep.ts",
     "src/app/core/board.ts",
-    "src/app/core/minutes.ts"
+    "src/app/core/minutes.ts",
+    "src/app/core/minutes-docx.ts"
   ]
 }

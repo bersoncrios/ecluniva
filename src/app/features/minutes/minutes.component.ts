@@ -4,6 +4,7 @@ import { DataService } from '../../core/data.service';
 import { MinutesService } from '../../core/minutes.service';
 import { Minute, MinuteInput, attendanceAvailable, civilDate, emptyMinute, minuteSegments, minutePersonName, minuteStatus, snapshotAttendance, suggestedOfficers, validateMinute } from '../../core/minutes';
 import { exportMinutePdf } from '../../core/minutes-pdf';
+import { exportMinuteDocx } from '../../core/minutes-docx';
 
 @Component({selector:'app-minutes',standalone:true,imports:[FormsModule],templateUrl:'./minutes.component.html',styleUrl:'./minutes.component.css'})
 export class MinutesComponent {
@@ -65,6 +66,7 @@ export class MinutesComponent {
   async admit():Promise<void>{const minute=this.current();if(!minute||!this.available())return;if(this.admissionName.trim().length<2){this.failure.set('Informe o nome completo do novo sócio.');return;}await this.perform(async()=>{const context=this.context;await this.service.admit(minute,this.admissionName.trim());if(!this.validContext(context))return;const latest=this.service.minutes().find(item=>item.id===minute.id);if(latest)this.current.set({...minute,revision:latest.revision,attendance:latest.attendance,newMembers:latest.newMembers,status:latest.status});this.admissionName='';this.message.set('Sócio recebido, cadastrado e incluído entre os presentes.');});}
   maxLength(key:TextKey):number{return key==='deliberations'?40000:key==='newMembers'?10000:key==='convocation'?4000:key==='scripture'?1000:['templeAddress','hymn'].includes(key)?500:['preacher','openingPrayer','closingPrayer'].includes(key)?120:160;}
   async pdf():Promise<void>{const minute=this.current();if(minute)await this.perform(async()=>{const context=this.context;await exportMinutePdf(minute);if(!this.validContext(context))return;this.message.set('PDF gerado. Confira os downloads do navegador.');});}
+  async docx():Promise<void>{const minute=this.current();if(minute)await this.perform(async()=>{const context=this.context;await exportMinuteDocx(minute);if(!this.validContext(context))return;this.message.set('DOCX gerado. Confira os downloads do navegador.');});}
   requestConclude():void{const minute=this.current();if(!minute)return;this.errors.set(validateMinute(minute,true));if(Object.keys(this.errors()).length){this.failure.set('Revise os campos indicados antes de lavrar a ata.');return;}this.dialog?.nativeElement.showModal();}
   closeConfirmation(event?:Event):void{event?.preventDefault();if(!this.busy())this.dialog?.nativeElement.close();}
   async conclude():Promise<void>{const minute=this.current();if(!minute)return;await this.perform(async()=>{const context=this.context;await this.service.conclude(minute);if(!this.validContext(context))return;this.refresh(minute.id);this.dialog?.nativeElement.close();this.message.set('Ata lavrada. O documento e o histórico de presença foram congelados.');});}

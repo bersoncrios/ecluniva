@@ -81,8 +81,7 @@ export async function exportMinutePdf(minute: MinuteInput): Promise<void> {
   pdf.setLineDashPattern([],0);
   const pages=pdf.getNumberOfPages();
   for(let page=1;page<=pages;page++) {
-    pdf.setPage(page);pdf.setFont('times','normal');pdf.setFontSize(10);
-    pdf.text(`${page} / ${pages}`,105,285,{align:'center'});
+    pdf.setPage(page);pdf.setFont('times','normal');
     if(minute.status!=='concluded') {
       pdf.setFontSize(8);pdf.text('PRÉVIA — ATA AINDA NÃO LAVRADA',105,291,{align:'center'});
     }
