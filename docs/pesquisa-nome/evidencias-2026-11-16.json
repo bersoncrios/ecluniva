@@ -1,0 +1,345 @@
+{
+  "date": "2026-11-16",
+  "scope": "Pesquisa preliminar, não declaração de exclusividade ou registrabilidade",
+  "domains": [
+    {
+      "domain": "fratunio.com",
+      "source": "https://rdap.verisign.com/com/v1/domain/fratunio.com",
+      "http": "404",
+      "curl_exit": 0
+    },
+    {
+      "domain": "eclunio.com",
+      "source": "https://rdap.verisign.com/com/v1/domain/eclunio.com",
+      "http": "404",
+      "curl_exit": 0
+    },
+    {
+      "domain": "congrelio.com",
+      "source": "https://rdap.verisign.com/com/v1/domain/congrelio.com",
+      "http": "404",
+      "curl_exit": 0
+    },
+    {
+      "domain": "confravio.com",
+      "source": "https://rdap.verisign.com/com/v1/domain/confravio.com",
+      "http": "404",
+      "curl_exit": 0
+    },
+    {
+      "domain": "ecluniva.com",
+      "source": "https://rdap.verisign.com/com/v1/domain/ecluniva.com",
+      "http": "404",
+      "curl_exit": 0
+    },
+    {
+      "domain": "fratunio.com.br",
+      "source": "https://rdap.registro.br/domain/fratunio.com.br",
+      "http": "404",
+      "curl_exit": 0
+    },
+    {
+      "domain": "eclunio.com.br",
+      "source": "https://rdap.registro.br/domain/eclunio.com.br",
+      "http": "404",
+      "curl_exit": 0
+    },
+    {
+      "domain": "congrelio.com.br",
+      "source": "https://rdap.registro.br/domain/congrelio.com.br",
+      "http": "404",
+      "curl_exit": 0
+    },
+    {
+      "domain": "confravio.com.br",
+      "source": "https://rdap.registro.br/domain/confravio.com.br",
+      "http": "404",
+      "curl_exit": 0
+    },
+    {
+      "domain": "ecluniva.com.br",
+      "source": "https://rdap.registro.br/domain/ecluniva.com.br",
+      "http": "404",
+      "curl_exit": 0
+    },
+    {
+      "domain": "example.com",
+      "source": "https://rdap.verisign.com/com/v1/domain/example.com",
+      "http": "200",
+      "curl_exit": 0,
+      "ldhName": "EXAMPLE.COM"
+    },
+    {
+      "domain": "google.com.br",
+      "source": "https://rdap.registro.br/domain/google.com.br",
+      "http": "200",
+      "curl_exit": 0,
+      "ldhName": "google.com.br"
+    }
+  ],
+  "inpi": [
+    {
+      "term": "ECLUNIVA",
+      "exact": true,
+      "classes": "all",
+      "http": "200",
+      "curl_exit": 0,
+      "no_results": true,
+      "summary": "RESULTADO DA PESQUISA (16/11/2026 às 18:26:38) Marca:  ECLUNIVA - Nenhum resultado foi encontrado para a sua pesquisa. Para efetuar outra pesquisa, pressione o botão de VOLTAR. ",
+      "updated_through": "10/11/2026"
+    },
+    {
+      "term": "ECLUN",
+      "exact": false,
+      "classes": "all",
+      "http": "200",
+      "curl_exit": 0,
+      "no_results": true,
+      "summary": "RESULTADO DA PESQUISA (16/11/2026 às 18:26:38) Marca:  ECLUN - Nenhum resultado foi encontrado para a sua pesquisa. Para efetuar outra pesquisa, pressione o botão de VOLTAR. ",
+      "updated_through": "10/11/2026"
+    },
+    {
+      "term": "FRATUN",
+      "exact": false,
+      "classes": "all",
+      "http": "200",
+      "curl_exit": 0,
+      "no_results": true,
+      "summary": "RESULTADO DA PESQUISA (16/11/2026 às 18:26:38) Marca:  FRATUN - Nenhum resultado foi encontrado para a sua pesquisa. Para efetuar outra pesquisa, pressione o botão de VOLTAR. ",
+      "updated_through": "10/11/2026"
+    },
+    {
+      "term": "CONFRAV",
+      "exact": false,
+      "classes": "all",
+      "http": "200",
+      "curl_exit": 0,
+      "no_results": false,
+      "summary": "RESULTADO DA PESQUISA (16/11/2026 às 18:26:39) Marca:  \"CONFRAV\" Foram encontrados 3 processos que satisfazem à pesquisa. Mostrando página 1 de 1 ."
+    },
+    {
+      "term": "CONGREL",
+      "exact": false,
+      "classes": "all",
+      "http": "200",
+      "curl_exit": 0,
+      "no_results": false,
+      "summary": "RESULTADO DA PESQUISA (16/11/2026 às 18:26:39) Marca:  \"CONGREL\" Foram encontrados 2 processos que satisfazem à pesquisa. Mostrando página 1 de 1 ."
+    },
+    {
+      "term": "MICROSOFT",
+      "exact": true,
+      "classes": "all",
+      "http": "200",
+      "curl_exit": 0,
+      "no_results": false,
+      "summary": "RESULTADO DA PESQUISA (16/11/2026 às 18:26:40) Marca:  \"MICROSOFT\" Foram encontrados 40 processos que satisfazem à pesquisa. Mostrando página 1 de 1 ."
+    }
+  ],
+  "stores": {
+    "collectedAt": "2026-11-16T21:27:34.395433+00:00",
+    "method": "Native public Apple Search API and Google Play HTML, HTTPS via system curl. Exact candidate queries; WhatsApp BR control. Counts reflect returned store search, not legal clearance.",
+    "results": [
+      {
+        "store": "apple",
+        "name": "Ecluniva",
+        "country": "br",
+        "url": "https://itunes.apple.com/search?term=Ecluniva&entity=software&country=br&limit=200",
+        "queriedAt": "2026-11-16T21:27:32.145029+00:00",
+        "httpStatus": 200,
+        "bodyBytes": 42,
+        "curlExitCode": 0,
+        "resultCount": 0,
+        "titles": [],
+        "exactNameMatches": []
+      },
+      {
+        "store": "google",
+        "name": "Ecluniva",
+        "country": "BR",
+        "url": "https://play.google.com/store/search?q=Ecluniva&c=apps&hl=en&gl=BR",
+        "queriedAt": "2026-11-16T21:27:32.146256+00:00",
+        "httpStatus": 200,
+        "bodyBytes": 968631,
+        "curlExitCode": 0,
+        "appIds": [],
+        "appCount": 0,
+        "noResultsMarker": "No results for "
+      },
+      {
+        "store": "apple",
+        "name": "Ecluniva",
+        "country": "us",
+        "url": "https://itunes.apple.com/search?term=Ecluniva&entity=software&country=us&limit=200",
+        "queriedAt": "2026-11-16T21:27:32.148042+00:00",
+        "httpStatus": 200,
+        "bodyBytes": 80316,
+        "curlExitCode": 0,
+        "resultCount": 9,
+        "titles": [
+          "La Radio De Moda Ecuador",
+          "La Humilde Del Ecuador",
+          "earadio",
+          "RUDA: Natural Remedies",
+          "Orbum",
+          "Radio Kosmos",
+          "Radio Ecuatoriana FM",
+          "Gerena",
+          "Examiamo"
+        ],
+        "exactNameMatches": []
+      },
+      {
+        "store": "google",
+        "name": "Ecluniva",
+        "country": "US",
+        "url": "https://play.google.com/store/search?q=Ecluniva&c=apps&hl=en&gl=US",
+        "queriedAt": "2026-11-16T21:27:32.149583+00:00",
+        "httpStatus": 200,
+        "bodyBytes": 969934,
+        "curlExitCode": 0,
+        "appIds": [],
+        "appCount": 0,
+        "noResultsMarker": "No results for "
+      },
+      {
+        "store": "apple",
+        "name": "Confravio",
+        "country": "br",
+        "url": "https://itunes.apple.com/search?term=Confravio&entity=software&country=br&limit=200",
+        "queriedAt": "2026-11-16T21:27:32.339866+00:00",
+        "httpStatus": 200,
+        "bodyBytes": 42,
+        "curlExitCode": 0,
+        "resultCount": 0,
+        "titles": [],
+        "exactNameMatches": []
+      },
+      {
+        "store": "google",
+        "name": "Confravio",
+        "country": "BR",
+        "url": "https://play.google.com/store/search?q=Confravio&c=apps&hl=en&gl=BR",
+        "queriedAt": "2026-11-16T21:27:32.484477+00:00",
+        "httpStatus": 200,
+        "bodyBytes": 968620,
+        "curlExitCode": 0,
+        "appIds": [],
+        "appCount": 0,
+        "noResultsMarker": "No results for "
+      },
+      {
+        "store": "apple",
+        "name": "Fratunio",
+        "country": "br",
+        "url": "https://itunes.apple.com/search?term=Fratunio&entity=software&country=br&limit=200",
+        "queriedAt": "2026-11-16T21:27:32.858363+00:00",
+        "httpStatus": 200,
+        "bodyBytes": 42,
+        "curlExitCode": 0,
+        "resultCount": 0,
+        "titles": [],
+        "exactNameMatches": []
+      },
+      {
+        "store": "google",
+        "name": "Fratunio",
+        "country": "BR",
+        "url": "https://play.google.com/store/search?q=Fratunio&c=apps&hl=en&gl=BR",
+        "queriedAt": "2026-11-16T21:27:32.935224+00:00",
+        "httpStatus": 200,
+        "bodyBytes": 968551,
+        "curlExitCode": 0,
+        "appIds": [],
+        "appCount": 0,
+        "noResultsMarker": "No results for "
+      },
+      {
+        "store": "apple",
+        "name": "Eclunio",
+        "country": "br",
+        "url": "https://itunes.apple.com/search?term=Eclunio&entity=software&country=br&limit=200",
+        "queriedAt": "2026-11-16T21:27:33.177814+00:00",
+        "httpStatus": 200,
+        "bodyBytes": 42,
+        "curlExitCode": 0,
+        "resultCount": 0,
+        "titles": [],
+        "exactNameMatches": []
+      },
+      {
+        "store": "google",
+        "name": "Eclunio",
+        "country": "BR",
+        "url": "https://play.google.com/store/search?q=Eclunio&c=apps&hl=en&gl=BR",
+        "queriedAt": "2026-11-16T21:27:33.351594+00:00",
+        "httpStatus": 200,
+        "bodyBytes": 968515,
+        "curlExitCode": 0,
+        "appIds": [],
+        "appCount": 0,
+        "noResultsMarker": "No results for "
+      },
+      {
+        "store": "apple",
+        "name": "Congrelio",
+        "country": "br",
+        "url": "https://itunes.apple.com/search?term=Congrelio&entity=software&country=br&limit=200",
+        "queriedAt": "2026-11-16T21:27:33.352126+00:00",
+        "httpStatus": 200,
+        "bodyBytes": 42,
+        "curlExitCode": 0,
+        "resultCount": 0,
+        "titles": [],
+        "exactNameMatches": []
+      },
+      {
+        "store": "google",
+        "name": "Congrelio",
+        "country": "BR",
+        "url": "https://play.google.com/store/search?q=Congrelio&c=apps&hl=en&gl=BR",
+        "queriedAt": "2026-11-16T21:27:33.405733+00:00",
+        "httpStatus": 200,
+        "bodyBytes": 968522,
+        "curlExitCode": 0,
+        "appIds": [],
+        "appCount": 0,
+        "noResultsMarker": "No results for "
+      },
+      {
+        "store": "google",
+        "name": "WhatsApp",
+        "country": "BR",
+        "url": "https://play.google.com/store/search?q=WhatsApp&c=apps&hl=en&gl=BR",
+        "queriedAt": "2026-11-16T21:27:33.540060+00:00",
+        "httpStatus": 200,
+        "bodyBytes": 1212921,
+        "curlExitCode": 0,
+        "appIds": [
+          "com.whatsapp",
+          "com.whatsapp.w4b",
+          "com.facebook.orca",
+          "org.telegram.messenger",
+          "com.ai.business.crm",
+          "com.tencent.mm",
+          "org.thoughtcrime.securesms",
+          "com.google.android.apps.messaging",
+          "com.imo.android.imoim",
+          "jp.naver.line.android",
+          "com.instagram.android",
+          "com.google.android.apps.tachyon",
+          "com.imo.android.imoimhd",
+          "com.viber.voip",
+          "us.zoom.videomeetings",
+          "com.wondershare.wutsapper.android",
+          "com.facebook.katana",
+          "com.facebook.lite",
+          "org.thunderdog.challegram",
+          "com.google.android.gm"
+        ],
+        "appCount": 20,
+        "noResultsMarker": null
+      }
+    ]
+  }
+}

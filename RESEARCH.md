@@ -1,4 +1,4 @@
-# Pesquisa de referências — Quadrei
+# Pesquisa de referências — Ecluniva
 
 Responsável: AGENTE PESQUISADOR  
 Data: 15/11/2026  
@@ -10,14 +10,14 @@ Consulta a páginas oficiais de produtos e guias primários de acessibilidade. F
 
 ## Referências de gestão comunitária
 
-| Fonte primária | Achado observado | Possível aplicação ao Quadrei |
+| Fonte primária | Achado observado | Possível aplicação ao Ecluniva |
 | --- | --- | --- |
 | [Planning Center People](https://www.planningcenter.com/people) | Centraliza perfis, oferece campos personalizáveis e listas por critérios; menciona aniversários como condição de agrupamento. | Tratar o membro como unidade principal e apresentar aniversariantes como consulta derivada do cadastro. |
 | [Planning Center — listas](https://help.planningcenter.com/en/139197-lists-overview.html) | Listas filtram pessoas com base em informações e atividades; o guia chama atenção para a atualização dos resultados. | Mostrar filtros ativos e atualizar a lista após salvar ou alterar status, evitando resultados visualmente desatualizados. |
 | [Breeze — introdução a People](https://support.breezechms.com/hc/en-us/articles/360049088914-Getting-Started-With-People) | Reúne inclusão, busca, filtros, ações e exportação; distingue arquivar e excluir. | Manter as ações do rol próximas à lista e tornar a inativação recuperável. A distinção de status deve ser explicada no contexto da sociedade. |
 | [Breeze — exportação](https://support.breezechms.com/hc/en-us/articles/360001160713-Exporting-People) | Exporta pessoas para Excel e permite selecionar campos. O fluxo parte da lista que o usuário quer exportar. | Explicitar se a exportação corresponde ao rol completo ou ao resultado filtrado; informar quantidade e campos antes de gerar. |
 
-As aplicações propostas são inferências, não funcionalidades copiadas integralmente. Sistemas amplos também incluem contribuições, comunicação e automações; sua existência não justifica adicioná-las ao MVP do Quadrei.
+As aplicações propostas são inferências, não funcionalidades copiadas integralmente. Sistemas amplos também incluem contribuições, comunicação e automações; sua existência não justifica adicioná-las ao MVP do Ecluniva.
 
 ## Formulários para pessoas com pouca familiaridade digital
 

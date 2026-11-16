@@ -1,15 +1,15 @@
-# Quadrei — identidade verbal e microcopy
+# Ecluniva — identidade verbal e microcopy
 
 Responsável: AGENTE COPYWRITER & BRAND STRATEGIST · 15/11/2026  
 Base: MVP_SCOPE.md, DESIGN_SYSTEM.md e WIREFRAMES.md. Direção visual liberada para continuidade pelo dono do produto.
 
 ## Marca e tom
 
-**Quadrei** reúne a rotina das sociedades internas: membros, aniversários, diretoria, reuniões e atas. Assinatura: **Sua sociedade, em um só lugar.** Texto de apoio: **Pessoas, encontros e história.**
+**Ecluniva** reúne a vida das sociedades: membros, aniversários, diretoria, reuniões, convocações, comunicação e atas. Assinatura: **Sua sociedade, em um só lugar.** Texto de apoio: **Pessoas, encontros e história.**
 
 Falar em português brasileiro, com acolhimento, clareza e respeito. Usar frases curtas, verbos conhecidos e ações concretas. Evitar jargão técnico, culpa, promessas de segurança absoluta, alegações de vínculo oficial com a IPB e linguagem que confunda inativação na sociedade com desligamento da igreja. Não incluir versículos, títulos religiosos ou saudações litúrgicas como requisito para usar o app.
 
-Preferir “membro”, “sociedade”, “igreja”, “responsável” e “rol de membros”. Usar “cadastro” para o registro de uma pessoa. Escrever UPH, SAF, UMP, UCP e UPA em maiúsculas. Manter “Quadrei” como nome próprio; marca visual pode usar minúsculas conforme o design.
+Preferir “membro”, “sociedade”, “igreja”, “responsável” e “rol de membros”. Usar “cadastro” para o registro de uma pessoa. Escrever UPH, SAF, UMP, UCP e UPA em maiúsculas. Manter “Ecluniva” como nome próprio.
 
 ## Entrada e primeiro acesso
 

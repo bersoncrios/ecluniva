@@ -1,4 +1,4 @@
-# Quadrei — contrato Cloud Firestore
+# Ecluniva — contrato Cloud Firestore
 
 Responsável: AGENTE BACKEND ENGINEER · 15/11/2026  
 Base: MVP_SCOPE.md, BACKLOG.md e BRAND.md. Identidade visual liberada para continuidade. Este contrato precede as regras e o código de persistência.

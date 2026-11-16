@@ -5,12 +5,12 @@
 @defer(on immediate){<app-public-attendance />}
 } @else if (!data.ready()) {
 <main id="main" class="initial-loading">
-  <div class="brand"><span class="brand-mark">Q</span>quadrei</div>
+  <div class="brand"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 64 64"><circle cx="22" cy="23" r="5"/><circle cx="42" cy="23" r="5"/><circle cx="32" cy="18" r="6"/><path d="M12 45c0-7 4-11 10-11 3 0 5 1 7 3M52 45c0-7-4-11-10-11-3 0-5 1-7 3M19 48c0-10 5-15 13-15s13 5 13 15"/></svg></span>Ecluniva</div>
   <p class="muted" role="status">Preparando seu espaço…</p>
 </main>
 } @else if (!data.user()) {
 <div class="login-page">
-  <header class="public-header"><a class="brand" href="#"><span class="brand-mark">Q</span>quadrei</a><span
+  <header class="public-header"><a class="brand" href="#"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 64 64"><circle cx="22" cy="23" r="5"/><circle cx="42" cy="23" r="5"/><circle cx="32" cy="18" r="6"/><path d="M12 45c0-7 4-11 10-11 3 0 5 1 7 3M52 45c0-7-4-11-10-11-3 0-5 1-7 3M19 48c0-10 5-15 13-15s13 5 13 15"/></svg></span>Ecluniva</a><span
       class="public-label">PESSOAS, ENCONTROS E HISTÓRIA</span></header>
   <main id="main" class="login-layout">
     <section class="login-intro">
@@ -24,7 +24,7 @@
     </section>
     <section class="login-card">
       <div class="card-symbol"><app-icon name="church" /></div>
-      <span class="eyebrow">BEM-VINDO AO QUADREI</span>
+      <span class="eyebrow">BEM-VINDO À ECLUNIVA</span>
       <h2>Cuide da rotina da sua sociedade</h2>
       <p class="muted">Organize os membros, acompanhe a diretoria e registre as reuniões e atas da sua sociedade.</p>
       @if (error()) { <div class="alert error" role="alert">{{ error() }}</div> }
@@ -50,13 +50,13 @@
       }
     </section>
   </main>
-  <footer class="public-footer"><span>Quadrei</span>
+  <footer class="public-footer"><span>Ecluniva</span>
     <p>Sua sociedade, em um só lugar.</p>
   </footer>
 </div>
 } @else if (!data.selected()) {
 <div class="selection-page">
-  <header class="selection-header"><a class="brand" href="#"><span class="brand-mark">Q</span>quadrei</a><button
+  <header class="selection-header"><a class="brand" href="#"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 64 64"><circle cx="22" cy="23" r="5"/><circle cx="42" cy="23" r="5"/><circle cx="32" cy="18" r="6"/><path d="M12 45c0-7 4-11 10-11 3 0 5 1 7 3M52 45c0-7-4-11-10-11-3 0-5 1-7 3M19 48c0-10 5-15 13-15s13 5 13 15"/></svg></span>Ecluniva</a><button
       class="button subtle" (click)="logout()" [disabled]="busy()"><app-icon name="logout" />Sair</button></header>
   <main id="main" class="selection-main">
     <div class="eyebrow">SEU ESPAÇO DE ORGANIZAÇÃO</div>
@@ -112,7 +112,7 @@
           sociedade</strong><span class="muted">Organize outra unidade local.</span></button></div>
     }
   </main>
-  <footer class="public-footer"><span>Quadrei</span>
+  <footer class="public-footer"><span>Ecluniva</span>
     <p>Sua sociedade, em um só lugar.</p>
   </footer>
 </div>
@@ -120,7 +120,7 @@
 <div class="app-layout">
   <aside class="sidebar" aria-label="Navegação principal">
     <a class="brand" href="#overview" (click)="$event.preventDefault(); navigate('overview')"><span
-        class="brand-mark">Q</span>quadrei</a>
+        class="brand-mark" aria-hidden="true"><svg viewBox="0 0 64 64"><circle cx="22" cy="23" r="5"/><circle cx="42" cy="23" r="5"/><circle cx="32" cy="18" r="6"/><path d="M12 45c0-7 4-11 10-11 3 0 5 1 7 3M52 45c0-7-4-11-10-11-3 0-5 1-7 3M19 48c0-10 5-15 13-15s13 5 13 15"/></svg></span>Ecluniva</a>
     <div class="sidebar-caption">PESSOAS, ENCONTROS E HISTÓRIA</div>
     <nav>@if(data.isOwner()){<button [class.active]="page() === 'overview'" [attr.aria-current]="page() === 'overview' ? 'page' : null"
         (click)="navigate('overview')" [disabled]="busy() || exportBusy()"><app-icon name="grid" />Visão
@@ -524,7 +524,7 @@
         </div>
       </form>
       }
-      <footer class="workspace-footer"><span>Quadrei</span><span>{{ data.selected()?.type }} · {{ data.selected()?.name
+      <footer class="workspace-footer"><span>Ecluniva</span><span>{{ data.selected()?.type }} · {{ data.selected()?.name
           }}</span></footer>
     </main>
     <nav class="mobile-nav" [class.communication-only]="!data.isOwner()" aria-label="Navegação principal">@if(data.isOwner()){<button [class.active]="page() === 'overview'"

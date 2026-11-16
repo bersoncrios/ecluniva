@@ -103,5 +103,5 @@ export class CommunicationService {
     }));
   }
   invitationLink():string{return `${location.origin}${location.pathname}#convites`;}
-  invitationMail(invite:CommunicationInvite):string{return `mailto:${encodeURIComponent(invite.email)}?subject=${encodeURIComponent('Convite para Comunicação — '+invite.societyName)}&body=${encodeURIComponent(`Você recebeu acesso à Comunicação da ${invite.societyType} ${invite.societyName}.\n\nEntre no Quadrei com Google usando ${invite.email} e aceite o convite. Você poderá consultar aniversariantes, preparar mensagens e baixar cartões.\n\n${this.invitationLink()}`)}`;}
+  invitationMail(invite:CommunicationInvite):string{return `mailto:${encodeURIComponent(invite.email)}?subject=${encodeURIComponent('Convite para Comunicação — '+invite.societyName)}&body=${encodeURIComponent(`Você recebeu acesso à Comunicação da ${invite.societyType} ${invite.societyName}.\n\nEntre na Ecluniva com Google usando ${invite.email} e aceite o convite. Você poderá consultar aniversariantes, preparar mensagens e baixar cartões.\n\n${this.invitationLink()}`)}`;}
 }

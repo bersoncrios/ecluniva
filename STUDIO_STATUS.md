@@ -1,4 +1,4 @@
-# Quadrei — entrega e verificação
+# Ecluniva — entrega e verificação
 
 Atualizado em 15/11/2026. Desenvolvimento do MVP concluído e validado localmente. A solicitação de continuidade do dono liberou a identidade visual e o avanço automático das especialidades. Produção não foi promovida.
 

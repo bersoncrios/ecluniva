@@ -5,7 +5,7 @@ import { AttendanceService, type PublicPresenceSession } from '../../core/attend
 import { presenceToken, type PresenceRequest } from '../../core/attendance';
 
 @Component({selector:'app-public-attendance',standalone:true,imports:[FormsModule],template:`
-  <main class="presence-public" id="main"><a class="brand" href="#"><span class="brand-mark">Q</span>quadrei</a>
+  <main class="presence-public" id="main"><a class="brand" href="#"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 64 64"><circle cx="22" cy="23" r="5"/><circle cx="42" cy="23" r="5"/><circle cx="32" cy="18" r="6"/><path d="M12 45c0-7 4-11 10-11 3 0 5 1 7 3M52 45c0-7-4-11-10-11-3 0-5 1-7 3M19 48c0-10 5-15 13-15s13 5 13 15"/></svg></span>Ecluniva</a>
   <section class="panel"><div class="eyebrow">PRESENÇA NA PLENÁRIA</div>
   @if(loading()){<p role="status">Carregando plenária…</p>}
   @else if(!session()){<h1>Link indisponível</h1><p>Confira o QR Code ou peça o link ao secretário.</p><button class="button secondary" (click)="reload()">Tentar novamente</button>}

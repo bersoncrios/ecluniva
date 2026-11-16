@@ -7,7 +7,7 @@ export async function exportRoster(format: 'pdf'|'xlsx', society: Society, membe
   if (format === 'xlsx') {
     const XLSX = await import('xlsx');
     const data = [
-      ['Quadrei — rol de membros'],
+      ['Ecluniva — rol de membros'],
       ['Igreja', society.churchName], ['Sociedade', `${society.type} · ${society.name}`],
       ['Gerado em', displayDate(todayISO())], ['Filtros', filters], ['Quantidade', String(members.length)],
       [], EXPORT_HEADERS, ...exportRows(members)
@@ -91,7 +91,7 @@ export async function exportRoster(format: 'pdf'|'xlsx', society: Society, membe
     if (body!.children.length) await capture();
     for (let index=1;index<=pageCount;index++) {
       pdf.setPage(index); pdf.setFontSize(8); pdf.setTextColor('#52645b');
-      pdf.text(`Quadrei · ${index} / ${pageCount}`,287,203,{align:'right'});
+      pdf.text(`Ecluniva · ${index} / ${pageCount}`,287,203,{align:'right'});
     }
     pdf.save(filename + '.pdf');
   } finally { host.remove(); }

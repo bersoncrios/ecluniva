@@ -13,35 +13,13 @@ const faviconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" 
     </linearGradient>
   </defs>
   <rect width="64" height="64" rx="16" fill="url(#favBg)"/>
-  <!-- Quadro loop of Q -->
-  <path fill-rule="evenodd" clip-rule="evenodd" d="
-    M 20 12
-    C 14.5 12, 12 14.5, 12 20
-    L 12 34
-    C 12 39.5, 14.5 42, 20 42
-    L 32 42
-    C 37.5 42, 40 39.5, 40 34
-    L 40 20
-    C 40 14.5, 37.5 12, 32 12
-    Z
-    M 21.5 18.5
-    C 18.5 18.5, 18 19, 18 22
-    L 18 32
-    C 18 35, 18.5 35.5, 21.5 35.5
-    L 30.5 35.5
-    C 33.5 35.5, 34 35, 34 32
-    L 34 22
-    C 34 19, 33.5 18.5, 30.5 18.5
-    Z
-  " fill="#FFFFFF"/>
-  <!-- Q Dynamic organizer tail -->
-  <rect x="31" y="31" width="18" height="7.2" rx="3.6" transform="rotate(45 31 31)" fill="#FFFFFF"/>
-  <!-- Subtle inner list bar -->
-  <rect x="22" y="24" width="8" height="2" rx="1" fill="#EAF3EE" opacity="0.9"/>
-  <rect x="22" y="28" width="5.5" height="2" rx="1" fill="#EAF3EE" opacity="0.9"/>
+  <!-- Três pessoas reunidas em torno de um centro comum -->
+  <circle cx="22" cy="23" r="5" fill="#FFFFFF"/><circle cx="42" cy="23" r="5" fill="#FFFFFF"/>
+  <circle cx="32" cy="18" r="6" fill="#FFFFFF"/>
+  <path d="M12 45c0-7 4-11 10-11 3 0 5 1 7 3M52 45c0-7-4-11-10-11-3 0-5 1-7 3M19 48c0-10 5-15 13-15s13 5 13 15" fill="none" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round"/>
 </svg>`;
 
-// 2. Principal Logo Symbol SVG (512x512) - Transparent background, detailed Quadro/Organizer Q
+// 2. Principal Logo Symbol SVG (512x512) - Pessoas reunidas em comunidade
 const logoSymbolSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <defs>
     <linearGradient id="qGrad" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -49,33 +27,9 @@ const logoSymbolSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 
       <stop offset="100%" stop-color="#103B31"/>
     </linearGradient>
   </defs>
-  <!-- Q Quadro Frame -->
-  <path fill-rule="evenodd" clip-rule="evenodd" d="
-    M 160 56
-    C 102 56, 76 82, 76 140
-    L 76 272
-    C 76 330, 102 356, 160 356
-    L 292 356
-    C 350 356, 376 330, 376 272
-    L 376 140
-    C 376 82, 350 56, 292 56
-    Z
-    M 172 116
-    C 142 116, 134 124, 134 154
-    L 134 258
-    C 134 288, 142 296, 172 296
-    L 280 296
-    C 310 296, 318 288, 318 258
-    L 318 154
-    C 318 124, 310 116, 280 116
-    Z
-  " fill="url(#qGrad)"/>
-  <!-- Q Tail -->
-  <rect x="296" y="296" width="150" height="58" rx="29" transform="rotate(45 296 296)" fill="url(#qGrad)"/>
-  <!-- Organizer list lines (quadro / rol) inside the counter -->
-  <rect x="168" y="166" width="116" height="18" rx="9" fill="#145443" opacity="0.9"/>
-  <rect x="168" y="206" width="116" height="18" rx="9" fill="#145443" opacity="0.9"/>
-  <rect x="168" y="246" width="76" height="18" rx="9" fill="#145443" opacity="0.9"/>
+  <circle cx="176" cy="192" r="58" fill="url(#qGrad)"/><circle cx="336" cy="192" r="58" fill="url(#qGrad)"/>
+  <circle cx="256" cy="128" r="70" fill="url(#qGrad)"/>
+  <path d="M64 408c0-88 48-136 112-136 36 0 66 15 84 43M448 408c0-88-48-136-112-136-36 0-66 15-84 43M120 432c0-112 48-176 136-176s136 64 136 176" fill="none" stroke="url(#qGrad)" stroke-width="44" stroke-linecap="round"/>
 </svg>`;
 
 // 3. Horizontal Logo SVG (640x160) - Symbol + Wordmark
@@ -86,36 +40,11 @@ const logoHorizontalSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 
       <stop offset="100%" stop-color="#103B31"/>
     </linearGradient>
   </defs>
-  <!-- Símbolo Q estilizado -->
-  <g transform="translate(18, 18) scale(0.242)">
-    <path fill-rule="evenodd" clip-rule="evenodd" d="
-      M 160 56
-      C 102 56, 76 82, 76 140
-      L 76 272
-      C 76 330, 102 356, 160 356
-      L 292 356
-      C 350 356, 376 330, 376 272
-      L 376 140
-      C 376 82, 350 56, 292 56
-      Z
-      M 172 116
-      C 142 116, 134 124, 134 154
-      L 134 258
-      C 134 288, 142 296, 172 296
-      L 280 296
-      C 310 296, 318 288, 318 258
-      L 318 154
-      C 318 124, 310 116, 280 116
-      Z
-    " fill="url(#qGradH)"/>
-    <rect x="296" y="296" width="150" height="58" rx="29" transform="rotate(45 296 296)" fill="url(#qGradH)"/>
-    <rect x="168" y="166" width="116" height="18" rx="9" fill="#145443" opacity="0.9"/>
-    <rect x="168" y="206" width="116" height="18" rx="9" fill="#145443" opacity="0.9"/>
-    <rect x="168" y="246" width="76" height="18" rx="9" fill="#145443" opacity="0.9"/>
-  </g>
+  <!-- Símbolo de pessoas reunidas -->
+  <g transform="translate(18, 18) scale(0.242)"><circle cx="176" cy="192" r="58" fill="url(#qGradH)"/><circle cx="336" cy="192" r="58" fill="url(#qGradH)"/><circle cx="256" cy="128" r="70" fill="url(#qGradH)"/><path d="M64 408c0-88 48-136 112-136 36 0 66 15 84 43M448 408c0-88-48-136-112-136-36 0-66 15-84 43M120 432c0-112 48-176 136-176s136 64 136 176" fill="none" stroke="url(#qGradH)" stroke-width="44" stroke-linecap="round"/></g>
   <!-- Wordmark -->
-  <text x="162" y="93" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="68" font-weight="700" letter-spacing="-1.8" fill="#103B31">quadrei</text>
-  <text x="166" y="122" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="13" font-weight="650" letter-spacing="3.2" fill="#52645B">GESTÃO DE SOCIEDADES</text>
+  <text x="162" y="93" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="59" font-weight="700" letter-spacing="-1.2" fill="#103B31">Ecluniva</text>
+  <text x="166" y="122" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="13" font-weight="650" letter-spacing="2" fill="#52645B">PESSOAS, ENCONTROS E HISTÓRIA</text>
 </svg>`;
 
 // Write SVG files

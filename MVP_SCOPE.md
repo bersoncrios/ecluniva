@@ -1,4 +1,4 @@
-# Quadrei — escopo do MVP
+# Ecluniva — escopo do MVP
 
 Responsável: AGENTE PRODUCT OWNER · 15/11/2026  
 Base: [RESEARCH.md](RESEARCH.md) e requisitos do dono do produto. As definições abaixo são decisões iniciais de produto, sem validação de campo. Continuidade da identidade visual autorizada pelo dono do produto em 15/11/2026.

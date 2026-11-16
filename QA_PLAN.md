@@ -1,4 +1,4 @@
-# Quadrei — plano de qualidade
+# Ecluniva — plano de qualidade
 
 Responsável: AGENTE QA ENGINEER · 15/11/2026  
 Estado inicial: plano escrito antes dos testes. A execução e seus resultados serão registrados pelo orquestrador; presença de testes não significa aprovação.

@@ -47,6 +47,6 @@ As leituras transacionais do serviço recompõem nomes e cargos a partir dos cad
 - Build HML aprovado; compilação Angular da interface aprovada.
 - 32 testes de domínio e 21 testes das regras Firestore aprovados.
 - Jornada de navegador de atas aprovada: agendamento futuro bloqueado, chamada no dia, cargos anuais e mesa, admissão, persistência após recarga, congelamento após lavratura, alteração posterior de cadastro sem efeito no retrato e download de PDF com duas páginas.
-- Capturas sem transbordamento em 320, 390 e 1440 pixels. Primeira página do PDF renderizada para inspeção de legibilidade, logotipo, margens, justificação, negritos e paginação. O logotipo Quadrei foi usado apenas como massa de teste na validação original.
+- Capturas sem transbordamento em 320, 390 e 1440 pixels. Primeira página do PDF renderizada para inspeção de legibilidade, logotipo, margens, justificação, negritos e paginação. O logotipo Ecluniva foi usado apenas como massa de teste na validação original.
 - Na suíte geral, o teste do rol de membros excedeu 60 segundos aguardando seu PDF (`tests/browser/app.test.mjs:205`). Esse resultado impede afirmar aprovação integral da suíte do aplicativo. O teste dedicado ao PDF de atas passou.
 - Nenhuma regra ou aplicação foi publicada em projeto remoto.

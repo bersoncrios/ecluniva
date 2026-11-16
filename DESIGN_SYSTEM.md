@@ -1,11 +1,11 @@
-# Quadrei — sistema de design proposto
+# Ecluniva — sistema de design proposto
 
 Responsável: AGENTE UX/UI DESIGNER · 15/11/2026  
 Estado: direção visual liberada pelo dono do produto ao solicitar continuidade até finalizar o desenvolvimento em 15/11/2026. Base: RESEARCH.md, BACKLOG.md e MVP_SCOPE.md.
 
 ## Direção visual
 
-Institucional, serena e acolhedora: verde profundo como referência ao contexto presbiteriano, superfícies claras e tipografia de sistema. O verde é uma proposta de identidade do Quadrei, sem alegar que reproduz um manual oficial da IPB. O nome aparece por extenso; um monograma Q pode ocupar espaços compactos. Não usar brasões ou marcas institucionais sem autorização.
+Institucional, serena e acolhedora: verde profundo como referência ao contexto presbiteriano, superfícies claras e tipografia de sistema. O verde é uma proposta de identidade da Ecluniva, sem alegar que reproduz um manual oficial da IPB. O nome aparece por extenso; o símbolo de pessoas reunidas ocupa espaços compactos. Não usar brasões ou marcas institucionais sem autorização.
 
 ## Tokens
 

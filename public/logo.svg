@@ -5,31 +5,7 @@
       <stop offset="100%" stop-color="#103B31"/>
     </linearGradient>
   </defs>
-  <!-- Q Quadro Frame -->
-  <path fill-rule="evenodd" clip-rule="evenodd" d="
-    M 160 56
-    C 102 56, 76 82, 76 140
-    L 76 272
-    C 76 330, 102 356, 160 356
-    L 292 356
-    C 350 356, 376 330, 376 272
-    L 376 140
-    C 376 82, 350 56, 292 56
-    Z
-    M 172 116
-    C 142 116, 134 124, 134 154
-    L 134 258
-    C 134 288, 142 296, 172 296
-    L 280 296
-    C 310 296, 318 288, 318 258
-    L 318 154
-    C 318 124, 310 116, 280 116
-    Z
-  " fill="url(#qGrad)"/>
-  <!-- Q Tail -->
-  <rect x="296" y="296" width="150" height="58" rx="29" transform="rotate(45 296 296)" fill="url(#qGrad)"/>
-  <!-- Organizer list lines (quadro / rol) inside the counter -->
-  <rect x="168" y="166" width="116" height="18" rx="9" fill="#145443" opacity="0.9"/>
-  <rect x="168" y="206" width="116" height="18" rx="9" fill="#145443" opacity="0.9"/>
-  <rect x="168" y="246" width="76" height="18" rx="9" fill="#145443" opacity="0.9"/>
+  <circle cx="176" cy="192" r="58" fill="url(#qGrad)"/><circle cx="336" cy="192" r="58" fill="url(#qGrad)"/>
+  <circle cx="256" cy="128" r="70" fill="url(#qGrad)"/>
+  <path d="M64 408c0-88 48-136 112-136 36 0 66 15 84 43M448 408c0-88-48-136-112-136-36 0-66 15-84 43M120 432c0-112 48-176 136-176s136 64 136 176" fill="none" stroke="url(#qGrad)" stroke-width="44" stroke-linecap="round"/>
 </svg>

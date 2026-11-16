@@ -236,6 +236,23 @@ input[type=radio] {
     letter-spacing: 0
 }
 
+.brand-mark svg {
+    width: 29px;
+    height: 29px;
+    overflow: visible;
+}
+
+.brand-mark svg circle {
+    fill: currentColor;
+}
+
+.brand-mark svg path {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 5;
+    stroke-linecap: round;
+}
+
 .muted {
     color: var(--muted)
 }

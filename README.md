@@ -1,6 +1,6 @@
-# Quadrei
+# Ecluniva
 
-Gestão do rol das sociedades internas IPB: UPH, SAF, UMP, UCP e UPA. Angular 20 standalone, Signals, AngularFire, Firebase Auth/Firestore e Tailwind CSS. Sem Cloud Functions.
+Plataforma para a vida das sociedades internas IPB: membros, diretoria, aniversários, comunicação, convocações e atas de UPH, SAF, UMP, UCP e UPA. Angular 20 standalone, Signals, AngularFire, Firebase Auth/Firestore e Tailwind CSS. Sem Cloud Functions.
 
 ## Desenvolvimento
 
