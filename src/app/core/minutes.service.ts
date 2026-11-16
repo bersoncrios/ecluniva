@@ -1,5 +1,5 @@
 import { Injectable, Injector, effect, inject, runInInjectionContext, signal } from '@angular/core';
-import { Firestore, Timestamp, collection, doc, onSnapshot, runTransaction, serverTimestamp, type Transaction, type Unsubscribe } from '@angular/fire/firestore';
+import { Firestore, Timestamp, collection, doc, onSnapshot, query, runTransaction, serverTimestamp, where, type Transaction, type Unsubscribe } from '@angular/fire/firestore';
 import { DataService } from './data.service';
 import { sharedBirthday } from './communication';
 import { emptyMember } from './domain';
@@ -33,8 +33,10 @@ export class MinutesService {
       this.unsubscribe = runInInjectionContext(this.injector, () => onSnapshot(collection(this.firestore,`societies/${society.id}/minutes`), snapshot => {
         if (context !== this.context) return;
         const items=snapshot.docs.map(item => ({meetingLocation:'',...item.data(),id:item.id}) as Minute);
+        const used:Record<number,Set<number>>={};
+        for(const item of items)if(!item.deletedAt){(used[item.year]??=new Set()).add(item.number);}
         const numbers:Record<number,number>={};
-        for(const item of items)numbers[item.year]=Math.max(numbers[item.year]??1,item.number+1);
+        for(const year of new Set(items.map(item=>item.year))){let number=1;while(used[year]?.has(number))number++;numbers[year]=number;}
         this.nextNumbers.set(numbers);
         this.minutes.set(items.filter(item=>!item.deletedAt).sort((a,b)=>b.date.localeCompare(a.date)||b.number-a.number));
         this.loading.set(false);
@@ -58,14 +60,23 @@ export class MinutesService {
     if (input.date < civilDate(new Date(), input.timeZone)) throw new Error('Agende a plenária para hoje ou uma data futura.');
     return runInInjectionContext(this.injector, () => runTransaction(this.firestore, async transaction => {
       this.assertContext(context);
-      const counterRef = doc(this.firestore,`societies/${societyId}/minuteCounters/${input.year}`);
       const number = input.number;
-      const id = `${input.year}_${number}`;
+      const numberId = `${input.year}_${number}`;
+      const numberRef = doc(this.firestore,`societies/${societyId}/minuteNumbers/${numberId}`);
+      const matching = await transaction.get(query(collection(this.firestore,`societies/${societyId}/minutes`),where('year','==',input.year),where('number','==',number)));
+      const reservation = await transaction.get(numberRef);
+      const staleReservation=reservation.exists()&&matching.docs.some(item=>item.id===reservation.data()['minuteId']&&!!item.data()['deletedAt']);
+      if((reservation.exists()&&!staleReservation)||matching.docs.some(item=>!item.data()['deletedAt']))throw new Error('Já existe uma ata ativa com este número neste ano.');
+      const baseId = `${input.year}_${number}`;
+      const baseRef = doc(this.firestore,`societies/${societyId}/minutes/${baseId}`);
+      const base = matching.docs.find(item=>item.id===baseId);
+      const id = base ? doc(collection(this.firestore,`societies/${societyId}/minutes`)).id : baseId;
       const ref = doc(this.firestore,`societies/${societyId}/minutes/${id}`);
-      if ((await transaction.get(ref)).exists()) throw new Error('Este número já está reservado no ano da plenária, inclusive para atas excluídas. Escolha outro número.');
+      if(base && !base.data()['deletedAt'])throw new Error('Já existe uma ata ativa com este número neste ano.');
+      if(!base && (await transaction.get(baseRef)).exists())throw new Error('Não foi possível reservar este número. Atualize a lista e tente novamente.');
       this.assertContext(context);
       const dayStart = Timestamp.fromDate(new Date(`${input.date}T${String(ZONES[input.timeZone]).padStart(2,'0')}:00:00.000Z`));
-      transaction.set(counterRef,{year:input.year,value:number,minuteId:id,updatedAt:serverTimestamp()});
+      transaction.set(numberRef,{year:input.year,number,minuteId:id,updatedAt:serverTimestamp()});
       transaction.set(ref,{...input,number,status:'scheduled',attendance:[],presidentId:'',secretaryId:'',revision:0,dayStart,dayEnd:Timestamp.fromMillis(dayStart.toMillis()+86400000),createdAt:serverTimestamp(),updatedAt:serverTimestamp(),concludedAt:null,finalText:''});
       return id;
     }));
@@ -78,12 +89,14 @@ export class MinutesService {
     await runInInjectionContext(this.injector,()=>runTransaction(this.firestore,async transaction=>{
       this.assertContext(context);
       const ref=doc(this.firestore,`societies/${societyId}/minutes/${minute.id}`);
-      const [stored,session]=await Promise.all([transaction.get(ref),transaction.get(doc(this.firestore,`societies/${societyId}/attendanceSessions/${minute.id}`))]);
+      const numberRef=doc(this.firestore,`societies/${societyId}/minuteNumbers/${minute.year}_${minute.number}`);
+      const [stored,session,reservation]=await Promise.all([transaction.get(ref),transaction.get(doc(this.firestore,`societies/${societyId}/attendanceSessions/${minute.id}`)),transaction.get(numberRef)]);
       if(!stored.exists()||stored.data()['deletedAt'])throw new Error('Esta ata já foi excluída ou está indisponível.');
       const previous=stored.data() as Minute;
       if(previous.revision!==minute.revision||previous.number!==minute.number||previous.year!==minute.year)throw new Error('A ata foi atualizada em outra sessão. Reabra-a e confira antes de excluir.');
       this.assertContext(context);
       if(session.exists())transaction.update(doc(this.firestore,`plenaryAttendance/${session.data()['token']}`),{open:false});
+      if(reservation.exists()&&reservation.data()['minuteId']===minute.id)transaction.delete(numberRef);
       transaction.update(ref,{deletedAt:serverTimestamp(),deletedBy:uid,deletionReason:reason.trim(),deletionConfirmation:phrase,revision:previous.revision+1,updatedAt:serverTimestamp()});
     }));
     this.assertContext(context);

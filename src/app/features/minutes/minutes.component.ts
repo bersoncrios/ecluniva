@@ -116,7 +116,7 @@ export class MinutesComponent {
       if(!this.validContext(context))return;
       if(this.current()?.id===target.id){this.baseline=null;this.current.set(null);}
       this.deleteDialog?.nativeElement.close();this.deletionTarget.set(null);this.deletionPhrase.set('');this.deletionReason.set('');
-      this.message.set(`Ata ${String(target.number).padStart(3,'0')} excluída. O número permanece reservado e o link de presença foi encerrado.`);
+      this.message.set(`Ata ${String(target.number).padStart(3,'0')} excluída. O número está disponível para uma nova ata, e o link de presença foi encerrado.`);
       document.querySelector<HTMLElement>('.page-heading h1')?.focus();
     });
   }

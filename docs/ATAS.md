@@ -1,6 +1,6 @@
 # Atas e gestão de plenárias
 
-O módulo pertence ao proprietário da sociedade autenticado. O histórico fica em `societies/{societyId}/minutes`; o usuário define o número ao agendar, com sugestão do próximo número do ano. A reserva é atômica por ano e impede duplicatas. O cabeçalho exibe apenas o número, sem sufixo de ano. Nenhuma alteração de cadastro ou vínculo anual deve reescrever uma ata já concluída.
+O módulo pertence ao proprietário da sociedade autenticado. O histórico fica em `societies/{societyId}/minutes`; o usuário define o número ao agendar, com sugestão do próximo número livre do ano. A reserva é atômica por ano e impede atas ativas duplicadas. O cabeçalho exibe apenas o número, sem sufixo de ano. Nenhuma alteração de cadastro ou vínculo anual deve reescrever uma ata já concluída.
 
 ## Ciclo de vida
 
@@ -16,7 +16,7 @@ A diretoria considera o ano civil da plenária. Apenas sócios ativos entram na 
 
 O responsável pela sociedade pode selecionar **Excluir ata** no histórico ou **Excluir esta ata** no editor, inclusive para documentos já lavrados. A confirmação mostra número, data, sociedade e situação; exige motivo de 10 a 500 caracteres e a digitação exata de `EXCLUIR ATA 001`, substituindo pelo número exibido. Sem os dois campos válidos, o botão fica desabilitado. **Manter ata** ou Escape cancela e limpa os campos.
 
-A exclusão remove a ata da listagem e fecha o editor. Trata-se de exclusão lógica: o documento permanece privado com conteúdo histórico, `deletedAt`, `deletedBy`, `deletionReason` e `deletionConfirmation`. O número continua reservado no mesmo ano e é considerado na sugestão do próximo número. Não há restauração pela interface; o corpo de atas lavradas não é reescrito e arquivos já baixados não são recolhidos.
+A exclusão remove a ata da listagem e fecha o editor. Trata-se de exclusão lógica: o documento permanece privado com conteúdo histórico, `deletedAt`, `deletedBy`, `deletionReason` e `deletionConfirmation`. O número fica disponível novamente no mesmo ano e pode ser sugerido para uma nova ata. A nova ata recebe um identificador interno próprio, preservando a ata excluída e seus registros. Não há restauração pela interface; o corpo de atas lavradas não é reescrito e arquivos já baixados não são recolhidos.
 
 O servidor exige proprietário, confirmação correta, motivo, timestamp de servidor e incremento da revisão. O serviço verifica se a versão exibida ainda é atual, recusando a exclusão após alteração em outra sessão. O link de presença é encerrado na mesma transação; atas excluídas não recebem novas confirmações, não reabrem a chamada e não aceitam edição, nova exclusão ou remoção física pelo cliente. As regras atualizadas devem acompanhar a publicação da aplicação.
 
@@ -36,7 +36,7 @@ Os testes de domínio cobrem limites da data civil, fusos, retrato da diretoria 
 
 ## Persistência e limites
 
-`minutes/{ano}_{número}` armazena o conteúdo da reunião, `attendance` com `memberId`, `name`, `office` e `role`, seletores da mesa, `revision`, `dayStart`, `dayEnd`, `createdAt`, `updatedAt`, `concludedAt` e `finalText`. `minuteCounters/{ano}` guarda `year`, `value`, `minuteId` e `updatedAt`. A reserva do contador exige a criação da ata correspondente na mesma gravação atômica. Revisões obsoletas são recusadas. A data civil, o fuso e o número ficam fixos após o agendamento.
+`minutes/{id}` armazena o conteúdo da reunião, `attendance` com `memberId`, `name`, `office` e `role`, seletores da mesa, `revision`, `dayStart`, `dayEnd`, `createdAt`, `updatedAt`, `concludedAt` e `finalText`. `minuteNumbers/{ano}_{número}` reserva atomicamente cada número em uso e aponta para o ID da ata. Se o número for reutilizado, a ata antiga excluída permanece preservada com seu conteúdo e trilha de auditoria, e a nova recebe outro ID. Revisões obsoletas são recusadas. A data civil, o fuso e o número ficam fixos após o agendamento.
 
 O módulo aceita até 500 presentes. O formulário não solicita logotipo; atas antigas que já possuem imagem mantêm seu registro. Os fusos disponíveis são brasileiros, com deslocamentos UTC−2, UTC−3, UTC−4 e UTC−5; a configuração fica registrada em cada reunião. Os horários de abertura, devocional e encerramento devem ocorrer nessa ordem, no mesmo dia civil. Reuniões que atravessam meia-noite não são suportadas nesta versão.
 

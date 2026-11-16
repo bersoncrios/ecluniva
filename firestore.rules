@@ -375,6 +375,26 @@ service cloud.firestore {
           && getAfter(/databases/$(database)/documents/societies/$(societyId)/minutes/$(request.resource.data.minuteId)).data.number == request.resource.data.value;
         allow delete: if false;
       }
+      match /minuteNumbers/{numberId} {
+        function validNumberReservation(data) {
+          return data.keys().hasAll(['year','number','minuteId','updatedAt'])
+            && data.keys().hasOnly(['year','number','minuteId','updatedAt'])
+            && data.year is int && data.year >= 2020 && data.year <= 2100
+            && data.number is int && data.number >= 1 && data.number <= 999999
+            && numberId == string(data.year) + '_' + string(data.number)
+            && data.minuteId is string && data.updatedAt == request.time
+            && getAfter(/databases/$(database)/documents/societies/$(societyId)/minutes/$(data.minuteId)).data.year == data.year
+            && getAfter(/databases/$(database)/documents/societies/$(societyId)/minutes/$(data.minuteId)).data.number == data.number
+            && getAfter(/databases/$(database)/documents/societies/$(societyId)/minutes/$(data.minuteId)).data.createdAt == request.time;
+        }
+        allow read: if ownsSociety(societyId);
+        allow create: if ownsSociety(societyId) && validNumberReservation(request.resource.data,numberId)
+          && !exists(/databases/$(database)/documents/societies/$(societyId)/minutes/$(request.resource.data.minuteId));
+        allow update: if ownsSociety(societyId) && validNumberReservation(request.resource.data,numberId)
+          && get(/databases/$(database)/documents/societies/$(societyId)/minutes/$(resource.data.minuteId)).data.deletedAt != null;
+        allow delete: if ownsSociety(societyId)
+          && getAfter(/databases/$(database)/documents/societies/$(societyId)/minutes/$(resource.data.minuteId)).data.deletedAt == request.time;
+      }
       match /minutes/{minuteId} {
         function validDeletion() {
           let data=request.resource.data;
@@ -392,15 +412,13 @@ service cloud.firestore {
         allow update: if request.resource.data.keys().hasAny(['deletedAt']) && ownsSociety(societyId) && validDeletion();
         allow read: if ownsSociety(societyId);
         allow create: if ownsSociety(societyId) && validMinute(request.resource.data)
-          && minuteId == string(request.resource.data.year) + '_' + string(request.resource.data.number)
           && request.resource.data.createdAt == request.time
           && request.resource.data.revision == 0 && request.resource.data.status == 'scheduled'
           && request.resource.data.attendance.size() == 0
           && request.resource.data.presidentId == '' && request.resource.data.secretaryId == ''
           && request.time < request.resource.data.dayEnd
-          && getAfter(/databases/$(database)/documents/societies/$(societyId)/minuteCounters/$(string(request.resource.data.year))).data.value == request.resource.data.number
-          && getAfter(/databases/$(database)/documents/societies/$(societyId)/minuteCounters/$(string(request.resource.data.year))).data.minuteId == minuteId
-          && getAfter(/databases/$(database)/documents/societies/$(societyId)/minuteCounters/$(string(request.resource.data.year))).data.updatedAt == request.time;
+          && getAfter(/databases/$(database)/documents/societies/$(societyId)/minuteNumbers/$(string(request.resource.data.year) + '_' + string(request.resource.data.number))).data.minuteId == minuteId
+          && getAfter(/databases/$(database)/documents/societies/$(societyId)/minuteNumbers/$(string(request.resource.data.year) + '_' + string(request.resource.data.number))).data.updatedAt == request.time;
         allow update: if ownsSociety(societyId) && minuteNotDeleted(resource.data) && resource.data.status != 'concluded'
           && validMinute(request.resource.data)
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['type','startTime','endTime','churchName','societyName','meetingLocation','templeAddress','logoDataUrl','convocation','scripture','preacher','openingPrayer','devotionalTime','deliberations','newMembers','hymn','closingPrayer','presidentId','secretaryId','attendance','status','revision','updatedAt','concludedAt','finalText'])

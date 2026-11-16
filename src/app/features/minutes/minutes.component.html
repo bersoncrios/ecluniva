@@ -42,7 +42,7 @@
 <dialog #deleteDialog class="confirmation-dialog deletion-dialog" aria-labelledby="delete-minute-title" aria-describedby="delete-minute-description" (cancel)="closeDeletion($event)">
 <h2 id="delete-minute-title">Excluir ata?</h2>
 @if(deletionTarget();as target){
-<p id="delete-minute-description">A ata sairá da listagem e não poderá ser restaurada pela aplicação. O link de presença será encerrado. O registro da exclusão e o número serão preservados.</p>
+<p id="delete-minute-description">A ata sairá da listagem e não poderá ser restaurada pela aplicação. O link de presença será encerrado. O registro da exclusão será mantido e o número ficará livre para outra ata.</p>
 <div class="export-context"><strong>Ata {{target.number.toString().padStart(3,'0')}} · {{date(target.date)}}</strong><p>{{target.societyName}} · {{status(target)}}</p>@if(target.status==='concluded'){<p>Esta ata já foi lavrada. A exclusão não recolhe arquivos PDF ou Word já baixados.</p>}</div>
 <form (ngSubmit)="deleteMinute()"><fieldset [disabled]="busy()">
 <div class="field"><label for="delete-minute-reason">Motivo da exclusão</label><textarea id="delete-minute-reason" name="deletionReason" [ngModel]="deletionReason()" (ngModelChange)="deletionReason.set($event)" minlength="10" maxlength="500" rows="3" aria-describedby="delete-reason-help" required></textarea><p id="delete-reason-help" class="help">Entre 10 e 500 caracteres. O motivo ficará no registro da exclusão.</p></div>

@@ -19,7 +19,7 @@ async function seed(value,id) { await env.withSecurityRulesDisabled(c=>setDoc(re
 async function reserve(db,value) {
  const id=`${value.year}_${value.number}`;
  const batch=writeBatch(db);
- batch.set(doc(db,`societies/own/minuteCounters/${value.year}`),{year:value.year,value:value.number,minuteId:id,updatedAt:serverTimestamp()});
+ batch.set(doc(db,`societies/own/minuteNumbers/${value.year}_${value.number}`),{year:value.year,number:value.number,minuteId:id,updatedAt:serverTimestamp()});
  batch.set(ref(db,id),value);
  return batch.commit();
 }
