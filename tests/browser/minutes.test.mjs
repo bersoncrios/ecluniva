@@ -91,9 +91,7 @@ test('plenaries enforce civil-day attendance, preserve annual officers and issue
   for(const [id,value] of Object.entries({startTime:'19:00',devotionalTime:'19:05',scripture:'Salmo 23',preacher:'Ana Presidente',openingPrayer:'Bruno Secretário',hymn:'Hino oficial da UPH',endTime:'21:00',closingPrayer:'Débora Admitida'}))await editor.locator(`#draft-${id}`).fill(value);
   const deliberations='Foi aprovada, por unanimidade, a contribuição destinada às atividades da sociedade. A diretoria apresentou o planejamento anual e foram deliberadas as ações de visitação e assistência aos sócios. '.repeat(32);
   await editor.locator('#draft-deliberations').fill(deliberations);
-  // Official logo upload fixture: actual local raster file, no remote image request.
-  await editor.getByLabel('Logotipo oficial da sociedade',{exact:true}).setInputFiles('public/logo-512.png');
-  await page.locator('.minute-paper img').waitFor();
+  assert.equal(await editor.locator('input[type="file"]').count(),0);
   const preview=page.locator('.minute-paper');
   assert.ok((await preview.textContent()).includes('3 sócios'));
   assert.ok((await preview.textContent()).includes('Débora Admitida'));

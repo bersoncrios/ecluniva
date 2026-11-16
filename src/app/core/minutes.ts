@@ -90,7 +90,6 @@ export function validateMinute(minute: MinuteInput, concluding = false): Record<
     for (const key of ['presidentId','secretaryId'] as const) if (!minute.attendance.some(person => person.memberId === minute[key])) errors[key]='Escolha um membro presente.';
     if (minute.presidentId && minute.presidentId === minute.secretaryId) errors['secretaryId']='Presidente e secretário devem ser pessoas distintas.';
     if (!minute.attendance.length) errors['attendance']='Registre os presentes antes de lavrar.';
-    if (!minute.logoDataUrl) errors['logoDataUrl']='Inclua o logotipo oficial da sociedade.';
   }
   return errors;
 }

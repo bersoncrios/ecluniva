@@ -27,16 +27,16 @@ test('snapshot deduplicates presence, excludes inactive members and uses only th
   assert.ok(canonical.endsWith('Não havendo mais nada para ser tratado, encerrou-se a presente às 11h30min com uma oração pelo Irmão Sandro Junior. E eu Guilherme Taveira Berson, Secretário da União Presbiteriana de Homens da Igreja Presbiteriana Palmas Norte, a tudo presente, lavrei e após lida e aprovada, assino a presente ata.'));
 
 });
-test('conclusion requires devotional, closing, logo and present distinct session officers',()=>{
+test('conclusion requires devotional, closing and present distinct session officers',()=>{
   const minute={...emptyMinute(),churchName:'Igreja',societyName:'UPH',templeAddress:'Rua Um, 1'};
   assert.deepEqual(validateMinute(minute),{});
   const errors=validateMinute(minute,true);
-  for(const field of ['attendance','presidentId','secretaryId','scripture','endTime','logoDataUrl'])assert.ok(errors[field],field);
+  for(const field of ['attendance','presidentId','secretaryId','scripture','endTime'])assert.ok(errors[field],field);
   assert.ok(validateMinute({...minute,date:'2026-02-30'}).date);
   assert.ok(validateMinute({...minute,year:2025}).year);
   assert.ok(validateMinute({...minute,timeZone:'invalid'}).timeZone);
   const attendance=[{memberId:'a',name:'Ana',role:'Presidente'},{memberId:'b',name:'Bruno',role:'Secretário'}];
-  const complete={...minute,attendance,presidentId:'a',secretaryId:'b',startTime:'19:00',devotionalTime:'19:05',endTime:'20:00',convocation:'segunda',scripture:'Salmo 23',preacher:'Ana',openingPrayer:'Bruno',deliberations:'Foi aprovada a proposta.',hymn:'Hino da UPH',closingPrayer:'Ana',logoDataUrl:'data:image/png;base64,example'};
+  const complete={...minute,attendance,presidentId:'a',secretaryId:'b',startTime:'19:00',devotionalTime:'19:05',endTime:'20:00',convocation:'segunda',scripture:'Salmo 23',preacher:'Ana',openingPrayer:'Bruno',deliberations:'Foi aprovada a proposta.',hymn:'Hino da UPH',closingPrayer:'Ana',logoDataUrl:''};
   assert.deepEqual(validateMinute(complete,true),{});
   assert.ok(validateMinute({...complete,endTime:'18:59'},true).endTime);
   assert.ok(validateMinute({...complete,devotionalTime:'20:01'},true).devotionalTime);

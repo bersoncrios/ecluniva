@@ -135,7 +135,7 @@ service cloud.firestore {
         && text(data.finalText,100000)
         && (data.status == 'concluded' ? data.concludedAt == request.time && data.finalText.size() > 0
           && data.attendance.size() > 0 && data.presidentId != '' && data.secretaryId != ''
-          && data.presidentId != data.secretaryId && data.logoDataUrl.size() > 0
+          && data.presidentId != data.secretaryId
           && data.startTime.matches('^([01][0-9]|2[0-3]):[0-5][0-9]$')
           && data.endTime.matches('^([01][0-9]|2[0-3]):[0-5][0-9]$')
           && data.devotionalTime.matches('^([01][0-9]|2[0-3]):[0-5][0-9]$')
