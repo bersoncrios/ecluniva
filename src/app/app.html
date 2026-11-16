@@ -125,10 +125,10 @@
         [attr.aria-current]="page() === 'members' || page() === 'member' ? 'page' : null" (click)="navigate('members')"
         [disabled]="busy() || exportBusy()"><app-icon name="people" />Membros</button><button
         [class.active]="page() === 'birthdays'" [attr.aria-current]="page() === 'birthdays' ? 'page' : null"
-        (click)="navigate('birthdays')" [disabled]="busy() || exportBusy()"><app-icon
+        (click)="navigate('birthdays')" aria-label="Aniversariantes" [disabled]="busy() || exportBusy()"><app-icon
           name="calendar" />Aniversariantes</button><button [class.active]="page() === 'board'"
         [attr.aria-current]="page() === 'board' ? 'page' : null" (click)="navigate('board')"
-        [disabled]="busy() || exportBusy()"><app-icon name="board" />Diretoria</button><button [class.active]="page() === 'minutes'" [attr.aria-current]="page() === 'minutes' ? 'page' : null" (click)="navigate('minutes')" [disabled]="busy() || exportBusy()"><app-icon name="calendar" />Atas e plenárias</button></nav>
+        [disabled]="busy() || exportBusy()"><app-icon name="board" />Diretoria</button><button [class.active]="page() === 'minutes'" [attr.aria-current]="page() === 'minutes' ? 'page' : null" (click)="navigate('minutes')" [disabled]="busy() || exportBusy()"><app-icon name="calendar" />Atas e plenárias</button><button [class.active]="page() === 'notices'" [attr.aria-current]="page() === 'notices' ? 'page' : null" (click)="navigate('notices')" [disabled]="busy() || exportBusy()"><app-icon name="notice" />Convocações</button></nav>
     <div class="sidebar-bottom">
       <div class="sidebar-note"><app-icon name="heart" /><span>Sua sociedade, em um só lugar.</span></div><button
         class="switch-button" (click)="switchSociety()" [disabled]="busy() || exportBusy()"><app-icon
@@ -204,6 +204,8 @@
         <p>Verifique a conexão e tente novamente.</p><button class="button" (click)="data.loadMembers()">Tentar
           novamente</button>
       </div>
+      } @else if (page() === 'notices') {
+      <app-notices (savingChange)="busy.set($event)" />
       } @else if (page() === 'minutes') {
       <app-minutes (savingChange)="busy.set($event)" />
       } @else if (page() === 'board') {
@@ -526,10 +528,10 @@
         [attr.aria-current]="page() === 'members' || page() === 'member' ? 'page' : null" (click)="navigate('members')"
         [disabled]="busy() || exportBusy()"><app-icon name="people" /><span>Membros</span></button><button
         [class.active]="page() === 'birthdays'" [attr.aria-current]="page() === 'birthdays' ? 'page' : null"
-        (click)="navigate('birthdays')" [disabled]="busy() || exportBusy()"><app-icon
-          name="calendar" /><span>Aniversários</span></button><button [class.active]="page() === 'board'"
+        (click)="navigate('birthdays')" aria-label="Aniversariantes" [disabled]="busy() || exportBusy()"><app-icon
+          name="calendar" /><span>Anivers.</span></button><button [class.active]="page() === 'board'"
         [attr.aria-current]="page() === 'board' ? 'page' : null" (click)="navigate('board')"
-        [disabled]="busy() || exportBusy()"><app-icon name="board" /><span>Diretoria</span></button><button [class.active]="page() === 'minutes'" [attr.aria-current]="page() === 'minutes' ? 'page' : null" (click)="navigate('minutes')" [disabled]="busy() || exportBusy()"><app-icon name="calendar" /><span>Atas</span></button></nav>
+        [disabled]="busy() || exportBusy()"><app-icon name="board" /><span>Diretoria</span></button><button [class.active]="page() === 'minutes'" [attr.aria-current]="page() === 'minutes' ? 'page' : null" (click)="navigate('minutes')" [disabled]="busy() || exportBusy()"><app-icon name="calendar" /><span>Atas</span></button><button [class.active]="page() === 'notices'" [attr.aria-current]="page() === 'notices' ? 'page' : null" (click)="navigate('notices')" aria-label="Convocações" [disabled]="busy() || exportBusy()"><app-icon name="notice" /><span>Convocar</span></button></nav>
   </div>
 </div>
 }

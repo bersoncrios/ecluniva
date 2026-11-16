@@ -3086,3 +3086,11 @@ app-board {
 .member-details-grid dd { margin: 0; overflow-wrap: anywhere; }
 .member-details-notes { white-space: pre-wrap; overflow-wrap: anywhere; }
 @media (max-width: 480px) { .member-details-grid { grid-template-columns: minmax(0, 1fr); } }
+
+/* Six primary sections stay accessible in the compact navigation. */
+@media(max-width:1023px){
+  .mobile-nav{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:0;padding-left:4px;padding-right:4px}
+  .mobile-nav button{min-width:0;padding-left:0;padding-right:0}
+  .mobile-nav button span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+}
+@media(max-width:380px){.mobile-nav button{font-size:10px}}

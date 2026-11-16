@@ -84,3 +84,7 @@ O campo Ofício registra a função na igreja; cargo da diretoria é anual e nã
 ### Atas e plenárias
 
 O menu **Atas e plenárias** reúne agendamento, chamada no dia civil da reunião, diretoria anual, recepção de novos sócios, redação com prévia e exportação PDF A4. A lavratura congela o documento e os presentes. Consulte [regras e limitações do módulo](docs/ATAS.md), incluindo a comparação pendente com o original da ATA 025.
+
+### Convocações
+
+O menu **Convocações** permite criar documentos para reuniões plenárias, da Comissão Executiva e da diretoria, com local, endereço, horário livre, pauta opcional e assinaturas. Oferece prévia, histórico editável e download em PDF ou Word, sem numeração de páginas. Consulte [o módulo de convocações](docs/CONVOCACOES.md).

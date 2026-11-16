@@ -80,7 +80,7 @@ test('annual board persists roles by year, preserves members and remains isolate
     await page.setViewportSize({width,height:900});
     const dimensions=await page.evaluate(()=>({scroll:document.documentElement.scrollWidth,client:document.documentElement.clientWidth}));
     assert.ok(dimensions.scroll<=dimensions.client+1,`Board overflows ${width}px`);
-    if(width<1024) assert.equal(await page.locator('.mobile-nav').getByRole('button').count(),5);
+    if(width<1024) assert.equal(await page.locator('.mobile-nav').getByRole('button').count(),6);
   }
   await mkdir('artifacts/browser',{recursive:true});
   await page.screenshot({path:`artifacts/browser/${unique}-desktop.png`,fullPage:true});

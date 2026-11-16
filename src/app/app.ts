@@ -9,11 +9,12 @@ import { environment } from '../environments/environment';
 import { IconComponent } from './icon';
 import { BoardComponent } from './features/board/board.component';
 import { MinutesComponent } from './features/minutes/minutes.component';
+import { NoticesComponent } from './features/notices/notices.component';
 import { lookupPostalCode, postalCodeDigits, PostalCodeNotFoundError } from './core/viacep';
 
-type Page = 'overview' | 'members' | 'birthdays' | 'member' | 'board' | 'minutes';
+type Page = 'overview' | 'members' | 'birthdays' | 'member' | 'board' | 'minutes' | 'notices';
 type DateParts = { day:string; month:string; year:string };
-@Component({ selector:'app-root', standalone:true, imports:[CommonModule, FormsModule, IconComponent, BoardComponent, MinutesComponent], templateUrl:'./app.html' })
+@Component({ selector:'app-root', standalone:true, imports:[CommonModule, FormsModule, IconComponent, BoardComponent, MinutesComponent, NoticesComponent], templateUrl:'./app.html' })
 export class AppComponent {
   readonly data = inject(DataService);
   private readonly destroyRef = inject(DestroyRef);
@@ -90,7 +91,7 @@ export class AppComponent {
       this.boardMemberId.set(null);
       this.cancelPostalLookup();
       const hash = location.hash.slice(1);
-      const page = (['overview','members','birthdays','board','minutes'].includes(hash) ? hash : 'overview') as Page;
+      const page = (['overview','members','birthdays','board','minutes','notices'].includes(hash) ? hash : 'overview') as Page;
       this.page.set(page);
       refreshDay();
     };

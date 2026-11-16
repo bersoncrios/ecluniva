@@ -113,6 +113,34 @@ service cloud.firestore {
       return request.time >= data.dayStart && request.time < data.dayEnd;
     }
 
+    function noticeDate(value) {
+      return value is string && value.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$') && noticeDay(value.split('-'));
+    }
+    function noticeDay(parts) {
+      let year = int(parts[0]); let month = int(parts[1]); let day = int(parts[2]);
+      let leap = year % 400 == 0 || (year % 4 == 0 && year % 100 != 0);
+      let last = month == 2 ? (leap ? 29 : 28) : (month in [4,6,9,11] ? 30 : 31);
+      return year >= 1900 && year <= 2100 && month >= 1 && month <= 12 && day >= 1 && day <= last;
+    }
+    function noticeField(value, maximum) {
+      return text(value, maximum) && value.size() > 0 && value.matches('.*\\S.*');
+    }
+    function validNotice(data) {
+      return data.keys().hasAll(['meetingType','churchName','societyName','issueCity','issueDate','meetingDate','timeDescription','meetingPurpose','meetingLocation','address','legalBasis','agenda','presidentName','secretaryName','presidentRole','secretaryRole','revision','createdAt','updatedAt'])
+        && data.keys().hasOnly(['meetingType','churchName','societyName','issueCity','issueDate','meetingDate','timeDescription','meetingPurpose','meetingLocation','address','legalBasis','agenda','presidentName','secretaryName','presidentRole','secretaryRole','revision','createdAt','updatedAt'])
+        && data.meetingType in ['plenary','executive','board']
+        && noticeField(data.churchName,160) && noticeField(data.societyName,240)
+        && noticeField(data.issueCity,160) && noticeDate(data.issueDate) && noticeDate(data.meetingDate)
+        && data.issueDate <= data.meetingDate && noticeField(data.timeDescription,160)
+        && noticeField(data.meetingPurpose,160) && noticeField(data.meetingLocation,240)
+        && noticeField(data.address,500) && text(data.legalBasis,1000)
+        && text(data.agenda,10000) && data.agenda.split('\n').size() <= 50
+        && noticeField(data.presidentName,240) && noticeField(data.secretaryName,240)
+        && noticeField(data.presidentRole,160) && noticeField(data.secretaryRole,160)
+        && data.revision is int && data.revision >= 0
+        && data.createdAt is timestamp && data.updatedAt == request.time;
+    }
+
     function validMinute(data) {
       return data.keys().hasAll(['number','year','type','date','timeZone','startTime','endTime','churchName','societyName','templeAddress','logoDataUrl','convocation','scripture','preacher','openingPrayer','devotionalTime','deliberations','newMembers','hymn','closingPrayer','presidentId','secretaryId','attendance','status','revision','dayStart','dayEnd','createdAt','updatedAt','concludedAt','finalText'])
         && data.keys().hasOnly(['number','year','type','date','timeZone','startTime','endTime','churchName','societyName','meetingLocation','templeAddress','logoDataUrl','convocation','scripture','preacher','openingPrayer','devotionalTime','deliberations','newMembers','hymn','closingPrayer','presidentId','secretaryId','attendance','status','revision','dayStart','dayEnd','createdAt','updatedAt','concludedAt','finalText'])
@@ -194,6 +222,16 @@ service cloud.firestore {
             ? request.resource.data.status == 'scheduled' && request.resource.data.presidentId == '' && request.resource.data.secretaryId == ''
             : request.resource.data.status in ['in_progress','concluded'])
           && (minuteIsToday(resource.data) || request.resource.data.attendance == resource.data.attendance);
+        allow delete: if false;
+      }
+
+      match /notices/{noticeId} {
+        allow read: if ownsSociety(societyId);
+        allow create: if ownsSociety(societyId) && validNotice(request.resource.data)
+          && request.resource.data.revision == 0 && request.resource.data.createdAt == request.time;
+        allow update: if ownsSociety(societyId) && validNotice(request.resource.data)
+          && request.resource.data.createdAt == resource.data.createdAt
+          && request.resource.data.revision == resource.data.revision + 1;
         allow delete: if false;
       }
 
