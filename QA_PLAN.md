@@ -81,3 +81,7 @@ A matriz e as correções estão documentadas em [RESPONSIVIDADE.md](docs/RESPON
 Resultado: 43 unitários aprovados. Auditoria de 24 telas/estados em 15 resoluções e três perfis de toque aprovada, com zero problemas detectados e zero exceções de página. Na execução conjunta de navegador, seis jornadas passaram; ViaCEP parou em uma espera genérica por `networkidle`, incompatível com as conexões persistentes do Firestore. O teste passou a observar apenas consultas postais; a reexecução de ViaCEP e da auditoria passou (2/2). As sete jornadas ficaram verificadas. Regras e dados remotos não foram alterados.
 
 Compilação HML concluída após a revisão, sem erros.
+
+## Comunicação compartilhada — 16/11/2026
+
+47 unitários, 33 testes de regras e oito jornadas de navegador aprovados. A jornada nova usa duas contas com e-mail confirmado pelo Auth Emulator e verifica convite, aceite, dados mínimos sem ano de nascimento/contato, bloqueio de navegação privada, acompanhamento, seis cartões PNG, identidade, inativação/reativação e revogação em tempo real. A interface de Comunicação foi conferida em 320/390/768/1024/1440 px; a auditoria geral passou nas 24 telas/estados × 15 resoluções. Detalhes e requisitos de publicação em [COMUNICACAO.md](docs/COMUNICACAO.md). Testes exclusivamente locais, sem e-mails reais.

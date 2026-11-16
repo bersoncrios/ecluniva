@@ -3125,3 +3125,5 @@ app-board {
   .input-with-icon>input,.status-filter select,.form-section input,.form-section select,.form-section textarea,.date-parts input,.board-year-picker input,.emulator-login input{font-size:16px}
   .results-meta>.text-button{min-height:44px}
 }
+
+.pending-invites{margin:24px 0}.pending-invites>h2{margin-bottom:16px}.pending-invite{display:flex;gap:20px;justify-content:space-between;align-items:center;padding:24px;margin-bottom:16px}.pending-invite>div{min-width:0;overflow-wrap:anywhere}.pending-invite h3{margin:10px 0}.pending-invite p{color:var(--muted);font-size:14px}.birthday-heading-actions{display:flex;flex-direction:column;align-items:flex-end;gap:12px}.mobile-nav.communication-only{grid-template-columns:minmax(0,1fr)}@media(max-width:767px){.pending-invite{padding:18px;flex-direction:column;align-items:stretch}.birthday-heading-actions{align-items:flex-start}.pending-invite .button{width:100%}}

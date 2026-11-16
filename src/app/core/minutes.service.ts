@@ -1,6 +1,7 @@
 import { Injectable, Injector, effect, inject, runInInjectionContext, signal } from '@angular/core';
 import { Firestore, Timestamp, collection, doc, onSnapshot, runTransaction, serverTimestamp, type Transaction, type Unsubscribe } from '@angular/fire/firestore';
 import { DataService } from './data.service';
+import { sharedBirthday } from './communication';
 import { emptyMember } from './domain';
 import { attendanceAvailable, civilDate, minuteText, validateMinute, type AttendanceSnapshot, type Minute, type MinuteInput } from './minutes';
 
@@ -124,6 +125,7 @@ export class MinutesService {
       attendance.push({memberId:memberRef.id,name:name.trim(),office:'',role:''});
       this.assertContext(context);
       transaction.set(memberRef,{...emptyMember(),name:name.trim(),receivedDate:previous.date,createdAt:serverTimestamp(),updatedAt:serverTimestamp()});
+      transaction.set(doc(this.firestore,`societies/${societyId}/communicationBirthdays/${memberRef.id}`),sharedBirthday({...emptyMember(),name:name.trim()}));
       const editable = ['type','startTime','endTime','churchName','societyName','meetingLocation','templeAddress','logoDataUrl','convocation','scripture','preacher','openingPrayer','devotionalTime','deliberations','hymn','closingPrayer','presidentId','secretaryId'] as const;
       const draft = Object.fromEntries(editable.map(key=>[key,minute[key]]));
       const result = {...previous,...draft,attendance,newMembers:[minute.newMembers.trim(),name.trim()].filter(Boolean).join('; '),revision:previous.revision+1,status:'in_progress' as const,id:minute.id};

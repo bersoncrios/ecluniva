@@ -29,7 +29,7 @@
       <button class="google-button" (click)="login()" [disabled]="loginBusy()"><span class="google-g"
           aria-hidden="true">G</span>{{ loginBusy() ? 'Entrando…' : 'Entrar com Google' }}<app-icon
           name="arrow" /></button>
-      <p class="help">Use sua conta Google para acessar as sociedades sob sua responsabilidade.</p>
+      <p class="help">Use sua conta Google para acessar suas sociedades e os convites de Comunicação.</p>@if(inviteEntry){<p class="alert" role="status">Entre com o e-mail que recebeu o convite para aceitá-lo.</p>}
       <div class="login-features">
         <div><app-icon name="check" />Membros e aniversários</div>
         <div><app-icon name="check" />Diretoria por ano</div>
@@ -58,12 +58,13 @@
       class="button subtle" (click)="logout()" [disabled]="busy()"><app-icon name="logout" />Sair</button></header>
   <main id="main" class="selection-main">
     <div class="eyebrow">SEU ESPAÇO DE ORGANIZAÇÃO</div>
-    <h1 tabindex="-1">{{ createMode() || (!data.societies().length && !data.societiesLoading() &&
+    <h1 tabindex="-1">{{ createMode() || (!data.societies().length && !pendingInvites().length && !data.societiesLoading() &&
       !data.societiesError()) ? 'Vamos começar pela sua sociedade' : 'Suas sociedades' }}</h1>
-    <p class="lead small">{{ createMode() || !data.societies().length ? 'Informe a igreja, o tipo de sociedade e o nome
+    <p class="lead small">{{ createMode() || (!data.societies().length&&!pendingInvites().length) ? 'Informe a igreja, o tipo de sociedade e o nome
       da unidade local.' : 'Escolha a sociedade que deseja organizar.' }}</p>
     @if (notice()) { <div class="alert success" role="status">{{ notice() }}</div> }
     @if (error()) { <div class="alert error" role="alert">{{ error() }}</div> }
+    @if(pendingInvites().length){<section class="pending-invites" aria-label="Convites de Comunicação"><h2>Convites de Comunicação</h2>@for(invite of pendingInvites();track invite.id){<article class="panel pending-invite"><div><span class="badge">Comunicação</span><h3>{{invite.societyType}} · {{invite.societyName}}</h3><p>{{invite.churchName}}</p><p class="help">Acesso aos nomes e dia/mês dos aniversariantes, mensagens, cartões e acompanhamento das publicações.</p></div><button type="button" class="button" (click)="acceptInvite(invite)" [disabled]="busy()" [attr.aria-label]="'Aceitar convite de '+invite.societyName">Aceitar convite</button></article>}</section>}
     @if (data.societiesLoading()) {
     <div class="panel loading" role="status"><span class="spinner"></span>Carregando sociedades…</div>
     } @else if (data.societiesError()) {
@@ -72,7 +73,7 @@
       <p>Verifique a conexão e tente novamente.</p><button class="button" (click)="data.loadSocieties()">Tentar
         novamente</button>
     </div>
-    } @else if (createMode() || !data.societies().length) {
+    } @else if (createMode() || (!data.societies().length&&!pendingInvites().length)) {
     <form class="panel society-form" (ngSubmit)="createSociety()" novalidate>
       <div class="field"><label for="churchName">Igreja <span class="required-label">obrigatório</span></label><input
           id="churchName" name="churchName" [(ngModel)]="churchName" maxlength="160"
@@ -94,7 +95,7 @@
           [attr.aria-invalid]="!!societyErrors()['societyName']" aria-describedby="society-name-error">@if
         (societyErrors()['societyName']) { <p class="field-error" id="society-name-error">{{
           societyErrors()['societyName'] }}</p> }</div>
-      <p class="help"><app-icon name="info" />O cadastro fica disponível somente para sua conta neste MVP.</p>
+      <p class="help"><app-icon name="info" />O cadastro completo fica restrito à sua conta. A Comunicação pode ser compartilhada por convite.</p>
       <div class="form-actions"><button type="submit" class="button" [disabled]="busy()">{{ busy() ? 'Criando
           sociedade…' : 'Criar e continuar' }}<app-icon name="arrow" /></button>@if (data.societies().length) { <button
           type="button" class="button secondary" (click)="createMode.set(false)" [disabled]="busy()">Cancelar</button> }
@@ -104,7 +105,7 @@
     <div class="society-grid">@for (society of data.societies(); track society.id) { <button
         class="society-choice panel" (click)="select(society)"><span class="society-type">{{ society.type
           }}</span><strong>{{ society.name }}</strong><span class="muted">{{ society.churchName }}</span><span
-          class="choice-action">Organizar sociedade<app-icon name="arrow" /></span></button> }<button
+          class="choice-action">{{society.ownerId===data.user()?.uid?'Organizar sociedade':'Acessar Comunicação'}}<app-icon name="arrow" /></span></button> }<button
         class="society-choice create-choice" (click)="createMode.set(true)"><app-icon name="plus" /><strong>Criar
           sociedade</strong><span class="muted">Organize outra unidade local.</span></button></div>
     }
@@ -119,16 +120,16 @@
     <a class="brand" href="#overview" (click)="$event.preventDefault(); navigate('overview')"><span
         class="brand-mark">Q</span>quadrei</a>
     <div class="sidebar-caption">PESSOAS, ENCONTROS E HISTÓRIA</div>
-    <nav><button [class.active]="page() === 'overview'" [attr.aria-current]="page() === 'overview' ? 'page' : null"
+    <nav>@if(data.isOwner()){<button [class.active]="page() === 'overview'" [attr.aria-current]="page() === 'overview' ? 'page' : null"
         (click)="navigate('overview')" [disabled]="busy() || exportBusy()"><app-icon name="grid" />Visão
         geral</button><button [class.active]="page() === 'members' || page() === 'member'"
         [attr.aria-current]="page() === 'members' || page() === 'member' ? 'page' : null" (click)="navigate('members')"
         [disabled]="busy() || exportBusy()"><app-icon name="people" />Membros</button><button
-        [class.active]="page() === 'birthdays'" [attr.aria-current]="page() === 'birthdays' ? 'page' : null"
+        [class.active]="(page() === 'birthdays' || page() === 'communication')" [attr.aria-current]="(page() === 'birthdays' || page() === 'communication') ? 'page' : null"
         (click)="navigate('birthdays')" aria-label="Aniversariantes" [disabled]="busy() || exportBusy()"><app-icon
           name="calendar" />Aniversariantes</button><button [class.active]="page() === 'board'"
         [attr.aria-current]="page() === 'board' ? 'page' : null" (click)="navigate('board')"
-        [disabled]="busy() || exportBusy()"><app-icon name="board" />Diretoria</button><button [class.active]="page() === 'minutes'" [attr.aria-current]="page() === 'minutes' ? 'page' : null" (click)="navigate('minutes')" [disabled]="busy() || exportBusy()"><app-icon name="calendar" />Atas e plenárias</button><button [class.active]="page() === 'notices'" [attr.aria-current]="page() === 'notices' ? 'page' : null" (click)="navigate('notices')" [disabled]="busy() || exportBusy()"><app-icon name="notice" />Convocações</button></nav>
+        [disabled]="busy() || exportBusy()"><app-icon name="board" />Diretoria</button><button [class.active]="page() === 'minutes'" [attr.aria-current]="page() === 'minutes' ? 'page' : null" (click)="navigate('minutes')" [disabled]="busy() || exportBusy()"><app-icon name="calendar" />Atas e plenárias</button><button [class.active]="page() === 'notices'" [attr.aria-current]="page() === 'notices' ? 'page' : null" (click)="navigate('notices')" [disabled]="busy() || exportBusy()"><app-icon name="notice" />Convocações</button>}@else{<button class="active" aria-current="page" (click)="navigate('communication')"><app-icon name="calendar" />Comunicação</button>}</nav>
     <div class="sidebar-bottom">
       <div class="sidebar-note"><app-icon name="heart" /><span>Sua sociedade, em um só lugar.</span></div><button
         class="switch-button" (click)="switchSociety()" [disabled]="busy() || exportBusy()"><app-icon
@@ -155,6 +156,7 @@
       </details>
     </header>
     <main id="main" class="workspace">
+      @if(pendingInvites().length){<div class="alert" role="status">Você tem {{pendingInvites().length}} {{pendingInvites().length===1?'convite':'convites'}} de Comunicação. <button type="button" class="button secondary" (click)="switchSociety()" [disabled]="busy()||exportBusy()">Ver convites</button></div>}
       @if (notice()) { <div class="alert success notice" role="status"><app-icon name="check" /><span>{{ notice()
           }}</span><button aria-label="Fechar mensagem" class="dismiss" (click)="notice.set('')">×</button></div> }
       @if (error()) { <div class="alert error" role="alert">{{ error() }}</div> }
@@ -182,7 +184,7 @@
           <div class="eyebrow">MOTIVOS PARA CELEBRAR</div>
           <h1 tabindex="-1">Aniversariantes</h1>
           <p>Somente membros ativos com nascimento informado.</p>
-        </div><span class="month-tag"><app-icon name="calendar" />{{ monthName() }}</span>
+        </div><div class="birthday-heading-actions"><span class="month-tag"><app-icon name="calendar" />{{ monthName() }}</span><button type="button" class="button secondary" (click)="navigate('communication')">Comunicação e publicações</button></div>
       </div>
       } @else if (page() === 'member') {
       <button class="back-link" (click)="navigate('members')" [disabled]="busy()"><app-icon name="back" />Voltar ao
@@ -204,6 +206,8 @@
         <p>Verifique a conexão e tente novamente.</p><button class="button" (click)="data.loadMembers()">Tentar
           novamente</button>
       </div>
+      } @else if (page() === 'communication') {
+      @defer (on immediate) {<app-communication (savingChange)="busy.set($event)" (back)="navigate('birthdays')" />} @loading {<div class="panel loading" role="status">Carregando Comunicação…</div>} @error {<div class="alert error" role="alert">Não foi possível abrir Comunicação. <button type="button" class="button secondary" (click)="reloadApp()">Atualizar página</button></div>}
       } @else if (page() === 'notices') {
       <app-notices (savingChange)="busy.set($event)" />
       } @else if (page() === 'minutes') {
@@ -521,17 +525,17 @@
       <footer class="workspace-footer"><span>Quadrei</span><span>{{ data.selected()?.type }} · {{ data.selected()?.name
           }}</span></footer>
     </main>
-    <nav class="mobile-nav" aria-label="Navegação principal"><button [class.active]="page() === 'overview'"
+    <nav class="mobile-nav" [class.communication-only]="!data.isOwner()" aria-label="Navegação principal">@if(data.isOwner()){<button [class.active]="page() === 'overview'"
         [attr.aria-current]="page() === 'overview' ? 'page' : null" (click)="navigate('overview')"
         [disabled]="busy() || exportBusy()"><app-icon name="grid" /><span>Início</span></button><button
         [class.active]="page() === 'members' || page() === 'member'"
         [attr.aria-current]="page() === 'members' || page() === 'member' ? 'page' : null" (click)="navigate('members')"
         [disabled]="busy() || exportBusy()"><app-icon name="people" /><span>Membros</span></button><button
-        [class.active]="page() === 'birthdays'" [attr.aria-current]="page() === 'birthdays' ? 'page' : null"
+        [class.active]="(page() === 'birthdays' || page() === 'communication')" [attr.aria-current]="(page() === 'birthdays' || page() === 'communication') ? 'page' : null"
         (click)="navigate('birthdays')" aria-label="Aniversariantes" [disabled]="busy() || exportBusy()"><app-icon
           name="calendar" /><span>Anivers.</span></button><button [class.active]="page() === 'board'"
         [attr.aria-current]="page() === 'board' ? 'page' : null" (click)="navigate('board')"
-        [disabled]="busy() || exportBusy()"><app-icon name="board" /><span>Diretoria</span></button><button [class.active]="page() === 'minutes'" [attr.aria-current]="page() === 'minutes' ? 'page' : null" (click)="navigate('minutes')" [disabled]="busy() || exportBusy()"><app-icon name="calendar" /><span>Atas</span></button><button [class.active]="page() === 'notices'" [attr.aria-current]="page() === 'notices' ? 'page' : null" (click)="navigate('notices')" aria-label="Convocações" [disabled]="busy() || exportBusy()"><app-icon name="notice" /><span>Convocar</span></button></nav>
+        [disabled]="busy() || exportBusy()"><app-icon name="board" /><span>Diretoria</span></button><button [class.active]="page() === 'minutes'" [attr.aria-current]="page() === 'minutes' ? 'page' : null" (click)="navigate('minutes')" [disabled]="busy() || exportBusy()"><app-icon name="calendar" /><span>Atas</span></button><button [class.active]="page() === 'notices'" [attr.aria-current]="page() === 'notices' ? 'page' : null" (click)="navigate('notices')" aria-label="Convocações" [disabled]="busy() || exportBusy()"><app-icon name="notice" /><span>Convocar</span></button>}@else{<button class="active" aria-current="page" (click)="navigate('communication')"><app-icon name="calendar" /><span>Comunicação</span></button>}</nav>
   </div>
 </div>
 }

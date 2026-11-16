@@ -88,3 +88,7 @@ O menu **Atas e plenárias** reúne agendamento, chamada no dia civil da reuniã
 ### Convocações
 
 O menu **Convocações** permite criar documentos para reuniões plenárias, da Comissão Executiva e da diretoria, com local, endereço, horário livre, pauta opcional e assinaturas. Oferece prévia, histórico editável e download em PDF ou Word, sem numeração de páginas. Consulte [o módulo de convocações](docs/CONVOCACOES.md).
+
+### Comunicação e cartões de aniversário
+
+Em **Aniversariantes → Comunicação e publicações**, convide a equipe por e-mail, compartilhe apenas nomes e dia/mês, acompanhe publicações e gere cartões PNG para feed e story. O destinatário entra com o Google do endereço convidado e aceita o acesso. O responsável configura cores, logotipo e mensagem padrão e pode revogar o acesso. O convite pode ser copiado ou aberto como e-mail pronto para envio no cliente do usuário. Consulte [Comunicação e permissões](docs/COMUNICACAO.md).

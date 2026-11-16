@@ -9,12 +9,14 @@ import { environment } from '../environments/environment';
 import { IconComponent } from './icon';
 import { BoardComponent } from './features/board/board.component';
 import { MinutesComponent } from './features/minutes/minutes.component';
+import { CommunicationComponent } from './features/communication/communication.component';
+import { CommunicationInvite } from './core/communication';
 import { NoticesComponent } from './features/notices/notices.component';
 import { lookupPostalCode, postalCodeDigits, PostalCodeNotFoundError } from './core/viacep';
 
-type Page = 'overview' | 'members' | 'birthdays' | 'member' | 'board' | 'minutes' | 'notices';
+type Page = 'overview' | 'members' | 'birthdays' | 'member' | 'board' | 'minutes' | 'notices' | 'communication';
 type DateParts = { day:string; month:string; year:string };
-@Component({ selector:'app-root', standalone:true, imports:[CommonModule, FormsModule, IconComponent, BoardComponent, MinutesComponent, NoticesComponent], templateUrl:'./app.html' })
+@Component({ selector:'app-root', standalone:true, imports:[CommonModule, FormsModule, IconComponent, BoardComponent, MinutesComponent, NoticesComponent, CommunicationComponent], templateUrl:'./app.html' })
 export class AppComponent {
   readonly data = inject(DataService);
   private readonly destroyRef = inject(DestroyRef);
@@ -23,6 +25,8 @@ export class AppComponent {
   readonly types = SOCIETY_TYPES;
   readonly states = STATES;
   readonly page = signal<Page>('overview');
+  readonly pendingInvites=computed(()=>this.data.incomingInvites().filter(invite=>invite.status==='pending'));
+  readonly inviteEntry=location.hash==='#convites';
   readonly boardMemberId = signal<string|null>(null);
   readonly query = signal('');
   readonly status = signal<'all'|'active'|'inactive'>('active');
@@ -73,7 +77,7 @@ export class AppComponent {
         this.previousContext = context;
         this.busy.set(false);
         this.boardMemberId.set(null);
-        this.page.set('overview');
+        this.page.set(this.data.selected()&&!this.data.isOwner()?'communication':'overview');
         this.query.set('');
         this.status.set('active');
         this.member = emptyMember();
@@ -91,8 +95,8 @@ export class AppComponent {
       this.boardMemberId.set(null);
       this.cancelPostalLookup();
       const hash = location.hash.slice(1);
-      const page = (['overview','members','birthdays','board','minutes','notices'].includes(hash) ? hash : 'overview') as Page;
-      this.page.set(page);
+      const page = (['overview','members','birthdays','board','minutes','notices','communication'].includes(hash) ? hash : 'overview') as Page;
+      this.page.set(this.data.selected()&&!this.data.isOwner()?'communication':page);
       refreshDay();
     };
     window.addEventListener('popstate', navigateBack);
@@ -104,6 +108,8 @@ export class AppComponent {
       document.removeEventListener('visibilitychange', refreshDay);
     });
   }
+
+  reloadApp():void{location.reload();}
 
   async login(emulator = false): Promise<void> {
     if (this.loginBusy()) return;
@@ -135,7 +141,12 @@ export class AppComponent {
   select(society: Society): void {
     this.createMode.set(false);
     this.data.select(society);
-    this.navigate('overview');
+    this.navigate(this.data.isOwner()?'overview':'communication');
+  }
+
+  async acceptInvite(invite:CommunicationInvite):Promise<void>{
+    if(this.busy())return;this.busy.set(true);this.error.set('');
+    try{await this.data.acceptCommunicationInvite(invite);this.notice.set('Convite aceito. Abra a sociedade para acessar Comunicação.');}catch(error){this.error.set(error instanceof Error?error.message:'Não foi possível aceitar o convite.');}finally{this.busy.set(false);}
   }
 
   switchSociety(): void {
@@ -167,7 +178,7 @@ export class AppComponent {
   navigate(page: Page): void {
     if (this.busy() || this.exportBusy()) return;
     this.cancelPostalLookup();
-    this.page.set(page);
+    this.page.set(this.data.selected()&&!this.data.isOwner()?'communication':page);
     this.boardMemberId.set(null);
     this.today.set(todayISO());
     this.error.set('');

@@ -174,8 +174,120 @@ service cloud.firestore {
           : data.concludedAt == null && data.finalText == '');
     }
 
+    function verifiedEmail() {
+      return signedIn() && request.auth.token.get('email_verified', false) == true
+        && request.auth.token.get('email', '') != '';
+    }
+    function communicationAccess(societyId) {
+      return verifiedEmail()
+        && exists(/databases/$(database)/documents/societies/$(societyId)/communicationTeam/$(request.auth.uid))
+        && get(/databases/$(database)/documents/societies/$(societyId)/communicationTeam/$(request.auth.uid)).data.active == true
+        && get(/databases/$(database)/documents/societies/$(societyId)/communicationTeam/$(request.auth.uid)).data.email == request.auth.token.email.lower()
+        && get(/databases/$(database)/documents/societies/$(societyId)/communicationSettings/access).data.enabled == true
+        && activeCommunicationInvite(societyId, get(/databases/$(database)/documents/societies/$(societyId)/communicationTeam/$(request.auth.uid)).data.inviteId);
+    }
+    function activeCommunicationInvite(societyId, inviteId) {
+      let invite = get(/databases/$(database)/documents/communicationInvites/$(inviteId)).data;
+      return invite.societyId == societyId && invite.status == 'accepted' && invite.acceptedBy == request.auth.uid;
+    }
+    function sharedBirthdayMatches(data, member) {
+      let parts = member.birthDate == null ? ['0','0','0'] : member.birthDate.split('-');
+      return data.keys().hasAll(['name','month','day','active']) && data.keys().hasOnly(['name','month','day','active'])
+        && data.name == member.name && data.month is int && data.day is int && data.active is bool
+        && data.month == int(parts[1]) && data.day == int(parts[2])
+        && data.active == (member.status == 'active' && member.birthDate != null);
+    }
+    function birthdayProjectionRequired(societyId, memberId, creating) {
+      return (exists(/databases/$(database)/documents/societies/$(societyId)/communicationSettings/access)
+          && get(/databases/$(database)/documents/societies/$(societyId)/communicationSettings/access).data.enabled == true)
+        || (!creating && exists(/databases/$(database)/documents/societies/$(societyId)/communicationBirthdays/$(memberId)));
+    }
+    function memberBirthdaySynced(societyId, memberId, member, creating) {
+      return !birthdayProjectionRequired(societyId, memberId, creating)
+        || sharedBirthdayMatches(getAfter(/databases/$(database)/documents/societies/$(societyId)/communicationBirthdays/$(memberId)).data, member);
+    }
+    function validCommunicationInvite(data, inviteId) {
+      let society = get(/databases/$(database)/documents/societies/$(data.societyId)).data;
+      return data.keys().hasAll(['societyId','ownerId','email','societyName','churchName','societyType','status','acceptedBy','acceptedAt','createdAt','updatedAt'])
+        && data.keys().hasOnly(['societyId','ownerId','email','societyName','churchName','societyType','status','acceptedBy','acceptedAt','createdAt','updatedAt'])
+        && data.societyId is string && data.societyId.size() > 0 && data.societyId.size() <= 128
+        && data.societyId.matches('^[^/]+$') && data.ownerId == society.ownerId
+        && data.societyName == society.name && data.churchName == society.churchName && data.societyType == society.type
+        && text(data.email,254) && data.email == data.email.lower()
+        && data.email.matches('^[^\\s/@]+@[^\\s/@]+\\.[^\\s/@]+$')
+        && inviteId == data.societyId + '__' + data.email
+        && data.status in ['pending','accepted','revoked'] && text(data.acceptedBy,128)
+        && data.createdAt is timestamp && data.updatedAt == request.time;
+    }
+    function acceptingInvite(data, inviteId) {
+      return verifiedEmail() && resource.data.status == 'pending' && data.status == 'accepted'
+        && resource.data.email == request.auth.token.email.lower() && data.acceptedBy == request.auth.uid
+        && data.acceptedAt == request.time
+        && data.diff(resource.data).affectedKeys().hasOnly(['status','acceptedBy','acceptedAt','updatedAt'])
+        && getAfter(/databases/$(database)/documents/societies/$(data.societyId)/communicationTeam/$(request.auth.uid)).data.active == true
+        && getAfter(/databases/$(database)/documents/societies/$(data.societyId)/communicationTeam/$(request.auth.uid)).data.inviteId == inviteId;
+    }
+    function validCommunicationTeam(data, userId) {
+      return data.keys().hasAll(['userId','email','inviteId','active','createdAt','updatedAt'])
+        && data.keys().hasOnly(['userId','email','inviteId','active','createdAt','updatedAt'])
+        && data.userId == userId && text(data.email,254) && text(data.inviteId,400)
+        && data.active is bool && data.createdAt is timestamp && data.updatedAt == request.time;
+    }
+    function joiningCommunicationTeam(societyId, userId, data) {
+      let invite = getAfter(/databases/$(database)/documents/communicationInvites/$(data.inviteId)).data;
+      return verifiedEmail() && userId == request.auth.uid && data.active == true
+        && data.email == request.auth.token.email.lower() && invite.email == data.email
+        && invite.societyId == societyId && invite.status == 'accepted' && invite.acceptedBy == userId
+        && invite.acceptedAt == request.time;
+    }
+    function validCardIdentity(data) {
+      return data.keys().hasAll(['primaryColor','accentColor','logoDataUrl','messageTemplate','updatedAt','updatedBy'])
+        && data.keys().hasOnly(['primaryColor','accentColor','logoDataUrl','messageTemplate','updatedAt','updatedBy'])
+        && data.primaryColor is string && data.primaryColor.matches('^#[0-9a-fA-F]{6}$')
+        && data.accentColor is string && data.accentColor.matches('^#[0-9a-fA-F]{6}$')
+        && text(data.logoDataUrl,250000) && (data.logoDataUrl == '' || data.logoDataUrl.matches('^data:image/(png|jpeg);base64,[A-Za-z0-9+/=]+$'))
+        && text(data.messageTemplate,1000) && data.messageTemplate.size() >= 10
+        && data.updatedBy == request.auth.uid && data.updatedAt == request.time;
+    }
+    function birthdayOccurrenceMatches(person, date) {
+      let parts = date.split('-'); let year = int(parts[0]);
+      let leap = year % 400 == 0 || (year % 4 == 0 && year % 100 != 0);
+      return person.active == true && year >= 2020 && year <= 2100 && int(parts[1]) == person.month
+        && int(parts[2]) == (person.month == 2 && person.day == 29 && !leap ? 28 : person.day);
+    }
+    function validPublication(data, publicationId, societyId) {
+      return data.keys().hasAll(['memberId','date','status','revision','updatedBy','updatedAt'])
+        && data.keys().hasOnly(['memberId','date','status','revision','updatedBy','updatedAt'])
+        && data.memberId is string && data.memberId.size() > 0 && data.memberId.size() <= 128 && data.memberId.matches('^[^/]+$')
+        && noticeDate(data.date) && publicationId == data.memberId + '_' + data.date
+        && birthdayOccurrenceMatches(get(/databases/$(database)/documents/societies/$(societyId)/communicationBirthdays/$(data.memberId)).data,data.date)
+        && data.status in ['pending','prepared','published'] && data.revision is int && data.revision >= 0
+        && data.updatedBy == request.auth.uid && data.updatedAt == request.time;
+    }
+
+    match /communicationInvites/{inviteId} {
+      allow get: if signedIn() && ((resource == null && ownsSociety(inviteId.split('__')[0]))
+        || (resource != null && (ownsSociety(resource.data.societyId) || (verifiedEmail() && resource.data.email == request.auth.token.email.lower()))));
+      allow list: if signedIn() && (ownsSociety(resource.data.societyId) || (verifiedEmail() && resource.data.email == request.auth.token.email.lower()));
+      allow create: if signedIn() && ownsSociety(request.resource.data.societyId)
+        && validCommunicationInvite(request.resource.data,inviteId)
+        && request.resource.data.status == 'pending' && request.resource.data.acceptedBy == '' && request.resource.data.acceptedAt == null
+        && request.resource.data.createdAt == request.time
+        && get(/databases/$(database)/documents/societies/$(request.resource.data.societyId)/communicationSettings/access).data.enabled == true;
+      allow update: if signedIn() && validCommunicationInvite(request.resource.data,inviteId)
+        && request.resource.data.createdAt == resource.data.createdAt
+        && (acceptingInvite(request.resource.data,inviteId)
+          || (ownsSociety(resource.data.societyId)
+            && ((request.resource.data.status == 'revoked' && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','updatedAt']))
+              || (resource.data.status == 'revoked' && request.resource.data.status == 'pending'
+                && request.resource.data.acceptedBy == '' && request.resource.data.acceptedAt == null
+                && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','acceptedBy','acceptedAt','updatedAt'])))));
+      allow delete: if false;
+    }
+
     match /societies/{societyId} {
-      allow read: if signedIn() && resource.data.ownerId == request.auth.uid;
+      allow get: if ownsSociety(societyId) || communicationAccess(societyId);
+      allow list: if signedIn() && resource.data.ownerId == request.auth.uid;
       allow create: if signedIn() && validSociety(request.resource.data)
         && request.resource.data.ownerId == request.auth.uid
         && request.resource.data.createdAt == request.time
@@ -250,13 +362,50 @@ service cloud.firestore {
         allow delete: if ownsSociety(societyId);
       }
 
+      match /communicationBirthdays/{memberId} {
+        allow read: if ownsSociety(societyId) || (communicationAccess(societyId) && resource.data.active == true);
+        allow create, update: if ownsSociety(societyId)
+          && sharedBirthdayMatches(request.resource.data,getAfter(/databases/$(database)/documents/societies/$(societyId)/members/$(memberId)).data);
+        allow delete: if false;
+      }
+      match /communicationTeam/{userId} {
+        allow get: if ownsSociety(societyId) || (signedIn() && userId == request.auth.uid);
+        allow list: if ownsSociety(societyId);
+        allow create: if validCommunicationTeam(request.resource.data,userId)
+          && joiningCommunicationTeam(societyId,userId,request.resource.data) && request.resource.data.createdAt == request.time;
+        allow update: if validCommunicationTeam(request.resource.data,userId) && request.resource.data.createdAt == resource.data.createdAt
+          && (joiningCommunicationTeam(societyId,userId,request.resource.data)
+            || (ownsSociety(societyId) && request.resource.data.active == false
+              && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['active','updatedAt'])));
+        allow delete: if false;
+      }
+      match /communicationSettings/{settingId} {
+        allow read: if ownsSociety(societyId) || communicationAccess(societyId);
+        allow create, update: if ownsSociety(societyId)
+          && ((settingId == 'access' && request.resource.data.keys().hasAll(['enabled','updatedAt'])
+            && request.resource.data.keys().hasOnly(['enabled','updatedAt']) && request.resource.data.enabled == true && request.resource.data.updatedAt == request.time)
+            || (settingId == 'identity' && validCardIdentity(request.resource.data)));
+        allow delete: if false;
+      }
+      match /birthdayPublications/{publicationId} {
+        allow read: if ownsSociety(societyId) || communicationAccess(societyId);
+        allow create: if (ownsSociety(societyId) || communicationAccess(societyId)) && validPublication(request.resource.data,publicationId,societyId)
+          && request.resource.data.revision == 0;
+        allow update: if (ownsSociety(societyId) || communicationAccess(societyId)) && validPublication(request.resource.data,publicationId,societyId)
+          && request.resource.data.memberId == resource.data.memberId && request.resource.data.date == resource.data.date
+          && request.resource.data.revision == resource.data.revision + 1;
+        allow delete: if false;
+      }
+
       match /members/{memberId} {
         allow read: if ownsSociety(societyId);
         allow create: if ownsSociety(societyId) && validMember(request.resource.data)
           && request.resource.data.status == 'active'
+          && memberBirthdaySynced(societyId,memberId,request.resource.data,true)
           && request.resource.data.createdAt == request.time
           && request.resource.data.updatedAt == request.time;
         allow update: if ownsSociety(societyId) && validMember(request.resource.data)
+          && memberBirthdaySynced(societyId,memberId,request.resource.data,false)
           && request.resource.data.createdAt == resource.data.createdAt
           && request.resource.data.updatedAt == request.time;
         allow delete: if false;
