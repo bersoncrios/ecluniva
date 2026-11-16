@@ -96,3 +96,43 @@ test('meeting location is validated and legacy minutes remain editable',async()=
  await seed(legacy,`${value.year}_2`);
  await assertSucceeds(updateDoc(ref(db,`${value.year}_2`),{deliberations:'Pauta atualizada.',revision:1,updatedAt:serverTimestamp()}));
 });
+
+const deletion=(patch={})=>({deletedAt:serverTimestamp(),deletedBy:'owner',deletionReason:'Agendamento duplicado por engano.',deletionConfirmation:'EXCLUIR ATA 001',revision:1,updatedAt:serverTimestamp(),...patch});
+test('minute deletion requires owner, exact phrase, reason, server time and current revision',async()=>{
+ const db=owner(),value=minute(1),id=`${value.year}_1`;await reserve(db,value);
+ for(const patch of [{deletionConfirmation:'excluir ata 001'},{deletionConfirmation:'EXCLUIR ATA 002'},{deletionReason:'curto'},{deletionReason:'x'.repeat(501)},{deletedBy:'other'},{deletedAt:Timestamp.fromMillis(1)},{revision:0},{deliberations:'Conteúdo adulterado.'}])await assertFails(updateDoc(ref(db,id),deletion(patch)));
+ await assertFails(updateDoc(ref(env.authenticatedContext('other').firestore(),id),deletion()));
+ await assertFails(updateDoc(ref(env.unauthenticatedContext().firestore(),id),deletion()));
+ await assertFails(deleteDoc(ref(db,id)));
+ await assertSucceeds(updateDoc(ref(db,id),deletion()));
+ const stored=(await getDoc(ref(db,id))).data();assert.equal(stored.deletionReason,'Agendamento duplicado por engano.');assert.equal(stored.deletedBy,'owner');assert.ok(stored.deletedAt.toMillis()>0);
+ await assertFails(reserve(db,value));
+});
+test('concluded minute may be excluded without changing historical content and cannot be restored',async()=>{
+ const db=owner(),value={...minute(-1),status:'concluded',revision:4,concludedAt:Timestamp.fromMillis(Date.now()-86400000),finalText:'Documento histórico aprovado.',attendance:[{memberId:'a',name:'Ana',role:'Presidente'}]},id=`${value.year}_1`;await seed(value,id);
+ await assertFails(updateDoc(ref(db,id),deletion({revision:5,finalText:'Conteúdo diferente.'})));
+ await assertSucceeds(updateDoc(ref(db,id),deletion({revision:5})));
+ const stored=(await getDoc(ref(db,id))).data();assert.equal(stored.finalText,value.finalText);assert.deepEqual(stored.attendance,value.attendance);assert.equal(stored.status,'concluded');
+ await assertFails(updateDoc(ref(db,id),{deletedAt:null,revision:6,updatedAt:serverTimestamp()}));
+ await assertFails(updateDoc(ref(db,id),deletion({revision:6,deletionReason:'Outro motivo de exclusão.'})));
+ await assertFails(updateDoc(ref(db,id),{deliberations:'Editada após exclusão',revision:6,updatedAt:serverTimestamp()}));
+ await assertFails(deleteDoc(ref(db,id)));
+});
+test('deletion atomically closes attendance and blocks reopening, submissions and processing',async()=>{
+ const db=owner(),value=minute(),id=`${value.year}_1`,token='d'.repeat(48),receipt='e'.repeat(48);await reserve(db,value);
+ const link=doc(db,`plenaryAttendance/${token}`),session=doc(db,`societies/own/attendanceSessions/${id}`),pending=doc(db,`plenaryAttendance/${token}/requests/${receipt}`);
+ const batch=writeBatch(db);batch.set(session,{token,code:'123456'});batch.set(link,{societyId:'own',minuteId:id,title:'UPH Teste · Plenária 1',date:value.date,timeZone:value.timeZone,open:true});await assertSucceeds(batch.commit());
+ const guest=env.unauthenticatedContext().firestore();await assertSucceeds(setDoc(doc(guest,`plenaryAttendance/${token}/requests/${receipt}`),{name:'Ana da Silva',code:'123456',status:'pending',memberId:'',createdAt:serverTimestamp(),processedAt:null}));
+ await assertFails(updateDoc(ref(db,id),deletion()));
+ const remove=writeBatch(db);remove.update(ref(db,id),deletion());remove.update(link,{open:false});await assertSucceeds(remove.commit());
+ assert.equal((await getDoc(link)).data().open,false);
+ await assertFails(updateDoc(link,{open:true}));
+ await assertFails(setDoc(doc(guest,`plenaryAttendance/${token}/requests/${'f'.repeat(48)}`),{name:'Bruno da Silva',code:'123456',status:'pending',memberId:'',createdAt:serverTimestamp(),processedAt:null}));
+ await assertFails(updateDoc(pending,{status:'rejected',memberId:'',processedAt:serverTimestamp()}));
+});
+test('deletion does not bypass revision checks for concurrent edits',async()=>{
+ const db=owner(),value=minute(1),id=`${value.year}_1`;await reserve(db,value);
+ await updateDoc(ref(db,id),{deliberations:'Atualizada em outra sessão.',revision:1,updatedAt:serverTimestamp()});
+ await assertFails(updateDoc(ref(db,id),deletion()));
+ await assertSucceeds(updateDoc(ref(db,id),deletion({revision:2})));
+});

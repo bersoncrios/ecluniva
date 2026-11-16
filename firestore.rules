@@ -109,6 +109,8 @@ service cloud.firestore {
         && data.dayEnd == data.dayStart + duration.value(24, 'h');
     }
 
+    function minuteNotDeleted(data) { return data.get('deletedAt', null) == null; }
+
     function minuteIsToday(data) {
       return request.time >= data.dayStart && request.time < data.dayEnd;
     }
@@ -296,7 +298,7 @@ service cloud.firestore {
           && data.keys().hasOnly(['societyId','minuteId','title','date','timeZone','open'])
           && text(data.title,220) && data.date == minute.date && data.timeZone == minute.timeZone && data.open is bool
           && getAfter(/databases/$(database)/documents/societies/$(data.societyId)/attendanceSessions/$(data.minuteId)).data.token == token
-          && (!data.open || (minuteIsToday(minute) && minute.status != 'concluded'));
+          && (!data.open || (minuteNotDeleted(minute) && minuteIsToday(minute) && minute.status != 'concluded'));
       }
       allow get: if token.matches('^[a-f0-9]{48}$');
       allow list, delete: if false;
@@ -309,7 +311,7 @@ service cloud.firestore {
         function accepting() {
           let data = session();
           let minute = linkedMinute(data);
-          return data.open && minuteIsToday(minute) && minute.status != 'concluded';
+          return data.open && minuteNotDeleted(minute) && minuteIsToday(minute) && minute.status != 'concluded';
         }
         allow get: if token.matches('^[a-f0-9]{48}$') && requestId.matches('^[a-f0-9]{48}$');
         allow list: if requestOwner();
@@ -321,7 +323,7 @@ service cloud.firestore {
           && request.resource.data.status == 'pending' && request.resource.data.memberId == ''
           && request.resource.data.createdAt == request.time && request.resource.data.processedAt == null;
         allow update: if requestOwner() && resource.data.status == 'pending'
-          && minuteIsToday(linkedMinute(session())) && linkedMinute(session()).status != 'concluded'
+          && minuteNotDeleted(linkedMinute(session())) && minuteIsToday(linkedMinute(session())) && linkedMinute(session()).status != 'concluded'
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','memberId','processedAt'])
           && request.resource.data.status in ['confirmed','duplicate','rejected']
           && text(request.resource.data.memberId,128) && request.resource.data.processedAt == request.time
@@ -351,6 +353,7 @@ service cloud.firestore {
         allow create: if ownsSociety(societyId)
           && request.resource.data.keys().hasAll(['token','code']) && request.resource.data.keys().hasOnly(['token','code'])
           && request.resource.data.token.matches('^[a-f0-9]{48}$') && request.resource.data.code.matches('^[0-9]{6}$')
+          && minuteNotDeleted(get(/databases/$(database)/documents/societies/$(societyId)/minutes/$(minuteId)).data)
           && request.time < get(/databases/$(database)/documents/societies/$(societyId)/minutes/$(minuteId)).data.dayEnd
           && get(/databases/$(database)/documents/societies/$(societyId)/minutes/$(minuteId)).data.status != 'concluded'
           && getAfter(/databases/$(database)/documents/plenaryAttendance/$(request.resource.data.token)).data.societyId == societyId
@@ -373,6 +376,20 @@ service cloud.firestore {
         allow delete: if false;
       }
       match /minutes/{minuteId} {
+        function validDeletion() {
+          let data=request.resource.data;
+          let number=resource.data.number;
+          let padded=number < 10 ? '00' + string(number) : (number < 100 ? '0' + string(number) : string(number));
+          let sessionPath=/databases/$(database)/documents/societies/$(societyId)/attendanceSessions/$(minuteId);
+          return minuteNotDeleted(resource.data)
+            && data.diff(resource.data).affectedKeys().hasOnly(['deletedAt','deletedBy','deletionReason','deletionConfirmation','revision','updatedAt'])
+            && data.deletedAt == request.time && data.updatedAt == request.time && data.deletedBy == request.auth.uid
+            && requiredName(data.deletionReason,500) && data.deletionReason.size() >= 10
+            && data.deletionConfirmation == 'EXCLUIR ATA ' + padded
+            && data.revision == resource.data.revision + 1
+            && (!exists(sessionPath) || getAfter(/databases/$(database)/documents/plenaryAttendance/$(get(sessionPath).data.token)).data.open == false);
+        }
+        allow update: if request.resource.data.keys().hasAny(['deletedAt']) && ownsSociety(societyId) && validDeletion();
         allow read: if ownsSociety(societyId);
         allow create: if ownsSociety(societyId) && validMinute(request.resource.data)
           && minuteId == string(request.resource.data.year) + '_' + string(request.resource.data.number)
@@ -384,7 +401,7 @@ service cloud.firestore {
           && getAfter(/databases/$(database)/documents/societies/$(societyId)/minuteCounters/$(string(request.resource.data.year))).data.value == request.resource.data.number
           && getAfter(/databases/$(database)/documents/societies/$(societyId)/minuteCounters/$(string(request.resource.data.year))).data.minuteId == minuteId
           && getAfter(/databases/$(database)/documents/societies/$(societyId)/minuteCounters/$(string(request.resource.data.year))).data.updatedAt == request.time;
-        allow update: if ownsSociety(societyId) && resource.data.status != 'concluded'
+        allow update: if ownsSociety(societyId) && minuteNotDeleted(resource.data) && resource.data.status != 'concluded'
           && validMinute(request.resource.data)
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['type','startTime','endTime','churchName','societyName','meetingLocation','templeAddress','logoDataUrl','convocation','scripture','preacher','openingPrayer','devotionalTime','deliberations','newMembers','hymn','closingPrayer','presidentId','secretaryId','attendance','status','revision','updatedAt','concludedAt','finalText'])
           && request.resource.data.revision == resource.data.revision + 1

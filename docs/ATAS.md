@@ -12,6 +12,14 @@ A chamada só aceita alterações durante o dia civil agendado, desde 00h00 incl
 
 A diretoria considera o ano civil da plenária. Apenas sócios ativos entram na chamada. O ofício na igreja é preservado no retrato da presença e acompanha o nome na redação, nas orações e na presidência. Os cargos são os vínculos anuais, e não o campo de ofício eclesiástico. Presidente e secretário são sugeridos entre os presentes; o responsável pode escolher outros presentes para conduzir a sessão. Uma admissão durante a reunião cria o cadastro ativo e registra a recepção e presença na plenária.
 
+## Exclusão com confirmação reforçada
+
+O responsável pela sociedade pode selecionar **Excluir ata** no histórico ou **Excluir esta ata** no editor, inclusive para documentos já lavrados. A confirmação mostra número, data, sociedade e situação; exige motivo de 10 a 500 caracteres e a digitação exata de `EXCLUIR ATA 001`, substituindo pelo número exibido. Sem os dois campos válidos, o botão fica desabilitado. **Manter ata** ou Escape cancela e limpa os campos.
+
+A exclusão remove a ata da listagem e fecha o editor. Trata-se de exclusão lógica: o documento permanece privado com conteúdo histórico, `deletedAt`, `deletedBy`, `deletionReason` e `deletionConfirmation`. O número continua reservado no mesmo ano e é considerado na sugestão do próximo número. Não há restauração pela interface; o corpo de atas lavradas não é reescrito e arquivos já baixados não são recolhidos.
+
+O servidor exige proprietário, confirmação correta, motivo, timestamp de servidor e incremento da revisão. O serviço verifica se a versão exibida ainda é atual, recusando a exclusão após alteração em outra sessão. O link de presença é encerrado na mesma transação; atas excluídas não recebem novas confirmações, não reabrem a chamada e não aceitam edição, nova exclusão ou remoção física pelo cliente. As regras atualizadas devem acompanhar a publicação da aplicação.
+
 ## Documento
 
 O hino é opcional: informe somente seu número para incluir o trecho na ata. Sem número, o trecho é omitido.

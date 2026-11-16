@@ -35,7 +35,7 @@ export class AttendanceService {
       const privateRef=doc(this.db,`societies/${sid}/attendanceSessions/${minute.id}`);
       const minuteRef=doc(this.db,`societies/${sid}/minutes/${minute.id}`);
       const [stored,session]=await Promise.all([tx.get(minuteRef),tx.get(privateRef)]);
-      if(!stored.exists()||stored.data()['status']==='concluded'||stored.data()['date']<civilDate(new Date(),stored.data()['timeZone']))throw new Error('Gere o link para uma plenária de hoje ou futura, antes de concluir a ata.');
+      if(!stored.exists()||stored.data()['deletedAt']||stored.data()['status']==='concluded'||stored.data()['date']<civilDate(new Date(),stored.data()['timeZone']))throw new Error('Gere o link para uma plenária de hoje ou futura, antes de concluir ou excluir a ata.');
       if(session.exists()&&!attendanceAvailable(stored.data() as Minute))throw new Error('Abra as confirmações somente no dia da plenária.');
       this.owner(sid);
       const actualToken=session.exists()?String(session.data()['token']):token;

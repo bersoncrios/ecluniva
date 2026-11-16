@@ -98,3 +98,15 @@ test('hino só aparece quando o número é preenchido e pode ficar em branco',()
   assert.ok(validateMinute({...minute,hymn:'Hino de teste'}).hymn);
   assert.ok(validateMinute({...minute,hymn:'0'}).hymn);
 });
+
+test('deletion needs exact minute phrase and a meaningful bounded reason; deleted meetings have no attendance',async()=>{
+ const {minuteDeletionPhrase,validMinuteDeletion}=await import('../.test-dist/minutes.js');
+ for(const [number,phrase] of [[1,'EXCLUIR ATA 001'],[12,'EXCLUIR ATA 012'],[123,'EXCLUIR ATA 123'],[1234,'EXCLUIR ATA 1234']]){
+  assert.equal(minuteDeletionPhrase(number),phrase);assert.equal(validMinuteDeletion(number,phrase,'Agendamento duplicado.'),true);
+  assert.equal(validMinuteDeletion(number,phrase.toLowerCase(),'Agendamento duplicado.'),false);
+ }
+ assert.equal(validMinuteDeletion(1,'EXCLUIR ATA 002','Agendamento duplicado.'),false);
+ assert.equal(validMinuteDeletion(1,'EXCLUIR ATA 001','   curto   '),false);
+ assert.equal(validMinuteDeletion(1,'EXCLUIR ATA 001','x'.repeat(501)),false);
+ assert.equal(attendanceAvailable({...emptyMinute('2026-11-15'),deletedAt:{}},new Date('2026-11-15T15:00:00Z')),false);
+});

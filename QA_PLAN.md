@@ -101,3 +101,13 @@ Verificação final de presença e atas: 5/5 regras e 2/2 jornadas aprovadas ap�
 Corrigido o carregamento da exportação padrão da biblioteca CommonJS `qrcode`. O servidor de desenvolvimento disponibilizava exportações nomeadas, mas o chunk otimizado exportava apenas `default`, causando falha na chamada `toDataURL`.
 
 `npm run test:attendance:optimized` compila em modo production com configuração exclusiva dos emuladores, serve os arquivos estáticos em uma porta local e executa a jornada de presença. Teste aprovado: QR Code decodificado com `jsqr` e comparado ao link real, cópia do link, nomes/duplicidades/homônimos, admissão e presença automática, responsividade e encerramento com a ata. O teste não usa Vite e não grava em projetos remotos.
+
+## Exclusão de atas com confirmação reforçada — 16/11/2026
+
+51 testes unitários e 42 testes de regras aprovados. As regras novas verificam proprietário, frase exata, motivo limitado, timestamp, revisão, preservação de ata lavrada, reserva do número e encerramento atômico da presença. Edição, restauração, nova exclusão, remoção física, novos envios e reabertura de uma ata excluída são recusados.
+
+Os fluxos de ata e presença passaram na rodada conjunta. A jornada nova de exclusão passou na reexecução após corrigir a simulação do teste para usar o estado em andamento ao editar uma plenária no dia da reunião. Verifica campos obrigatórios, frase incorreta, Enter sem confirmação válida, cancelamento, campos limpos ao reabrir, revisão concorrente, exclusão persistida após recarga, encerramento da página pública, ata lavrada preservada, editor fechado e número não reutilizável. Diálogo conferido em 320/390/768/1440 px, com capturas em `artifacts/minute-deletion`.
+
+Testes exclusivamente em Auth/Firestore locais. Aplicação e regras remotas não foram publicadas.
+
+Compilação final HML aprovada após os testes de exclusão.

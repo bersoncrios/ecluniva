@@ -2,7 +2,7 @@ import { Component, DestroyRef, ElementRef, ViewChild, computed, effect, inject,
 import { FormsModule } from '@angular/forms';
 import { DataService } from '../../core/data.service';
 import { MinutesService } from '../../core/minutes.service';
-import { Minute, MinuteInput, attendanceAvailable, civilDate, emptyMinute, minuteSegments, minutePersonName, minuteStatus, snapshotAttendance, suggestedOfficers, validateMinute } from '../../core/minutes';
+import { Minute, MinuteInput, attendanceAvailable, civilDate, emptyMinute, minuteSegments, minutePersonName, minuteStatus, minuteDeletionPhrase, validMinuteDeletion, snapshotAttendance, suggestedOfficers, validateMinute } from '../../core/minutes';
 import { AttendancePanelComponent } from '../attendance/attendance-panel.component';
 import { exportMinutePdf } from '../../core/minutes-pdf';
 import { exportMinuteDocx } from '../../core/minutes-docx';
@@ -21,6 +21,11 @@ export class MinutesComponent {
   readonly clock=signal(new Date());
   readonly search=signal('');
   readonly confirmationOpen=signal(false);
+  readonly deletionTarget=signal<Minute|null>(null);
+  readonly deletionReason=signal('');
+  readonly deletionPhrase=signal('');
+  readonly deletionPrompt=computed(()=>this.deletionTarget()?minuteDeletionPhrase(this.deletionTarget()!.number):'');
+  readonly deletionReady=computed(()=>!!this.deletionTarget()&&validMinuteDeletion(this.deletionTarget()!.number,this.deletionPhrase(),this.deletionReason()));
   readonly zones=[{value:'America/Araguaina',label:'Tocantins / Brasília (UTC−3)'},{value:'America/Manaus',label:'Amazonas (UTC−4)'},{value:'America/Rio_Branco',label:'Acre (UTC−5)'},{value:'America/Noronha',label:'Fernando de Noronha (UTC−2)'}];
   readonly members=computed(()=>this.data.members().filter(member=>member.status==='active').sort((a,b)=>a.name.localeCompare(b.name,'pt-BR')));
   readonly filtered=computed(()=>this.members().filter(member=>member.name.toLocaleLowerCase('pt-BR').includes(this.search().toLocaleLowerCase('pt-BR'))));
@@ -42,17 +47,22 @@ export class MinutesComponent {
   schedule:MinuteInput=emptyMinute();
   admissionName='';
   @ViewChild('concludeDialog') dialog?:ElementRef<HTMLDialogElement>;
+  @ViewChild('deleteDialog') deleteDialog?:ElementRef<HTMLDialogElement>;
+  private deletionTrigger:HTMLElement|null=null;
   private baseline:Minute|null=null;
   private context='';
   private destroyed=false;
   constructor(){
     effect(()=>{
       const context=`${this.data.user()?.uid??''}/${this.data.selected()?.id??''}`;
-      if(context!==this.context){this.context=context;this.current.set(null);this.scheduleOpen.set(false);this.failure.set('');this.message.set('');this.errors.set({});this.search.set('');this.dialog?.nativeElement.close();}
+      if(context!==this.context){this.context=context;this.current.set(null);this.scheduleOpen.set(false);this.failure.set('');this.message.set('');this.errors.set({});this.search.set('');this.dialog?.nativeElement.close();this.deleteDialog?.nativeElement.close();this.deletionTarget.set(null);this.deletionPhrase.set('');this.deletionReason.set('');}
     });
     effect(()=>{
       const draft=this.current();
       const latest=this.service.minutes().find(item=>item.id===draft?.id);
+      if(draft&&!latest&&!this.service.loading()&&!this.service.error()){this.baseline=null;this.current.set(null);this.dialog?.nativeElement.close();}
+      const target=this.deletionTarget();
+      if(target&&!this.service.loading()&&!this.service.error()&&!this.service.minutes().some(item=>item.id===target.id)){this.deleteDialog?.nativeElement.close();this.deletionTarget.set(null);}
       const base=this.baseline;
       if(!draft||!latest||!base||base.id!==draft.id||latest.revision<=base.revision)return;
       const textChanged=this.fields.some(field=>latest[field.key]!==base[field.key]);
@@ -65,12 +75,12 @@ export class MinutesComponent {
       this.current.set({...draft,attendance,revision:latest.revision,status:latest.status,presidentId:draft.presidentId===base.presidentId?latest.presidentId:draft.presidentId,secretaryId:draft.secretaryId===base.secretaryId?latest.secretaryId:draft.secretaryId});
     });
     const timer=window.setInterval(()=>this.clock.set(new Date()),1000);
-    inject(DestroyRef).onDestroy(()=>{window.clearInterval(timer);this.destroyed=true;this.savingChange.emit(false);this.dialog?.nativeElement.close();});
+    inject(DestroyRef).onDestroy(()=>{window.clearInterval(timer);this.destroyed=true;this.savingChange.emit(false);this.dialog?.nativeElement.close();this.deleteDialog?.nativeElement.close();});
   }
   status(minute:Minute):string{return ({scheduled:'Agendada',in_progress:'Em andamento',concluded:'Lavrada / concluída'})[minuteStatus(minute,this.clock())];}
   date(value:string):string{return value.split('-').reverse().join('/');}
   countdown(minute:Minute):string{const today=civilDate(this.clock(),minute.timeZone);if(minute.status==='concluded')return 'Documento e presenças congelados';if(minute.date===today)return 'Chamada liberada hoje';if(minute.date<today)return 'Dia da reunião encerrado · chamada indisponível';const days=Math.round((Date.parse(minute.date+'T12:00:00Z')-Date.parse(today+'T12:00:00Z'))/86400000);return `Em ${days} ${days===1?'dia':'dias'} · chamada às 00h00 de ${this.date(minute.date)}`;}
-  newSchedule():void{const society=this.data.selected();const draft=emptyMinute();this.schedule={...draft,number:Math.max(0,...this.service.minutes().filter(minute=>minute.year===draft.year).map(minute=>minute.number))+1,churchName:society?.churchName??'',societyName:society?`${society.type} ${society.name}`:''};this.errors.set({});this.failure.set('');this.scheduleOpen.set(true);}
+  newSchedule():void{const society=this.data.selected();const draft=emptyMinute();this.schedule={...draft,number:this.service.nextNumber(draft.year),churchName:society?.churchName??'',societyName:society?`${society.type} ${society.name}`:''};this.errors.set({});this.failure.set('');this.scheduleOpen.set(true);}
   async create():Promise<void>{this.schedule.year=Number(this.schedule.date.slice(0,4));this.errors.set(validateMinute(this.schedule));if(Object.keys(this.errors()).length)return;await this.perform(async()=>{const context=this.context;const id=await this.service.schedule(this.schedule);if(!this.validContext(context))return;this.scheduleOpen.set(false);this.message.set('Plenária agendada com o número de ata informado.');const minute=this.service.minutes().find(item=>item.id===id);if(minute)this.open(minute);});}
   open(minute:Minute):void{if(this.busy())return;this.baseline=structuredClone(minute);this.current.set(structuredClone(minute));this.errors.set({});this.failure.set('');this.message.set('');this.search.set('');this.admissionName='';if(minute.status!=='concluded'&&this.data.boardYear()!==minute.year)this.data.loadBoard(minute.year);}
   update(key:TextKey,value:string):void{this.current.update(minute=>minute?{...minute,[key]:value}:null);}
@@ -86,6 +96,30 @@ export class MinutesComponent {
   requestConclude():void{const minute=this.current();if(!minute)return;this.errors.set(validateMinute(minute,true));if(Object.keys(this.errors()).length){this.failure.set('Revise os campos indicados antes de lavrar a ata.');return;}this.dialog?.nativeElement.showModal();}
   closeConfirmation(event?:Event):void{event?.preventDefault();if(!this.busy())this.dialog?.nativeElement.close();}
   async conclude():Promise<void>{const minute=this.current();if(!minute)return;await this.perform(async()=>{const context=this.context;await this.service.conclude(minute);if(!this.validContext(context))return;this.refresh(minute.id);this.dialog?.nativeElement.close();this.message.set('Ata lavrada. O documento e o histórico de presença foram congelados.');});}
+  requestDelete(minute:Minute):void{
+    if(this.busy())return;
+    const stored=this.service.minutes().find(item=>item.id===minute.id);
+    if(!stored)return;
+    this.deletionTrigger=document.activeElement instanceof HTMLElement?document.activeElement:null;
+    this.deletionTarget.set(structuredClone(stored));this.deletionPhrase.set('');this.deletionReason.set('');this.failure.set('');this.message.set('');
+    this.deleteDialog?.nativeElement.showModal();
+  }
+  closeDeletion(event?:Event):void{
+    event?.preventDefault();if(this.busy())return;
+    this.deleteDialog?.nativeElement.close();this.deletionTarget.set(null);this.deletionPhrase.set('');this.deletionReason.set('');this.failure.set('');this.deletionTrigger?.focus();
+  }
+  async deleteMinute():Promise<void>{
+    const target=this.deletionTarget();if(!target||!this.deletionReady())return;
+    await this.perform(async()=>{
+      const context=this.context;
+      await this.service.remove(target,this.deletionPhrase(),this.deletionReason());
+      if(!this.validContext(context))return;
+      if(this.current()?.id===target.id){this.baseline=null;this.current.set(null);}
+      this.deleteDialog?.nativeElement.close();this.deletionTarget.set(null);this.deletionPhrase.set('');this.deletionReason.set('');
+      this.message.set(`Ata ${String(target.number).padStart(3,'0')} excluída. O número permanece reservado e o link de presença foi encerrado.`);
+      document.querySelector<HTMLElement>('.page-heading h1')?.focus();
+    });
+  }
   private validContext(context:string):boolean{return !this.destroyed&&this.context===context;}
   private refresh(id:string):void{const minute=this.service.minutes().find(item=>item.id===id);if(minute){this.baseline=structuredClone(minute);this.current.set(structuredClone(minute));}}
   private async perform(action:()=>Promise<void>):Promise<void>{if(this.busy())return;const context=this.context;this.busy.set(true);this.savingChange.emit(true);this.failure.set('');this.message.set('');try{await action();}catch(error){if(context===this.context&&!this.destroyed)this.failure.set(error instanceof Error?error.message:'Não foi possível concluir a operação. Tente novamente.');}finally{this.busy.set(false);if(!this.destroyed)this.savingChange.emit(false);}}

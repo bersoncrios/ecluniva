@@ -3,7 +3,7 @@ import { Firestore, Timestamp, collection, doc, onSnapshot, runTransaction, serv
 import { DataService } from './data.service';
 import { sharedBirthday } from './communication';
 import { emptyMember } from './domain';
-import { attendanceAvailable, civilDate, minuteText, validateMinute, type AttendanceSnapshot, type Minute, type MinuteInput } from './minutes';
+import { attendanceAvailable, civilDate, minuteText, validateMinute, validMinuteDeletion, type AttendanceSnapshot, type Minute, type MinuteInput } from './minutes';
 
 const ZONES: Record<string, number> = {'America/Araguaina':3,'America/Sao_Paulo':3,'America/Recife':3,'America/Fortaleza':3,'America/Bahia':3,'America/Belem':3,'America/Noronha':2,'America/Manaus':4,'America/Rio_Branco':5};
 @Injectable({providedIn:'root'})
@@ -14,6 +14,8 @@ export class MinutesService {
   readonly minutes = signal<Minute[]>([]);
   readonly loading = signal(false);
   readonly error = signal('');
+  private readonly nextNumbers = signal<Record<number,number>>({});
+  nextNumber(year: number): number { return this.nextNumbers()[year] ?? 1; }
   private unsubscribe?: Unsubscribe;
   private context = '';
   private readonly reload = signal(0);
@@ -23,14 +25,18 @@ export class MinutesService {
       this.reload();
       const society = this.data.selected();
       const uid = this.data.user()?.uid;
-      this.unsubscribe?.(); this.minutes.set([]); this.error.set(''); this.loading.set(false);
+      this.unsubscribe?.(); this.minutes.set([]); this.nextNumbers.set({}); this.error.set(''); this.loading.set(false);
       this.context = `${uid ?? ''}/${society?.id ?? ''}`;
       if (!society || society.ownerId !== uid) return;
       const context = this.context;
       this.loading.set(true);
       this.unsubscribe = runInInjectionContext(this.injector, () => onSnapshot(collection(this.firestore,`societies/${society.id}/minutes`), snapshot => {
         if (context !== this.context) return;
-        this.minutes.set(snapshot.docs.map(item => ({meetingLocation:'',...item.data(),id:item.id}) as Minute).sort((a,b)=>b.date.localeCompare(a.date)||b.number-a.number));
+        const items=snapshot.docs.map(item => ({meetingLocation:'',...item.data(),id:item.id}) as Minute);
+        const numbers:Record<number,number>={};
+        for(const item of items)numbers[item.year]=Math.max(numbers[item.year]??1,item.number+1);
+        this.nextNumbers.set(numbers);
+        this.minutes.set(items.filter(item=>!item.deletedAt).sort((a,b)=>b.date.localeCompare(a.date)||b.number-a.number));
         this.loading.set(false);
       }, () => { if (context === this.context) { this.loading.set(false); this.error.set('Não foi possível carregar as atas.'); } }));
       onCleanup(() => this.unsubscribe?.());
@@ -56,7 +62,7 @@ export class MinutesService {
       const number = input.number;
       const id = `${input.year}_${number}`;
       const ref = doc(this.firestore,`societies/${societyId}/minutes/${id}`);
-      if ((await transaction.get(ref)).exists()) throw new Error('Já existe uma ata com esse número no ano da plenária. Escolha outro número.');
+      if ((await transaction.get(ref)).exists()) throw new Error('Este número já está reservado no ano da plenária, inclusive para atas excluídas. Escolha outro número.');
       this.assertContext(context);
       const dayStart = Timestamp.fromDate(new Date(`${input.date}T${String(ZONES[input.timeZone]).padStart(2,'0')}:00:00.000Z`));
       transaction.set(counterRef,{year:input.year,value:number,minuteId:id,updatedAt:serverTimestamp()});
@@ -66,6 +72,23 @@ export class MinutesService {
   }
   async save(minute: Minute): Promise<void> { await this.write(minute,false); }
   async conclude(minute: Minute): Promise<void> { await this.write(minute,true); }
+  async remove(minute: Minute, phrase: string, reason: string): Promise<void> {
+    const societyId=this.society(),context=this.context,uid=this.data.user()!.uid;
+    if(!validMinuteDeletion(minute.number,phrase,reason))throw new Error('Digite a confirmação exatamente como indicada e informe um motivo entre 10 e 500 caracteres.');
+    await runInInjectionContext(this.injector,()=>runTransaction(this.firestore,async transaction=>{
+      this.assertContext(context);
+      const ref=doc(this.firestore,`societies/${societyId}/minutes/${minute.id}`);
+      const [stored,session]=await Promise.all([transaction.get(ref),transaction.get(doc(this.firestore,`societies/${societyId}/attendanceSessions/${minute.id}`))]);
+      if(!stored.exists()||stored.data()['deletedAt'])throw new Error('Esta ata já foi excluída ou está indisponível.');
+      const previous=stored.data() as Minute;
+      if(previous.revision!==minute.revision||previous.number!==minute.number||previous.year!==minute.year)throw new Error('A ata foi atualizada em outra sessão. Reabra-a e confira antes de excluir.');
+      this.assertContext(context);
+      if(session.exists())transaction.update(doc(this.firestore,`plenaryAttendance/${session.data()['token']}`),{open:false});
+      transaction.update(ref,{deletedAt:serverTimestamp(),deletedBy:uid,deletionReason:reason.trim(),deletionConfirmation:phrase,revision:previous.revision+1,updatedAt:serverTimestamp()});
+    }));
+    this.assertContext(context);
+    this.minutes.update(items=>items.filter(item=>item.id!==minute.id));
+  }
   private async snapshot(transaction: Transaction, societyId: string, minute: Minute): Promise<AttendanceSnapshot[]> {
     const ids = [...new Set(minute.attendance.map(person=>person.memberId))];
     const result: AttendanceSnapshot[] = [];
@@ -86,7 +109,7 @@ export class MinutesService {
       this.assertContext(context);
       const ref = doc(this.firestore,`societies/${societyId}/minutes/${minute.id}`);
       const stored = await transaction.get(ref);
-      if (!stored.exists()) throw new Error('Ata indisponível.');
+      if (!stored.exists() || stored.data()['deletedAt']) throw new Error('Ata indisponível ou excluída.');
       const previous = stored.data() as Minute;
       if (minute.number !== previous.number || minute.year !== previous.year || minute.date !== previous.date || minute.timeZone !== previous.timeZone) throw new Error('A identificação da ata não pode ser alterada.');
       if (previous.status === 'concluded') throw new Error('A ata lavrada não pode ser alterada.');
@@ -118,7 +141,7 @@ export class MinutesService {
       this.assertContext(context);
       const ref = doc(this.firestore,`societies/${societyId}/minutes/${minute.id}`);
       const stored = await transaction.get(ref);
-      if (!stored.exists()) throw new Error('Ata indisponível.');
+      if (!stored.exists() || stored.data()['deletedAt']) throw new Error('Ata indisponível ou excluída.');
       const previous = stored.data() as Minute;
       if (minute.number !== previous.number || minute.year !== previous.year || minute.date !== previous.date || minute.timeZone !== previous.timeZone) throw new Error('A identificação da ata não pode ser alterada.');
       if (previous.revision !== minute.revision || !attendanceAvailable(previous)) throw new Error('Atualize a ata antes de receber o novo sócio.');

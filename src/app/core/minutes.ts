@@ -11,7 +11,7 @@ export interface MinuteInput {
   presidentId: string; secretaryId: string; attendance: AttendanceSnapshot[];
   status: MinuteStatus;
 }
-export interface Minute extends MinuteInput { id: string; revision: number; }
+export interface Minute extends MinuteInput { id: string; revision: number; deletedAt?: unknown; }
 export interface MinuteSegment { text: string; bold?: boolean; }
 
 export function civilDate(now = new Date(), timeZone = 'America/Araguaina'): string {
@@ -19,8 +19,12 @@ export function civilDate(now = new Date(), timeZone = 'America/Araguaina'): str
   return ['year','month','day'].map(key => parts.find(part => part.type === key)!.value).join('-');
 }
 /** Attendance is available only on the meeting's civil day, never retrospectively. */
-export function attendanceAvailable(minute: Pick<MinuteInput,'date'|'timeZone'|'status'>, now = new Date()): boolean {
-  return minute.status !== 'concluded' && minute.date === civilDate(now, minute.timeZone);
+export function attendanceAvailable(minute: Pick<MinuteInput,'date'|'timeZone'|'status'> & {deletedAt?: unknown}, now = new Date()): boolean {
+  return !minute.deletedAt && minute.status !== 'concluded' && minute.date === civilDate(now, minute.timeZone);
+}
+export function minuteDeletionPhrase(number: number): string { return `EXCLUIR ATA ${String(number).padStart(3,'0')}`; }
+export function validMinuteDeletion(number: number, phrase: string, reason: string): boolean {
+  return phrase === minuteDeletionPhrase(number) && reason.trim().length >= 10 && reason.trim().length <= 500;
 }
 export function minuteStatus(minute: Pick<MinuteInput,'date'|'timeZone'|'status'>, now = new Date()): MinuteStatus {
   if (minute.status === 'concluded') return 'concluded';
