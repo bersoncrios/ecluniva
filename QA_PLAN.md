@@ -95,3 +95,9 @@ As oito jornadas de navegador existentes passaram. A jornada nova passou após c
 Os testes usam exclusivamente Auth/Firestore locais. Não houve publicação de regras nem gravação remota. Uso e arquitetura em [PRESENCA_PLENARIAS.md](docs/PRESENCA_PLENARIAS.md).
 
 Verificação final de presença e atas: 5/5 regras e 2/2 jornadas aprovadas após o ajuste de sincronização na admissão. Compilação HML aprovada; carregamento inicial de 846,03 kB, dentro do limite de aviso de 850 kB, com telas de presença e QR Code carregadas sob demanda.
+
+## Regressão do QR Code na compilação otimizada — 16/11/2026
+
+Corrigido o carregamento da exportação padrão da biblioteca CommonJS `qrcode`. O servidor de desenvolvimento disponibilizava exportações nomeadas, mas o chunk otimizado exportava apenas `default`, causando falha na chamada `toDataURL`.
+
+`npm run test:attendance:optimized` compila em modo production com configuração exclusiva dos emuladores, serve os arquivos estáticos em uma porta local e executa a jornada de presença. Teste aprovado: QR Code decodificado com `jsqr` e comparado ao link real, cópia do link, nomes/duplicidades/homônimos, admissão e presença automática, responsividade e encerramento com a ata. O teste não usa Vite e não grava em projetos remotos.

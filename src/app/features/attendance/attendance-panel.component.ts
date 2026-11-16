@@ -58,7 +58,7 @@ export class AttendancePanelComponent {
       let alive=true;
       const stop=this.service.watchPublic(session.token,item=>this.publicSession.set(item),()=>this.error.set('Não foi possível acompanhar o link.'));
       const requests=this.service.watchRequests(session.token,items=>this.requests.set(items),()=>this.error.set('Não foi possível carregar as confirmações.'));
-      import('qrcode').then(module=>module.toDataURL(this.service.url(session.token),{width:360,margin:4,errorCorrectionLevel:'M'})).then(url=>{if(alive)this.qr.set(url);}).catch(()=>{if(alive)this.error.set('Não foi possível gerar o QR Code. O link continua disponível.');});
+      import('qrcode').then(({default:qrCode})=>qrCode.toDataURL(this.service.url(session.token),{width:360,margin:4,errorCorrectionLevel:'M'})).then(url=>{if(alive)this.qr.set(url);}).catch(()=>{if(alive)this.error.set('Não foi possível gerar o QR Code. O link continua disponível.');});
       cleanup(()=>{alive=false;stop();requests();});
     });
     effect(()=>{
