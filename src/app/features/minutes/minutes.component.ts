@@ -27,7 +27,8 @@ export class MinutesComponent {
   readonly segments=computed(()=>{const minute=this.current();return minute ? minuteSegments(minute):[];});
   readonly fields: {key:TextKey;label:string;type?:string;wide?:boolean}[]=[
     {key:'churchName',label:'Igreja'},{key:'societyName',label:'Sociedade'},
-    {key:'templeAddress',label:'Endereço completo do templo (logradouro, número, complemento, bairro, cidade, UF e CEP)',wide:true},
+    {key:'meetingLocation',label:'Local da reunião'},
+    {key:'templeAddress',label:'Endereço completo do local da reunião (logradouro, número, complemento, bairro, cidade, UF e CEP)',wide:true},
     {key:'convocation',label:'Chamada'},{key:'startTime',label:'Horário de abertura',type:'time'},
     {key:'devotionalTime',label:'Horário do devocional',type:'time'},{key:'scripture',label:'Passagem bíblica'},
     {key:'preacher',label:'Pregador'},{key:'openingPrayer',label:'Responsável pela oração inicial'},

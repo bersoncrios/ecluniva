@@ -115,12 +115,13 @@ service cloud.firestore {
 
     function validMinute(data) {
       return data.keys().hasAll(['number','year','type','date','timeZone','startTime','endTime','churchName','societyName','templeAddress','logoDataUrl','convocation','scripture','preacher','openingPrayer','devotionalTime','deliberations','newMembers','hymn','closingPrayer','presidentId','secretaryId','attendance','status','revision','dayStart','dayEnd','createdAt','updatedAt','concludedAt','finalText'])
-        && data.keys().hasOnly(['number','year','type','date','timeZone','startTime','endTime','churchName','societyName','templeAddress','logoDataUrl','convocation','scripture','preacher','openingPrayer','devotionalTime','deliberations','newMembers','hymn','closingPrayer','presidentId','secretaryId','attendance','status','revision','dayStart','dayEnd','createdAt','updatedAt','concludedAt','finalText'])
+        && data.keys().hasOnly(['number','year','type','date','timeZone','startTime','endTime','churchName','societyName','meetingLocation','templeAddress','logoDataUrl','convocation','scripture','preacher','openingPrayer','devotionalTime','deliberations','newMembers','hymn','closingPrayer','presidentId','secretaryId','attendance','status','revision','dayStart','dayEnd','createdAt','updatedAt','concludedAt','finalText'])
         && data.number is int && data.number >= 1 && data.number <= 999999
         && data.year is int && data.year >= 2020 && data.year <= 2100
         && data.year == int(data.date.split('-')[0]) && validMinuteDay(data)
         && requiredName(data.type,100) && requiredName(data.churchName,160)
         && requiredName(data.societyName,160) && requiredName(data.templeAddress,500)
+        && requiredName(data.get('meetingLocation', 'Templo da igreja'),160)
         && text(data.logoDataUrl,250000)
         && text(data.startTime,5) && text(data.endTime,5) && text(data.devotionalTime,5)
         && text(data.convocation,4000) && text(data.scripture,1000)
@@ -187,7 +188,7 @@ service cloud.firestore {
           && getAfter(/databases/$(database)/documents/societies/$(societyId)/minuteCounters/$(string(request.resource.data.year))).data.updatedAt == request.time;
         allow update: if ownsSociety(societyId) && resource.data.status != 'concluded'
           && validMinute(request.resource.data)
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['type','startTime','endTime','churchName','societyName','templeAddress','logoDataUrl','convocation','scripture','preacher','openingPrayer','devotionalTime','deliberations','newMembers','hymn','closingPrayer','presidentId','secretaryId','attendance','status','revision','updatedAt','concludedAt','finalText'])
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['type','startTime','endTime','churchName','societyName','meetingLocation','templeAddress','logoDataUrl','convocation','scripture','preacher','openingPrayer','devotionalTime','deliberations','newMembers','hymn','closingPrayer','presidentId','secretaryId','attendance','status','revision','updatedAt','concludedAt','finalText'])
           && request.resource.data.revision == resource.data.revision + 1
           && (request.time < resource.data.dayStart
             ? request.resource.data.status == 'scheduled' && request.resource.data.presidentId == '' && request.resource.data.secretaryId == ''

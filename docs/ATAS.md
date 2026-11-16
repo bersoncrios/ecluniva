@@ -14,6 +14,8 @@ A diretoria considera o ano civil da plenária. Apenas sócios ativos entram na 
 
 ## Documento
 
+O local da reunião é informado separadamente do endereço completo e pode identificar o templo, a casa de um irmão ou outro espaço.
+
 A redação é contínua: identificação, chamada (primeira ou segunda), presidência, presentes e seus cargos, devocional, admissões, deliberações, hino, encerramento, oração final e lavratura. A exportação usa A4, fonte serifada, texto justificado com destaques, linhas de fechamento e paginação. Rascunhos devem ser identificados como tal.
 
 **Fidelidade pendente:** a ATA 025 da UPH Palmas Norte e seu logotipo não estavam disponíveis no repositório durante a implementação. A redação e diagramação entregues são uma interpretação dos requisitos fornecidos. Não constituem comparação nem reprodução certificada do modelo físico. Quando o original for disponibilizado, conferir termos exatos, margens, tamanho do logotipo, espaçamento, quebras, rodapé e fechamento de todas as páginas lado a lado.

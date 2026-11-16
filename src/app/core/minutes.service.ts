@@ -29,7 +29,7 @@ export class MinutesService {
       this.loading.set(true);
       this.unsubscribe = runInInjectionContext(this.injector, () => onSnapshot(collection(this.firestore,`societies/${society.id}/minutes`), snapshot => {
         if (context !== this.context) return;
-        this.minutes.set(snapshot.docs.map(item => ({...item.data(),id:item.id}) as Minute).sort((a,b)=>b.date.localeCompare(a.date)||b.number-a.number));
+        this.minutes.set(snapshot.docs.map(item => ({meetingLocation:'',...item.data(),id:item.id}) as Minute).sort((a,b)=>b.date.localeCompare(a.date)||b.number-a.number));
         this.loading.set(false);
       }, () => { if (context === this.context) { this.loading.set(false); this.error.set('Não foi possível carregar as atas.'); } }));
       onCleanup(() => this.unsubscribe?.());
@@ -99,7 +99,7 @@ export class MinutesService {
       const finalErrors = validateMinute(content,conclude);
       if (Object.keys(finalErrors).length) throw new Error(Object.values(finalErrors)[0]);
       this.assertContext(context);
-      const editable = ['type','startTime','endTime','churchName','societyName','templeAddress','logoDataUrl','convocation','scripture','preacher','openingPrayer','devotionalTime','deliberations','newMembers','hymn','closingPrayer','presidentId','secretaryId','attendance','status'] as const;
+      const editable = ['type','startTime','endTime','churchName','societyName','meetingLocation','templeAddress','logoDataUrl','convocation','scripture','preacher','openingPrayer','devotionalTime','deliberations','newMembers','hymn','closingPrayer','presidentId','secretaryId','attendance','status'] as const;
       const payload = Object.fromEntries(editable.map(key=>[key,content[key]]));
       transaction.update(ref,{...payload,revision:previous.revision+1,updatedAt:serverTimestamp(),concludedAt:conclude ? serverTimestamp() : null,finalText:conclude ? minuteText(content) : ''});
       return {...content,revision:previous.revision+1};
@@ -124,7 +124,7 @@ export class MinutesService {
       attendance.push({memberId:memberRef.id,name:name.trim(),role:''});
       this.assertContext(context);
       transaction.set(memberRef,{...emptyMember(),name:name.trim(),receivedDate:previous.date,createdAt:serverTimestamp(),updatedAt:serverTimestamp()});
-      const editable = ['type','startTime','endTime','churchName','societyName','templeAddress','logoDataUrl','convocation','scripture','preacher','openingPrayer','devotionalTime','deliberations','hymn','closingPrayer','presidentId','secretaryId'] as const;
+      const editable = ['type','startTime','endTime','churchName','societyName','meetingLocation','templeAddress','logoDataUrl','convocation','scripture','preacher','openingPrayer','devotionalTime','deliberations','hymn','closingPrayer','presidentId','secretaryId'] as const;
       const draft = Object.fromEntries(editable.map(key=>[key,minute[key]]));
       const result = {...previous,...draft,attendance,newMembers:[minute.newMembers.trim(),name.trim()].filter(Boolean).join('; '),revision:previous.revision+1,status:'in_progress' as const,id:minute.id};
       transaction.update(ref,{...draft,attendance:result.attendance,newMembers:result.newMembers,revision:result.revision,status:result.status,updatedAt:serverTimestamp()});

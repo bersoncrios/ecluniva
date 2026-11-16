@@ -28,7 +28,7 @@ test('snapshot deduplicates presence, excludes inactive members and uses only th
 
 });
 test('conclusion requires devotional, closing and present distinct session officers',()=>{
-  const minute={...emptyMinute(),churchName:'Igreja',societyName:'UPH',templeAddress:'Rua Um, 1'};
+  const minute={...emptyMinute(),churchName:'Igreja',societyName:'UPH',meetingLocation:'Templo da igreja',templeAddress:'Rua Um, 1'};
   assert.deepEqual(validateMinute(minute),{});
   const errors=validateMinute(minute,true);
   for(const field of ['attendance','presidentId','secretaryId','scripture','endTime'])assert.ok(errors[field],field);
@@ -63,4 +63,15 @@ test('cabeçalho usa o número escolhido sem sufixo de ano',()=>{
   const text=minuteText({...emptyMinute('2026-11-16'),number:25});
   assert.ok(text.startsWith('ATA Nº 025. Aos '));
   assert.ok(!text.includes('025/2026'));
+});
+
+test('local da reunião é separado do endereço e aceita residência',()=>{
+  const minute={...emptyMinute(),meetingLocation:'Casa do irmão João',templeAddress:'Rua da Paz, 25'};
+  assert.ok(minuteText(minute).includes('na casa do irmão João, no endereço Rua da Paz, 25.'));
+  assert.ok(minuteText({...minute,meetingLocation:'na casa do irmão João'}).includes('na casa do irmão João, no endereço'));
+  assert.ok(minuteText({...minute,meetingLocation:'Templo da igreja'}).includes('no templo da igreja, no endereço'));
+  assert.equal(validateMinute(minute).meetingLocation,undefined);
+  assert.ok(validateMinute({...minute,meetingLocation:''}).meetingLocation);
+  assert.ok(validateMinute({...minute,meetingLocation:'a'.repeat(161)}).meetingLocation);
+  assert.ok(minuteText({...minute,meetingLocation:undefined,status:'concluded'}).includes('no templo situado à Rua da Paz, 25.'));
 });

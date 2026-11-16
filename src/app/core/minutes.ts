@@ -5,7 +5,7 @@ export interface AttendanceSnapshot { memberId: string; name: string; role: stri
 export interface MinuteInput {
   number: number; year: number; type: string; date: string; timeZone: string;
   startTime: string; endTime: string; churchName: string; societyName: string;
-  templeAddress: string; logoDataUrl: string; convocation: string;
+  meetingLocation: string; templeAddress: string; logoDataUrl: string; convocation: string;
   scripture: string; preacher: string; openingPrayer: string; devotionalTime: string;
   deliberations: string; newMembers: string; hymn: string; closingPrayer: string;
   presidentId: string; secretaryId: string; attendance: AttendanceSnapshot[];
@@ -41,7 +41,7 @@ export function suggestedOfficers(attendance: readonly AttendanceSnapshot[]): {p
   };
 }
 export function emptyMinute(date = civilDate()): MinuteInput {
-  return {number:1,year:Number(date.slice(0,4)),type:'Ordinária',date,timeZone:'America/Araguaina',startTime:'',endTime:'',churchName:'',societyName:'',templeAddress:'',logoDataUrl:'',convocation:'',scripture:'',preacher:'',openingPrayer:'',devotionalTime:'',deliberations:'',newMembers:'',hymn:'',closingPrayer:'',presidentId:'',secretaryId:'',attendance:[],status:'scheduled'};
+  return {number:1,year:Number(date.slice(0,4)),type:'Ordinária',date,timeZone:'America/Araguaina',startTime:'',endTime:'',churchName:'',societyName:'',meetingLocation:'',templeAddress:'',logoDataUrl:'',convocation:'',scripture:'',preacher:'',openingPrayer:'',devotionalTime:'',deliberations:'',newMembers:'',hymn:'',closingPrayer:'',presidentId:'',secretaryId:'',attendance:[],status:'scheduled'};
 }
 const prose = (value: string): string => value.trim().replace(/\s+/g,' ');
 const sentence = (value: string): string => { const text = prose(value); return text && /[.!?]$/.test(text) ? text : text + '.'; };
@@ -53,7 +53,13 @@ export function minuteSegments(minute: MinuteInput): MinuteSegment[] {
   add(`ATA Nº ${String(minute.number).padStart(3,'0')}`,true);
   add(`. Aos ${date}, às `); add(minute.startTime || '[horário inicial]',true);
   add(`, reuniu-se em plenária ${prose(minute.type).toLowerCase()} a `); add(prose(minute.societyName) || '[sociedade]',true);
-  add(`, da ${prose(minute.churchName) || '[igreja]'}, no templo situado à ${prose(minute.templeAddress) || '[endereço completo]'}. `);
+  const location = prose(minute.meetingLocation || '');
+  const feminine = /^(casa|residência|igreja|sede|chácara|congregação)\b/i.test(location);
+  const masculine = /^(templo|salão|auditório)\b/i.test(location);
+  const withPreposition = /^(na|no|nas|nos|em|ao|aos|à|às)\s/i.test(location);
+  const place = withPreposition ? location.charAt(0).toLocaleLowerCase('pt-BR') + location.slice(1) : feminine || masculine ? `${feminine ? 'na' : 'no'} ${location.charAt(0).toLocaleLowerCase('pt-BR') + location.slice(1)}` : `em ${location || '[local da reunião]'}`;
+  const venue = minute.status === 'concluded' && !location ? 'no templo situado à' : `${place}, no endereço`;
+  add(`, da ${prose(minute.churchName) || '[igreja]'}, ${venue} ${prose(minute.templeAddress) || '[endereço completo]'}. `);
   add(['primeira','segunda'].includes(minute.convocation) ? `Em ${minute.convocation} chamada, ` : minute.status === 'concluded' && minute.convocation ? sentence(minute.convocation)+' ' : 'Em [chamada]. ');
   add(['primeira','segunda'].includes(minute.convocation) ? 'sob a presidência de ' : 'Sob a presidência de '); add(name(minute.presidentId,'[presidente da sessão]'),true);
   add(', com a presença de '); add(`${minute.attendance.length} sócios`,true);
@@ -79,6 +85,7 @@ export function validateMinute(minute: MinuteInput, concluding = false): Record<
   if (minute.year !== Number(minute.date.slice(0,4))) errors['year']='O ano deve corresponder à data da plenária.';
   try { civilDate(new Date(),minute.timeZone); } catch { errors['timeZone']='Fuso horário inválido.'; }
   for (const key of ['type','churchName','societyName','templeAddress'] as const) if (!prose(minute[key])) errors[key]='Preencha este campo.';
+  if (!prose(minute.meetingLocation || '') || minute.meetingLocation.length > 160) errors['meetingLocation']='Informe o local da reunião com até 160 caracteres.';
   if (new Set(minute.attendance.map(person=>person.memberId)).size !== minute.attendance.length) errors['attendance']='Há presenças duplicadas.';
   if (minute.attendance.length > 500) errors['attendance']='A ata admite até 500 sócios presentes.';
   if (concluding) {

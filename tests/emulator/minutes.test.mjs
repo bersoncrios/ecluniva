@@ -13,7 +13,7 @@ function minute(shift=0) {
  const now=new Date(); const local=new Date(now.getTime()-3*3600000); local.setUTCDate(local.getUTCDate()+shift);
  const date=local.toISOString().slice(0,10); const year=Number(date.slice(0,4));
  const start=Date.parse(date+'T03:00:00Z');
- return {number:1,year,type:'Ordinária',date,timeZone:'America/Araguaina',startTime:'19:00',endTime:'20:00',churchName:'Igreja Teste',societyName:'UPH Teste',templeAddress:'Rua da Paz, 1, Centro, Palmas TO',logoDataUrl:'',convocation:'Convocada regularmente.',scripture:'Salmo 23',preacher:'Pedro',openingPrayer:'João',devotionalTime:'19:00',deliberations:'Foi aprovada a proposta.',newMembers:'',hymn:'Hino oficial',closingPrayer:'João',presidentId:'',secretaryId:'',attendance:[],status:'scheduled',revision:0,dayStart:Timestamp.fromMillis(start),dayEnd:Timestamp.fromMillis(start+86400000),createdAt:serverTimestamp(),updatedAt:serverTimestamp(),concludedAt:null,finalText:''};
+ return {number:1,year,type:'Ordinária',date,timeZone:'America/Araguaina',startTime:'19:00',endTime:'20:00',churchName:'Igreja Teste',societyName:'UPH Teste',meetingLocation:'Casa do irmão João',templeAddress:'Rua da Paz, 1, Centro, Palmas TO',logoDataUrl:'',convocation:'Convocada regularmente.',scripture:'Salmo 23',preacher:'Pedro',openingPrayer:'João',devotionalTime:'19:00',deliberations:'Foi aprovada a proposta.',newMembers:'',hymn:'Hino oficial',closingPrayer:'João',presidentId:'',secretaryId:'',attendance:[],status:'scheduled',revision:0,dayStart:Timestamp.fromMillis(start),dayEnd:Timestamp.fromMillis(start+86400000),createdAt:serverTimestamp(),updatedAt:serverTimestamp(),concludedAt:null,finalText:''};
 }
 async function seed(value,id) { await env.withSecurityRulesDisabled(c=>setDoc(ref(c.firestore(),id),value)); }
 async function reserve(db,value) {
@@ -84,4 +84,15 @@ test('conclusion rejects impossible chronology even through direct SDK writes',a
  await assertFails(updateDoc(ref(db,id),{...conclusion,startTime:'19:00',devotionalTime:'18:00',endTime:'20:00'}));
  await assertFails(updateDoc(ref(db,id),{...conclusion,startTime:'19:00',devotionalTime:'21:00',endTime:'20:00'}));
  await assertSucceeds(updateDoc(ref(db,id),{...conclusion,startTime:'19:00',devotionalTime:'19:30',endTime:'20:00'}));
+});
+
+test('meeting location is validated and legacy minutes remain editable',async()=>{
+ const db=owner(),value=minute(1),id=`${value.year}_1`;
+ await assertFails(reserve(db,{...value,meetingLocation:''}));
+ await assertFails(reserve(db,{...value,meetingLocation:'a'.repeat(161)}));
+ await assertSucceeds(reserve(db,value));
+ await assertSucceeds(updateDoc(ref(db,id),{meetingLocation:'Salão da igreja',revision:1,updatedAt:serverTimestamp()}));
+ const legacy={...minute(1),number:2};delete legacy.meetingLocation;
+ await seed(legacy,`${value.year}_2`);
+ await assertSucceeds(updateDoc(ref(db,`${value.year}_2`),{deliberations:'Pauta atualizada.',revision:1,updatedAt:serverTimestamp()}));
 });
