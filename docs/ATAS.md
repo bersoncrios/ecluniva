@@ -28,7 +28,7 @@ Os testes de domínio cobrem limites da data civil, fusos, retrato da diretoria 
 
 ## Persistência e limites
 
-`minutes/{ano}_{número}` armazena o conteúdo da reunião, `attendance` com `memberId`, `name` e `role`, seletores da mesa, `revision`, `dayStart`, `dayEnd`, `createdAt`, `updatedAt`, `concludedAt` e `finalText`. `minuteCounters/{ano}` guarda `year`, `value`, `minuteId` e `updatedAt`. A reserva do contador exige a criação da ata correspondente na mesma gravação atômica. Revisões obsoletas são recusadas. A data civil, o fuso e o número ficam fixos após o agendamento.
+`minutes/{ano}_{número}` armazena o conteúdo da reunião, `attendance` com `memberId`, `name`, `office` e `role`, seletores da mesa, `revision`, `dayStart`, `dayEnd`, `createdAt`, `updatedAt`, `concludedAt` e `finalText`. `minuteCounters/{ano}` guarda `year`, `value`, `minuteId` e `updatedAt`. A reserva do contador exige a criação da ata correspondente na mesma gravação atômica. Revisões obsoletas são recusadas. A data civil, o fuso e o número ficam fixos após o agendamento.
 
 O módulo aceita até 500 presentes. O formulário não solicita logotipo; atas antigas que já possuem imagem mantêm seu registro. Os fusos disponíveis são brasileiros, com deslocamentos UTC−2, UTC−3, UTC−4 e UTC−5; a configuração fica registrada em cada reunião. Os horários de abertura, devocional e encerramento devem ocorrer nessa ordem, no mesmo dia civil. Reuniões que atravessam meia-noite não são suportadas nesta versão.
 
