@@ -41,7 +41,9 @@ export class AppComponent {
   readonly exportFormat = signal<'pdf'|'xlsx'>('pdf');
   readonly exportBusy = signal(false);
   readonly dialogError = signal('');
-  readonly dialogKind = signal<'status'|'export'|null>(null);
+  readonly dialogKind = signal<'status'|'export'|'details'|null>(null);
+  readonly detailMemberId = signal<string|null>(null);
+  readonly detailMember = computed(() => this.data.members().find(member => member.id === this.detailMemberId()) ?? null);
   readonly postalLoading = signal(false);
   readonly postalMessage = signal('');
   readonly postalRetry = signal(false);
@@ -287,6 +289,18 @@ export class AppComponent {
     this.postalLoading.set(false); this.postalMessage.set(''); this.postalRetry.set(false);
   }
 
+  viewMember(member: Member): void {
+    this.detailMemberId.set(member.id);
+    this.openDialog('details');
+  }
+
+  editDetailMember(): void {
+    const member = this.detailMember();
+    if (!member) return;
+    this.closeDialog();
+    this.editMember(member);
+  }
+
   requestStatus(member: Member): void {
     this.statusMember.set(member); this.openDialog('status');
   }
@@ -335,6 +349,7 @@ export class AppComponent {
     if (!force && (this.busy() || this.exportBusy())) return;
     this.confirmation?.nativeElement.close();
     this.dialogKind.set(null); this.dialogError.set('');
+    this.detailMemberId.set(null);
     this.previousFocus?.focus();
   }
 
@@ -342,11 +357,11 @@ export class AppComponent {
     event.preventDefault(); this.closeDialog();
   }
 
-  private openDialog(kind: 'status'|'export'): void {
+  private openDialog(kind: 'status'|'export'|'details'): void {
     this.dialogKind.set(kind); this.dialogError.set('');
     this.previousFocus = document.activeElement as HTMLElement;
     this.confirmation?.nativeElement.showModal();
-    setTimeout(() => this.confirmation?.nativeElement.querySelector<HTMLElement>('button')?.focus());
+    setTimeout(() => this.confirmation?.nativeElement.querySelector<HTMLElement>(kind === 'details' ? '#dialog-title' : 'button')?.focus());
   }
 
   clearFilters(): void { this.query.set(''); this.status.set('active'); }

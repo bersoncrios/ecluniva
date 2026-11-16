@@ -58,3 +58,9 @@ test('ata registra primeira ou segunda chamada e exige a escolha para lavrar',()
   assert.ok(validateMinute({...minute,convocation:'Convocada'},true).convocation);
   assert.ok(minuteText({...minute,status:'concluded',convocation:'Convocada regularmente.'}).includes('Convocada regularmente.'));
 });
+
+test('cabeçalho usa o número escolhido sem sufixo de ano',()=>{
+  const text=minuteText({...emptyMinute('2026-11-16'),number:25});
+  assert.ok(text.startsWith('ATA Nº 025. Aos '));
+  assert.ok(!text.includes('025/2026'));
+});

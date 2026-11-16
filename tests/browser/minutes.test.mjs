@@ -50,7 +50,7 @@ test('plenaries enforce civil-day attendance, preserve annual officers and issue
   await selectSociety();
   const editor=page.locator('.minute-form');
   const schedule=async date=>{await page.getByRole('button',{name:'Agendar plenária',exact:true}).click();await page.getByLabel('Data civil da plenária',{exact:true}).fill(date);await page.getByLabel('Horário previsto',{exact:true}).fill('19:00');await page.getByLabel('Endereço completo do templo',{exact:true}).fill('Rua da Comunidade, 25, Centro, Palmas, TO, CEP 77000-000');await page.getByRole('button',{name:'Salvar agendamento',exact:true}).click();await waitFor(async()=>await page.locator('.minute-card').count()===(date===futureDate?1:2),'Scheduled plenary did not persist');};
-  const card=number=>page.locator('.minute-card').filter({has:page.getByRole('heading',{name:new RegExp(`^Ata ${String(number).padStart(3,'0')}/`)})});
+  const card=number=>page.locator('.minute-card').filter({has:page.getByRole('heading',{name:new RegExp(`^Ata ${String(number).padStart(3,'0')} ·`)})});
   await schedule(futureDate);
   await card(1).getByRole('button',{name:'Abrir plenária',exact:true}).click();
   await editor.getByText(/Lista de presença indisponível/).waitFor();
@@ -64,7 +64,7 @@ test('plenaries enforce civil-day attendance, preserve annual officers and issue
   // New Year's Eve can place the future meeting in another annual counter.
   const todayStored=(await getDocs(collection(database,'societies',society.id,'minutes'))).docs.find(item=>item.data().date===today);
   assert.ok(todayStored);const number=todayStored.data().number;
-  const todayCard=page.locator('.minute-card').filter({has:page.getByRole('heading',{name:`Ata ${String(number).padStart(3,'0')}/${year} · Ordinária`,exact:true})});
+  const todayCard=page.locator('.minute-card').filter({has:page.getByRole('heading',{name:`Ata ${String(number).padStart(3,'0')} · Ordinária`,exact:true})});
   await todayCard.getByRole('button',{name:'Abrir plenária',exact:true}).click();
   await waitFor(()=>anaPresence.isEnabled(),'Today attendance did not open');
   assert.equal(await editor.getByRole('checkbox',{name:'Presença de Carlos Inativo',exact:true}).count(),0);

@@ -50,7 +50,7 @@ export function minuteSegments(minute: MinuteInput): MinuteSegment[] {
   const name = (id: string, fallback: string) => minute.attendance.find(person => person.memberId === id)?.name || fallback;
   const segments: MinuteSegment[] = [];
   const add = (text: string, bold = false) => segments.push({text,bold});
-  add(`ATA Nº ${String(minute.number).padStart(3,'0')}/${minute.year}`,true);
+  add(`ATA Nº ${String(minute.number).padStart(3,'0')}`,true);
   add(`. Aos ${date}, às `); add(minute.startTime || '[horário inicial]',true);
   add(`, reuniu-se em plenária ${prose(minute.type).toLowerCase()} a `); add(prose(minute.societyName) || '[sociedade]',true);
   add(`, da ${prose(minute.churchName) || '[igreja]'}, no templo situado à ${prose(minute.templeAddress) || '[endereço completo]'}. `);
@@ -74,7 +74,7 @@ export function minuteSegments(minute: MinuteInput): MinuteSegment[] {
 export function minuteText(minute: MinuteInput): string { return minuteSegments(minute).map(segment => segment.text).join(''); }
 export function validateMinute(minute: MinuteInput, concluding = false): Record<string,string> {
   const errors: Record<string,string> = {};
-  if (!Number.isInteger(minute.number) || minute.number < 1) errors['number']='Informe um número sequencial positivo.';
+  if (!Number.isInteger(minute.number) || minute.number < 1) errors['number']='Informe um número inteiro positivo.';
   if (!/^\d{4}-\d{2}-\d{2}$/.test(minute.date) || !Number.isFinite(Date.parse(minute.date+'T12:00:00Z')) || new Date(minute.date+'T12:00:00Z').toISOString().slice(0,10) !== minute.date) errors['date']='Informe uma data civil válida.';
   if (minute.year !== Number(minute.date.slice(0,4))) errors['year']='O ano deve corresponder à data da plenária.';
   try { civilDate(new Date(),minute.timeZone); } catch { errors['timeZone']='Fuso horário inválido.'; }

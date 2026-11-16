@@ -52,11 +52,10 @@ export class MinutesService {
     return runInInjectionContext(this.injector, () => runTransaction(this.firestore, async transaction => {
       this.assertContext(context);
       const counterRef = doc(this.firestore,`societies/${societyId}/minuteCounters/${input.year}`);
-      const counter = await transaction.get(counterRef);
-      const number = counter.exists() ? Number(counter.data()['value']) + 1 : 1;
+      const number = input.number;
       const id = `${input.year}_${number}`;
       const ref = doc(this.firestore,`societies/${societyId}/minutes/${id}`);
-      if ((await transaction.get(ref)).exists()) throw new Error('Número de ata já reservado.');
+      if ((await transaction.get(ref)).exists()) throw new Error('Já existe uma ata com esse número no ano da plenária. Escolha outro número.');
       this.assertContext(context);
       const dayStart = Timestamp.fromDate(new Date(`${input.date}T${String(ZONES[input.timeZone]).padStart(2,'0')}:00:00.000Z`));
       transaction.set(counterRef,{year:input.year,value:number,minuteId:id,updatedAt:serverTimestamp()});

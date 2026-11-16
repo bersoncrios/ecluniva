@@ -1,6 +1,6 @@
 # Atas e gestão de plenárias
 
-O módulo pertence ao proprietário da sociedade autenticado. O histórico fica em `societies/{societyId}/minutes`; a numeração é reservada atomicamente por ano e não deve ser reutilizada. O número não é editável no formulário. Nenhuma alteração de cadastro ou vínculo anual deve reescrever uma ata já concluída.
+O módulo pertence ao proprietário da sociedade autenticado. O histórico fica em `societies/{societyId}/minutes`; o usuário define o número ao agendar, com sugestão do próximo número do ano. A reserva é atômica por ano e impede duplicatas. O cabeçalho exibe apenas o número, sem sufixo de ano. Nenhuma alteração de cadastro ou vínculo anual deve reescrever uma ata já concluída.
 
 ## Ciclo de vida
 
@@ -28,7 +28,7 @@ Os testes de domínio cobrem limites da data civil, fusos, retrato da diretoria 
 
 O módulo aceita até 500 presentes. O formulário não solicita logotipo; atas antigas que já possuem imagem mantêm seu registro. Os fusos disponíveis são brasileiros, com deslocamentos UTC−2, UTC−3, UTC−4 e UTC−5; a configuração fica registrada em cada reunião. Os horários de abertura, devocional e encerramento devem ocorrer nessa ordem, no mesmo dia civil. Reuniões que atravessam meia-noite não são suportadas nesta versão.
 
-As leituras transacionais do serviço recompõem nomes e cargos a partir dos cadastros atuais antes de salvar a chamada no dia. As regras garantem proprietário, janela temporal, sequência e congelamento, mas não conferem individualmente cada nome/cargo da lista contra o cadastro. Um proprietário usando diretamente o SDK pode fornecer um retrato diferente antes da lavratura. Validação independente desse conteúdo requer um backend confiável; esta implementação não possui função de servidor para isso.
+As leituras transacionais do serviço recompõem nomes e cargos a partir dos cadastros atuais antes de salvar a chamada no dia. As regras garantem proprietário, janela temporal, reserva do número e congelamento, mas não conferem individualmente cada nome/cargo da lista contra o cadastro. Um proprietário usando diretamente o SDK pode fornecer um retrato diferente antes da lavratura. Validação independente desse conteúdo requer um backend confiável; esta implementação não possui função de servidor para isso.
 
 ## Resultado da validação local (15/11/2026)
 

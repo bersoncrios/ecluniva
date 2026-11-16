@@ -26,12 +26,14 @@ async function reserve(db,value) {
 before(async()=>{env=await initializeTestEnvironment({projectId:'demo-societas-minutes',firestore:{host,port:Number(port),rules:readFileSync('firestore.rules','utf8')}});});
 after(async()=>{await env?.cleanup();});
 beforeEach(async()=>{await env.clearFirestore();await env.withSecurityRulesDisabled(c=>setDoc(doc(c.firestore(),'societies/own'),{ownerId:'owner'}));});
-test('atomic counter reserves sequential numbers; duplicate, skipped and standalone writes fail',async()=>{
+test('atomic reservation accepts chosen numbers and rejects duplicates and standalone writes',async()=>{
  const db=owner(),value=minute(1),id=`${value.year}_1`;
  await assertFails(setDoc(ref(db,id),value));
  await assertSucceeds(reserve(db,value));
  await assertFails(reserve(db,value));
- await assertFails(reserve(db,{...value,number:3}));
+ await assertSucceeds(reserve(db,{...value,number:25}));
+ await assertFails(reserve(db,{...value,number:25}));
+ await assertFails(reserve(db,{...value,number:0}));
  await assertSucceeds(reserve(db,{...value,number:2}));
  await assertFails(updateDoc(doc(db,`societies/own/minuteCounters/${value.year}`),{value:5,updatedAt:serverTimestamp()}));
 });

@@ -310,7 +310,7 @@
                   class="contact-email">{{ item.email || 'E-mail não informado' }}</span></td>
               <td><span class="badge" [class.inactive]="item.status === 'inactive'">{{ item.status === 'active' ?
                   'Ativo' : 'Inativo' }}</span></td>
-              <td class="table-action"><button class="text-button" (click)="editMember(item)"
+              <td class="table-action"><button class="text-button" (click)="viewMember(item)" [attr.aria-label]="'Ver detalhes de ' + item.name">Ver detalhes</button><button class="text-button" (click)="editMember(item)"
                   [attr.aria-label]="'Editar ' + item.name"><app-icon name="edit" />Editar</button></td>
             </tr> }</tbody>
         </table>
@@ -321,7 +321,7 @@
             <div class="member-card-contact">
               <p>{{ item.phone || 'Telefone não informado' }}</p>
               <p>{{ item.email || 'E-mail não informado' }}</p>
-            </div><button class="text-button" (click)="editMember(item)"
+            </div><button class="text-button" (click)="viewMember(item)" [attr.aria-label]="'Ver detalhes de ' + item.name">Ver detalhes<app-icon name="arrow" /></button><button class="text-button" (click)="editMember(item)"
               [attr.aria-label]="'Editar ' + item.name">Editar cadastro<app-icon name="arrow" /></button>
           </article> }</div> } @else { <div class="empty-state"><span class="empty-icon"><app-icon
               [name]="data.members().length ? 'search' : 'people'" /></span>
@@ -533,7 +533,35 @@
   </div>
 </div>
 }
-<dialog #confirmation class="confirmation-dialog" aria-labelledby="dialog-title" (cancel)="cancelDialog($event)">
+<dialog #confirmation class="confirmation-dialog" [class.member-details-dialog]="dialogKind() === 'details'" aria-labelledby="dialog-title" (cancel)="cancelDialog($event)">
+  @if (dialogKind() === 'details') {
+    <h2 id="dialog-title" tabindex="-1">Detalhes do membro</h2>
+    @if (detailMember(); as person) {
+      <div class="member-details-heading"><strong>{{ person.name }}</strong><span class="badge" [class.inactive]="person.status === 'inactive'">{{ person.status === 'active' ? 'Ativo' : 'Inativo' }}</span></div>
+      <h3>Identificação e contato</h3>
+      <dl class="member-details-grid">
+        <div><dt>Data de nascimento</dt><dd>{{ person.birthDate ? date(person.birthDate) : 'Não informada' }}</dd></div>
+        <div><dt>Data de recebimento</dt><dd>{{ person.receivedDate ? date(person.receivedDate) : 'Não informada' }}</dd></div>
+        <div><dt>Ofício na igreja</dt><dd>{{ person.office || 'Não informado' }}</dd></div>
+        <div><dt>Telefone</dt><dd>{{ person.phone || 'Não informado' }}</dd></div>
+        <div><dt>E-mail</dt><dd>{{ person.email || 'Não informado' }}</dd></div>
+      </dl>
+      <h3>Endereço</h3>
+      <dl class="member-details-grid">
+        <div><dt>CEP</dt><dd>{{ person.address.postalCode || 'Não informado' }}</dd></div>
+        <div><dt>Logradouro</dt><dd>{{ person.address.street || 'Não informado' }}</dd></div>
+        <div><dt>Número</dt><dd>{{ person.address.number || 'Não informado' }}</dd></div>
+        <div><dt>Complemento</dt><dd>{{ person.address.complement || 'Não informado' }}</dd></div>
+        <div><dt>Bairro</dt><dd>{{ person.address.neighborhood || 'Não informado' }}</dd></div>
+        <div><dt>Cidade</dt><dd>{{ person.address.city || 'Não informada' }}</dd></div>
+        <div><dt>UF</dt><dd>{{ person.address.state || 'Não informada' }}</dd></div>
+      </dl>
+      <h3>Observações</h3><p class="member-details-notes">{{ person.notes || 'Nenhuma observação registrada.' }}</p>
+      <div class="dialog-actions"><button type="button" class="button secondary" (click)="closeDialog()">Fechar</button><button type="button" class="button" (click)="editDetailMember()"><app-icon name="edit" />Editar cadastro</button></div>
+    } @else {
+      <p>O cadastro deste membro não está disponível.</p><div class="dialog-actions"><button type="button" class="button secondary" (click)="closeDialog()">Fechar</button></div>
+    }
+  }
   @if (dialogKind() === 'status') { <span class="dialog-symbol"><app-icon name="people" /></span>
   <h2 id="dialog-title">{{ statusMember()?.status === 'active' ? 'Inativar membro?' : 'Reativar membro?' }}</h2>
   <p class="muted">{{ statusMember()?.name }} {{ statusMember()?.status === 'active' ? 'sairá do rol ativo desta

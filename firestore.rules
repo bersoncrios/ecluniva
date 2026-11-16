@@ -166,7 +166,7 @@ service cloud.firestore {
           && request.resource.data.keys().hasOnly(['year','value','minuteId','updatedAt'])
           && request.resource.data.year is int && yearId == string(request.resource.data.year)
           && request.resource.data.value is int
-          && request.resource.data.value == (resource == null ? 1 : resource.data.value + 1)
+          && request.resource.data.value > 0
           && request.resource.data.minuteId == yearId + '_' + string(request.resource.data.value)
           && request.resource.data.updatedAt == request.time
           && !exists(/databases/$(database)/documents/societies/$(societyId)/minutes/$(request.resource.data.minuteId))
