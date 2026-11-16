@@ -73,3 +73,11 @@ Testar validação de ano/cargo/identidade, relação com membro e ordenação d
 Build HML aprovado. Unitários: 29/29; regras emulator: 14/14, incluindo 5 novos testes de diretoria; navegador: jornada do MVP, ViaCEP e diretoria aprovadas. Na jornada nova, o mesmo membro foi Presidente no ano atual e Tesoureiro no seguinte; edição, mudança de ano, recarga, membro inativo, remoção/cancelamento, cadastro preservado, atalho da edição e isolamento entre sociedades foram verificados. Layout sem overflow em320/390/1440px, quatro destinos mobile. Capturas de diretoria desktop/mobile em artifacts/browser/, inspecionadas visualmente.
 
 A primeira execução de navegador detectou uma leitura do teste feita após a atualização otimista e antes da confirmação de remoção. O teste passou a aguardar a mensagem de sucesso (emitida após deleteDoc confirmar), e a jornada dedicada passou no reteste. O código da aplicação não precisou de correção para esse caso. Testes de regras executados em série para que a limpeza de dados de um arquivo não interfira no outro. Nenhum projeto real ou regra remota foi alterado.
+
+## Revisão geral de responsividade — 16/11/2026
+
+A matriz e as correções estão documentadas em [RESPONSIVIDADE.md](docs/RESPONSIVIDADE.md). A nova auditoria percorre as telas e os estados vazios em 15 resoluções, verifica conteúdo longo, detalhes, formulários, prévias, diálogos e navegação lateral/inferior, além de perfis de toque em celular e tablet. Evidências e resultados ficam em `artifacts/responsive/audit.json`; presença do teste não substitui a execução. A suíte completa de navegador continua responsável pelos fluxos de cadastro, edição, diretoria, atas, convocações, CEP e downloads.
+
+Resultado: 43 unitários aprovados. Auditoria de 24 telas/estados em 15 resoluções e três perfis de toque aprovada, com zero problemas detectados e zero exceções de página. Na execução conjunta de navegador, seis jornadas passaram; ViaCEP parou em uma espera genérica por `networkidle`, incompatível com as conexões persistentes do Firestore. O teste passou a observar apenas consultas postais; a reexecução de ViaCEP e da auditoria passou (2/2). As sete jornadas ficaram verificadas. Regras e dados remotos não foram alterados.
+
+Compilação HML concluída após a revisão, sem erros.

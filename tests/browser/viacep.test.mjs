@@ -130,10 +130,12 @@ test('ViaCEP fills new/edited members, preserves manual data and ignores obsolet
   await page.getByRole('button',{name:'Salvar membro',exact:true}).click();
   await page.getByRole('heading',{name:'Rol de membros',exact:true}).waitFor();
   const beforeEdit=requests.length;
+  // Observe only postal lookups: Firestore deliberately keeps a live connection.
+  const unexpectedLookup=page.waitForRequest('https://viacep.com.br/**',{timeout:750}).then(()=>true,error=>{if(error.name!=='TimeoutError')throw error;return false;});
   await page.locator('.members-table').getByRole('button',{name:'Editar Membro ViaCEP',exact:true}).click();
   await valueIs(page,'street','Rua manual após falha');
   await valueIs(page,'city','Cidade manual');
-  await page.waitForLoadState('networkidle');
+  assert.equal(await unexpectedLookup,false,'Opening an existing member must not request ViaCEP');
   assert.equal(requests.length,beforeEdit,'Opening an existing member must not look up the stored CEP');
   await cep.fill('01001000');
   await valueIs(page,'street','Praça da Sé');

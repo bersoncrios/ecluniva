@@ -835,7 +835,9 @@ input[type=radio] {
     flex-direction: column;
     position: sticky;
     top: 0;
-    height: 100vh
+    height: 100dvh;
+    overflow-y: auto;
+    overscroll-behavior: contain
 }
 
 .sidebar>.brand {
@@ -886,7 +888,14 @@ input[type=radio] {
 }
 
 .sidebar-bottom {
-    margin-top: auto
+    margin-top: auto;
+    flex-shrink: 0
+}
+
+.sidebar>.brand,
+.sidebar-caption,
+.sidebar nav {
+    flex-shrink: 0
 }
 
 .sidebar-note {
@@ -1026,6 +1035,7 @@ input[type=radio] {
 }
 
 .account-menu summary {
+    min-width: 44px;
     list-style: none;
     display: flex;
     align-items: center;
@@ -1115,7 +1125,13 @@ input[type=radio] {
     color: #687c6d
 }
 
+.workspace-footer>span:last-child {
+    min-width: 0;
+    overflow-wrap: anywhere
+}
+
 .workspace-footer>span:first-child {
+    flex-shrink: 0;
     font-weight: 700;
     letter-spacing: -.02em
 }
@@ -1828,12 +1844,13 @@ input[type=radio] {
 
 .field-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     column-gap: 24px;
     row-gap: 22px
 }
 
 .field-grid>.field {
+    min-width: 0;
     margin: 0
 }
 
@@ -1856,6 +1873,7 @@ input[type=radio] {
 
 /* Native dialogs provide focus trapping and keyboard support. */
 .confirmation-dialog {
+    overflow-wrap: anywhere;
     color: var(--ink);
     background: white;
     border: 1px solid var(--line);
@@ -3076,7 +3094,8 @@ app-board {
     }
 }
 /* Member consultation uses the existing native dialog and preserves list filters. */
-.table-action .text-button + .text-button { margin-left: 16px; }
+.table-action .text-button + .text-button { margin-left: 0; }
+.table-action .text-button { display: flex; justify-content: flex-end; width: 100%; min-height: 44px; }
 .member-details-dialog { max-width: 640px; width: min(640px, calc(100% - 32px)); max-height: calc(100dvh - 32px); overflow-y: auto; }
 .member-details-heading { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin: 20px 0; }
 .member-details-heading strong { font-size: 1.2rem; overflow-wrap: anywhere; }
@@ -3094,3 +3113,15 @@ app-board {
   .mobile-nav button span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 }
 @media(max-width:380px){.mobile-nav button{font-size:10px}}
+
+/* Preserve usable controls when a touch keyboard or the bottom navigation is visible. */
+@media(max-width:1023px){
+  html{scroll-padding-block:16px calc(90px + env(safe-area-inset-bottom, 0px))}
+  .workspace{padding-bottom:calc(100px + env(safe-area-inset-bottom, 0px))}
+  .input-with-icon>input,.status-filter select,.form-section input,.form-section select,.form-section textarea,.date-parts input,.board-year-picker input,.emulator-login input{font-size:16px}
+  .results-meta>.text-button{min-height:44px}
+}
+@media(pointer:coarse){
+  .input-with-icon>input,.status-filter select,.form-section input,.form-section select,.form-section textarea,.date-parts input,.board-year-picker input,.emulator-login input{font-size:16px}
+  .results-meta>.text-button{min-height:44px}
+}
