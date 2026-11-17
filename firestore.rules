@@ -505,6 +505,11 @@ service cloud.firestore {
       }
     }
 
+    match /users/{userId}/billing/{societyId} {
+      allow read: if signedIn() && request.auth.uid == userId;
+      allow write: if false;
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }

@@ -30,6 +30,7 @@
     "@angular/router": "20.3.34",
     "docx": "9.15.4",
     "firebase": "11.10.0",
+    "firebase-admin": "^13.6.0",
     "html2canvas": "1.4.1",
     "jspdf": "4.2.1",
     "qrcode": "^1.5.4",

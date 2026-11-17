@@ -2,12 +2,14 @@ import { Injectable, Injector, effect, inject, runInInjectionContext, signal } f
 import { Firestore, collection, doc, onSnapshot, runTransaction, serverTimestamp } from '@angular/fire/firestore';
 import { DataService } from './data.service';
 import { Notice, NoticeInput, normalizeNotice, validateNotice } from './notices';
+import { BillingService } from './billing.service';
 
 @Injectable({providedIn:'root'})
 export class NoticesService {
   private readonly firestore=inject(Firestore);
   private readonly injector=inject(Injector);
   private readonly data=inject(DataService);
+  private readonly billing=inject(BillingService);
   readonly notices=signal<Notice[]>([]);
   readonly loading=signal(false);
   readonly error=signal('');
@@ -33,6 +35,7 @@ export class NoticesService {
     const society=this.data.selected(),uid=this.data.user()?.uid;
     if(!society||society.ownerId!==uid)throw new Error('Sociedade indisponível.');
     const errors=validateNotice(input);if(Object.keys(errors).length)throw new Error(Object.values(errors)[0]);
+    if(!current)this.billing.assert('notices',this.notices().filter(item=>item.issueDate.slice(0,4)===new Date().getFullYear().toString()).length);
     const validContext=()=>this.data.user()?.uid===uid&&this.data.selected()?.id===society.id;
     const ref=current?doc(this.firestore,`societies/${society.id}/notices/${current.id}`):doc(collection(this.firestore,`societies/${society.id}/notices`));
     const content=normalizeNotice(input);

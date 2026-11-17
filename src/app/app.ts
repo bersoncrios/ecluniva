@@ -13,11 +13,12 @@ import { CommunicationComponent } from './features/communication/communication.c
 import { CommunicationInvite } from './core/communication';
 import { PublicAttendanceComponent } from './features/attendance/public-attendance.component';
 import { NoticesComponent } from './features/notices/notices.component';
+import { BillingComponent } from './features/billing/billing.component';
 import { lookupPostalCode, postalCodeDigits, PostalCodeNotFoundError } from './core/viacep';
 
-type Page = 'overview' | 'members' | 'birthdays' | 'member' | 'board' | 'minutes' | 'notices' | 'communication';
+type Page = 'overview' | 'members' | 'birthdays' | 'member' | 'board' | 'minutes' | 'notices' | 'communication' | 'billing';
 type DateParts = { day:string; month:string; year:string };
-@Component({ selector:'app-root', standalone:true, imports:[CommonModule, FormsModule, IconComponent, BoardComponent, MinutesComponent, NoticesComponent, CommunicationComponent, PublicAttendanceComponent], templateUrl:'./app.html' })
+@Component({ selector:'app-root', standalone:true, imports:[CommonModule, FormsModule, IconComponent, BoardComponent, MinutesComponent, NoticesComponent, CommunicationComponent, PublicAttendanceComponent, BillingComponent], templateUrl:'./app.html' })
 export class AppComponent {
   readonly data = inject(DataService);
   private readonly destroyRef = inject(DestroyRef);
@@ -98,7 +99,7 @@ export class AppComponent {
       this.boardMemberId.set(null);
       this.cancelPostalLookup();
       const hash = location.hash.slice(1);
-      const page = (['overview','members','birthdays','board','minutes','notices','communication'].includes(hash) ? hash : 'overview') as Page;
+      const page = (['overview','members','birthdays','board','minutes','notices','communication','billing'].includes(hash) ? hash : 'overview') as Page;
       this.page.set(this.data.selected()&&!this.data.isOwner()?'communication':page);
       refreshDay();
     };

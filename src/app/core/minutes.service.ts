@@ -4,6 +4,7 @@ import { DataService } from './data.service';
 import { sharedBirthday } from './communication';
 import { emptyMember } from './domain';
 import { attendanceAvailable, civilDate, minuteText, validateMinute, validMinuteDeletion, type AttendanceSnapshot, type Minute, type MinuteInput } from './minutes';
+import { BillingService } from './billing.service';
 
 const ZONES: Record<string, number> = {'America/Araguaina':3,'America/Sao_Paulo':3,'America/Recife':3,'America/Fortaleza':3,'America/Bahia':3,'America/Belem':3,'America/Noronha':2,'America/Manaus':4,'America/Rio_Branco':5};
 @Injectable({providedIn:'root'})
@@ -11,6 +12,7 @@ export class MinutesService {
   private readonly firestore = inject(Firestore);
   private readonly injector = inject(Injector);
   private readonly data = inject(DataService);
+  private readonly billing = inject(BillingService);
   readonly minutes = signal<Minute[]>([]);
   readonly loading = signal(false);
   readonly error = signal('');
@@ -58,6 +60,8 @@ export class MinutesService {
     if (Object.keys(errors).length) throw new Error(Object.values(errors)[0]);
     if (!(input.timeZone in ZONES)) throw new Error('Escolha um dos fusos brasileiros disponíveis.');
     if (input.date < civilDate(new Date(), input.timeZone)) throw new Error('Agende a plenária para hoje ou uma data futura.');
+    const yearMinutes = this.minutes().filter(item=>item.year===input.year).length;
+    this.billing.assert('minutes', yearMinutes);
     const candidates = await runInInjectionContext(this.injector, () => getDocs(query(collection(this.firestore,`societies/${societyId}/minutes`),where('year','==',input.year),where('number','==',input.number))));
     return runInInjectionContext(this.injector, () => runTransaction(this.firestore, async transaction => {
       this.assertContext(context);
