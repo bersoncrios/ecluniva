@@ -21,14 +21,14 @@ export default async function handler(req, res) {
     const intentSnapshot = await intentRef.get();
     if (!intentSnapshot.exists) return json(res, 404, { error: 'A tentativa de assinatura não foi encontrada.' });
     const intent = intentSnapshot.data();
-    if (intent.uid !== user.uid || intent.societyId !== societyId || (intent.status !== 'pending' && !(intent.status === 'completed' && intent.subscriptionId === subscriptionId))) return json(res, 409, { error: 'A tentativa não está mais pendente para esta sociedade.' });
+    if (intent.uid !== user.uid || intent.societyId !== societyId || !['pending', 'completed'].includes(intent.status)) return json(res, 409, { error: 'A tentativa não está mais pendente para esta sociedade.' });
 
-    let subscription;
+    let subscription, invoice = null, inputWasTransaction = false;
     try {
       subscription = await mercado(`/preapproval/${encodeURIComponent(subscriptionId)}`);
     } catch (error) {
       if (!(error instanceof Error) || !error.message.startsWith('Mercado Pago 404:')) throw error;
-      let invoice;
+      inputWasTransaction = true;
       try {
         invoice = await mercado(`/authorized_payments/${encodeURIComponent(subscriptionId)}`);
       } catch (invoiceError) {
@@ -40,19 +40,22 @@ export default async function handler(req, res) {
       if (!invoice.preapproval_id) return json(res, 404, { error: 'Esse ID é de uma cobrança sem assinatura vinculada. Informe o ID da assinatura (preapproval_id).' });
       subscription = await mercado(`/preapproval/${encodeURIComponent(String(invoice.preapproval_id))}`);
     }
-    if (String(subscription.id) !== subscriptionId || subscription.preapproval_plan_id !== intent.planId) return json(res, 400, { error: 'Essa assinatura não corresponde ao plano selecionado.' });
+    const resolvedSubscriptionId = String(subscription.id || '');
+    if (!resolvedSubscriptionId || subscription.preapproval_plan_id !== intent.planId) return json(res, 400, { error: `A assinatura encontrada está vinculada a outro plano. Confira o ID do plano ${intent.plan} configurado na Vercel.` });
+    if (intent.status === 'completed' && intent.subscriptionId !== resolvedSubscriptionId) return json(res, 409, { error: 'A tentativa já foi concluída com outra assinatura.' });
     const payerEmail = String(subscription.payer_email || '').trim().toLowerCase();
-    if (!user.email || payerEmail !== user.email.toLowerCase() || payerEmail !== intent.payerEmail) return json(res, 403, { error: 'O e-mail pagador da assinatura não corresponde à conta Quadrei.' });
-
     if (subscription.status !== 'authorized') return json(res, 409, { error: `O Mercado Pago informa status "${subscription.status || 'desconhecido'}". O plano será liberado quando a assinatura estiver autorizada.` });
     const plan = Object.entries(plans).find(([, item]) => item.id === subscription.preapproval_plan_id)?.[0];
     if (!plan || plan !== intent.plan) return json(res, 400, { error: 'O plano retornado pelo Mercado Pago não corresponde à tentativa.' });
+    const expectedAmount = plans[plan].price;
+    if (Math.round(Number(subscription.auto_recurring?.transaction_amount) * 100) !== Math.round(expectedAmount * 100)) return json(res, 400, { error: 'O valor recorrente da assinatura não corresponde ao preço deste plano.' });
+    if (inputWasTransaction && (invoice?.payment?.status !== 'approved' || Math.round(Number(invoice.transaction_amount) * 100) !== Math.round(expectedAmount * 100))) return json(res, 409, { error: 'A transação não aparece como aprovada pelo valor esperado para este plano.' });
 
     await store.runTransaction(async transaction => {
       const [currentBilling, currentIntent] = await Promise.all([transaction.get(billingRef), transaction.get(intentRef)]);
-      if (currentBilling.data()?.checkoutIntentId !== intentId || (currentIntent.data()?.status !== 'pending' && !(currentIntent.data()?.status === 'completed' && currentIntent.data()?.subscriptionId === subscriptionId))) throw new Error('A tentativa de assinatura foi alterada. Atualize a página e tente novamente.');
-      transaction.set(billingRef, { plan, status: 'authorized', subscriptionId, payerEmail, updatedAt: new Date() }, { merge: true });
-      transaction.update(intentRef, { status: 'completed', subscriptionId, completedAt: new Date() });
+      if (currentBilling.data()?.checkoutIntentId !== intentId || (currentIntent.data()?.status !== 'pending' && !(currentIntent.data()?.status === 'completed' && currentIntent.data()?.subscriptionId === resolvedSubscriptionId))) throw new Error('A tentativa de assinatura foi alterada. Atualize a página e tente novamente.');
+      transaction.set(billingRef, { plan, status: 'authorized', subscriptionId: resolvedSubscriptionId, payerEmail, updatedAt: new Date() }, { merge: true });
+      transaction.update(intentRef, { status: 'completed', subscriptionId: resolvedSubscriptionId, completedAt: new Date() });
     });
     return json(res, 200, { synchronized: true, plan, status: 'authorized' });
   } catch (error) {
