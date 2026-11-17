@@ -34,6 +34,8 @@ export class AppComponent {
   readonly pendingInvites=computed(()=>this.data.incomingInvites().filter(invite=>invite.status==='pending'));
   readonly presenceEntry=signal(location.hash.startsWith('#presenca/'));
   readonly inviteEntry=location.hash==='#convites';
+  readonly showGuide=signal(location.hash==='#como-usar');
+  readonly showFaq=signal(location.hash==='#faq');
   readonly boardMemberId = signal<string|null>(null);
   readonly query = signal('');
   readonly status = signal<'all'|'active'|'inactive'>('active');
@@ -99,6 +101,8 @@ export class AppComponent {
     const timer = window.setInterval(refreshDay, 30000);
     const navigateBack = ():void => {
       this.presenceEntry.set(location.hash.startsWith('#presenca/'));
+      this.showGuide.set(location.hash==='#como-usar');
+      this.showFaq.set(location.hash==='#faq');
       if (this.busy() || this.exportBusy()) { history.pushState({}, '', `#${this.page()}`); return; }
       this.boardMemberId.set(null);
       this.cancelPostalLookup();
@@ -120,6 +124,9 @@ export class AppComponent {
   skipToMain(event:Event):void{if(!this.presenceEntry())return;event.preventDefault();const main=document.getElementById('main');main?.setAttribute('tabindex','-1');main?.focus();}
   reloadApp():void{location.reload();}
   currentPlanName():string{return this.planLabels[this.billing.plan()];}
+  openGuide(event:Event):void{event.preventDefault();this.showFaq.set(false);this.showGuide.set(true);history.pushState({},'','#como-usar');window.scrollTo({top:0,behavior:'instant'});}
+  openFaq(event:Event):void{event.preventDefault();this.showGuide.set(false);this.showFaq.set(true);history.pushState({},'','#faq');window.scrollTo({top:0,behavior:'instant'});}
+  openLanding(event:Event):void{event.preventDefault();this.showGuide.set(false);this.showFaq.set(false);history.pushState({},'','/');window.scrollTo({top:0,behavior:'instant'});}
 
   async login(emulator = false): Promise<void> {
     if (this.loginBusy()) return;

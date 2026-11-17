@@ -2,7 +2,7 @@ export type PlanKey = 'free' | 'essential' | 'professional' | 'institutional';
 export type QuotaKey = 'societies' | 'members' | 'minutes' | 'notices';
 export const PLAN_LIMITS: Record<PlanKey, Record<QuotaKey, number | null>> = {
   free: { societies: 1, members: 15, minutes: 6, notices: 6 },
-  essential: { societies: 1, members: 50, minutes: 24, notices: 24 },
+  essential: { societies: 1, members: 35, minutes: 24, notices: 24 },
   professional: { societies: 3, members: 150, minutes: null, notices: null },
   institutional: { societies: null, members: null, minutes: null, notices: null },
 };

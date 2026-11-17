@@ -7,7 +7,7 @@ import { PlanKey as ActivePlanKey } from '../../core/plans';
 
 type PlanKey = Exclude<ActivePlanKey, 'free'>;
 const PLANS: { key: PlanKey; name: string; price: string; description: string; featured?: boolean }[] = [
-  { key: 'essential', name: 'Essencial', price: 'R$ 9,90/mês', description: '1 sociedade, até 50 membros, 24 atas e 24 convocações por ano.' },
+  { key: 'essential', name: 'Essencial', price: 'R$ 9,90/mês', description: '1 sociedade, até 35 membros, 24 atas e 24 convocações por ano.' },
   { key: 'professional', name: 'Profissional', price: 'R$ 29,90/mês', description: 'Até 3 sociedades, 150 membros por sociedade e uso ilimitado.', featured: true },
   { key: 'institutional', name: 'Institucional', price: 'R$ 79,90/mês', description: 'Para organizações que administram várias sociedades.' },
 ];
