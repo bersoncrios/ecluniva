@@ -176,7 +176,7 @@ export class AppComponent {
       this.createMode.set(false);
       this.churchName = ''; this.societyName = '';
       this.notice.set('Sociedade criada. Agora você pode cadastrar os membros.');
-    } catch { this.error.set('Não foi possível criar a sociedade. Os dados continuam no formulário. Tente novamente.'); }
+    } catch (error) { this.error.set(error instanceof Error ? error.message : 'Não foi possível criar a sociedade. Os dados continuam no formulário. Tente novamente.'); }
     finally { this.busy.set(false); }
   }
 
@@ -228,8 +228,8 @@ export class AppComponent {
       this.busy.set(false);
       this.navigate('members');
       this.notice.set(editing ? 'Cadastro atualizado.' : 'Membro cadastrado.');
-    } catch {
-      if (societyId === this.data.selected()?.id) this.error.set('Não foi possível salvar. Seus dados continuam no formulário. Tente novamente.');
+    } catch (error) {
+      if (societyId === this.data.selected()?.id) this.error.set(error instanceof Error ? error.message : 'Não foi possível salvar. Seus dados continuam no formulário. Tente novamente.');
     } finally { this.busy.set(false); }
   }
 
