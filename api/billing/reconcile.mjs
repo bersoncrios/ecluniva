@@ -23,7 +23,23 @@ export default async function handler(req, res) {
     const intent = intentSnapshot.data();
     if (intent.uid !== user.uid || intent.societyId !== societyId || (intent.status !== 'pending' && !(intent.status === 'completed' && intent.subscriptionId === subscriptionId))) return json(res, 409, { error: 'A tentativa não está mais pendente para esta sociedade.' });
 
-    const subscription = await mercado(`/preapproval/${encodeURIComponent(subscriptionId)}`);
+    let subscription;
+    try {
+      subscription = await mercado(`/preapproval/${encodeURIComponent(subscriptionId)}`);
+    } catch (error) {
+      if (!(error instanceof Error) || !error.message.startsWith('Mercado Pago 404:')) throw error;
+      let invoice;
+      try {
+        invoice = await mercado(`/authorized_payments/${encodeURIComponent(subscriptionId)}`);
+      } catch (invoiceError) {
+        if (!(invoiceError instanceof Error) || !invoiceError.message.startsWith('Mercado Pago 404:')) throw invoiceError;
+        const results = await mercado(`/authorized_payments/search?payment_id=${encodeURIComponent(subscriptionId)}`);
+        invoice = (results.results || []).find(item => String(item.payment?.id) === subscriptionId);
+        if (!invoice) return json(res, 404, { error: 'O número informado não corresponde a uma assinatura ou fatura de assinatura encontrada nesta conta Mercado Pago.' });
+      }
+      if (!invoice.preapproval_id) return json(res, 404, { error: 'Esse ID é de uma cobrança sem assinatura vinculada. Informe o ID da assinatura (preapproval_id).' });
+      subscription = await mercado(`/preapproval/${encodeURIComponent(String(invoice.preapproval_id))}`);
+    }
     if (String(subscription.id) !== subscriptionId || subscription.preapproval_plan_id !== intent.planId) return json(res, 400, { error: 'Essa assinatura não corresponde ao plano selecionado.' });
     const payerEmail = String(subscription.payer_email || '').trim().toLowerCase();
     if (!user.email || payerEmail !== user.email.toLowerCase() || payerEmail !== intent.payerEmail) return json(res, 403, { error: 'O e-mail pagador da assinatura não corresponde à conta Quadrei.' });
