@@ -1,28 +1,26 @@
 import { Component, inject, signal } from '@angular/core';
+import { Auth } from '@angular/fire/auth';
 import { DataService } from '../../core/data.service';
-import { environment } from '../../../environments/environment';
 
 type PlanKey = 'essential' | 'professional' | 'institutional';
-const configuredUrls = (environment as unknown as { mercadoPago?: { essentialUrl?: string; professionalUrl?: string; institutionalUrl?: string } }).mercadoPago || {};
-const urls = {
-  essentialUrl: configuredUrls.essentialUrl || 'https://mpago.la/1S1w9Vz',
-  professionalUrl: configuredUrls.professionalUrl || 'https://mpago.la/1QLPTdn',
-  institutionalUrl: configuredUrls.institutionalUrl || 'https://mpago.la/2iN97Au',
-};
-const PLANS: { key: PlanKey; name: string; price: string; description: string; url: string; featured?: boolean }[] = [
-  { key: 'essential', name: 'Essencial', price: 'R$ 9,90/mês', description: '1 sociedade, até 50 membros, 24 atas e 24 convocações por ano.', url: urls.essentialUrl || '' },
-  { key: 'professional', name: 'Profissional', price: 'R$ 29,90/mês', description: 'Até 3 sociedades, 150 membros por sociedade e uso ilimitado.', url: urls.professionalUrl || '', featured: true },
-  { key: 'institutional', name: 'Institucional', price: 'R$ 79,90/mês', description: 'Para organizações que administram várias sociedades.', url: urls.institutionalUrl || '' },
+const PLANS: { key: PlanKey; name: string; price: string; description: string; featured?: boolean }[] = [
+  { key: 'essential', name: 'Essencial', price: 'R$ 9,90/mês', description: '1 sociedade, até 50 membros, 24 atas e 24 convocações por ano.' },
+  { key: 'professional', name: 'Profissional', price: 'R$ 29,90/mês', description: 'Até 3 sociedades, 150 membros por sociedade e uso ilimitado.', featured: true },
+  { key: 'institutional', name: 'Institucional', price: 'R$ 79,90/mês', description: 'Para organizações que administram várias sociedades.' },
 ];
 @Component({ selector: 'app-billing', standalone: true, templateUrl: './billing.component.html', styleUrl: './billing.component.css' })
 export class BillingComponent {
-  readonly data = inject(DataService); readonly plans = PLANS;
+  readonly data = inject(DataService); private readonly auth = inject(Auth); readonly plans = PLANS;
   readonly busy = signal<PlanKey | ''>(''); readonly error = signal('');
   async subscribe(plan: PlanKey): Promise<void> {
-    const selected = this.plans.find(item=>item.key===plan); if (!this.data.selected() || !selected?.url || this.busy()) { this.error.set('O link deste plano ainda não foi configurado.'); return; }
+    const society = this.data.selected(), user = this.auth.currentUser; if (!society || !user || this.busy()) return;
     this.busy.set(plan); this.error.set('');
     try {
-      window.location.assign(selected.url);
+      const token = await user.getIdToken();
+      const response = await fetch('/api/billing/checkout', { method: 'POST', headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify({ plan, societyId: society.id }) });
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok || !body.checkoutUrl) throw new Error(body.error || 'Não foi possível abrir o pagamento.');
+      window.location.assign(body.checkoutUrl);
     } catch (error) { this.error.set(error instanceof Error ? error.message : 'Não foi possível iniciar a assinatura.'); }
     finally { this.busy.set(''); }
   }
