@@ -28,13 +28,18 @@ export default async function handler(req, res) {
         const intents = await store.collection('billingCheckoutIntents').where('payerEmail', '==', email).get();
         const cutoff = Date.now() - 24 * 60 * 60 * 1000;
         const candidates = intents.docs.filter(item => item.data().planId === subscription.preapproval_plan_id && item.data().status === 'pending' && item.data().createdAt?.toDate?.().getTime() >= cutoff);
-        if (candidates.length === 1) {
-          const intent = candidates[0], data = intent.data();
-          const society = await store.doc(`societies/${data.societyId}`).get();
+        const current = await Promise.all(candidates.map(async intent => {
+          const data = intent.data();
           const billingRef = store.doc(`users/${data.uid}/billing/${data.societyId}`);
           const billing = await billingRef.get();
+          return billing.data()?.checkoutIntentId === intent.id ? { intent, data, billingRef } : null;
+        }));
+        const matches = current.filter(Boolean);
+        if (matches.length === 1) {
+          const { intent, data, billingRef } = matches[0];
+          const society = await store.doc(`societies/${data.societyId}`).get();
           const account = await admin.auth().getUser(data.uid);
-          if (society.exists && society.data()?.ownerId === data.uid && account.email?.toLowerCase() === email && billing.data()?.checkoutIntentId === intent.id) {
+          if (society.exists && society.data()?.ownerId === data.uid && account.email?.toLowerCase() === email) {
             await billingRef.set({ plan, status: subscription.status, subscriptionId: subscription.id, payerEmail: email, updatedAt: new Date() }, { merge: true });
             await intent.ref.update({ status: 'completed', subscriptionId: subscription.id, completedAt: new Date() });
           }
@@ -43,5 +48,8 @@ export default async function handler(req, res) {
       }
     }
     return json(res, 200, { received: true });
-  } catch { return json(res, 200, { received: true }); }
+  } catch (error) {
+    console.error('Falha ao processar webhook do Mercado Pago:', error);
+    return json(res, 500, { error: 'Falha ao processar a notificação.' });
+  }
 }
