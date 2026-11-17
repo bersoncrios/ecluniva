@@ -10,33 +10,27 @@
 </main>
 } @else if (!data.user()) {
 <div class="login-page">
-  <header class="public-header"><a class="brand" href="#"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 64 64"><circle cx="22" cy="23" r="5"/><circle cx="42" cy="23" r="5"/><circle cx="32" cy="18" r="6"/><path d="M12 45c0-7 4-11 10-11 3 0 5 1 7 3M52 45c0-7-4-11-10-11-3 0-5 1-7 3M19 48c0-10 5-15 13-15s13 5 13 15"/></svg></span>Ecluniva</a><span
-      class="public-label">PESSOAS, ENCONTROS E HISTÓRIA</span></header>
+  <header class="public-header landing-header"><a class="brand" href="#"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 64 64"><circle cx="22" cy="23" r="5"/><circle cx="42" cy="23" r="5"/><circle cx="32" cy="18" r="6"/><path d="M12 45c0-7 4-11 10-11 3 0 5 1 7 3M52 45c0-7-4-11-10-11-3 0-5 1-7 3M19 48c0-10 5-15 13-15s13 5 13 15"/></svg></span>Ecluniva</a><nav aria-label="Navegação da página"><a href="#recursos">Recursos</a><a href="#planos">Planos</a><a class="button" href="#acesso">Acessar o app <app-icon name="arrow" /></a></nav></header>
   <main id="main" class="login-layout">
-    <section class="login-intro">
-      <div class="eyebrow"><span class="small-line"></span> PESSOAS NO CENTRO</div>
-      <h1 tabindex="-1">Sua sociedade,<br> <em>em um só lugar.</em></h1>
-      <p class="lead">Membros, diretoria, reuniões e atas para acompanhar a vida da sua sociedade.</p>
+    <section class="login-intro landing-hero">
+      <div class="eyebrow"><span class="small-line"></span> ORGANIZAÇÃO QUE CUIDA DE PESSOAS</div>
+      <h1 tabindex="-1">A vida da sua sociedade,<br> <em>mais fácil de organizar.</em></h1>
+      <p class="lead">Membros, aniversários, diretoria, reuniões e comunicação reunidos em um só lugar, para sua equipe cuidar do que realmente importa.</p>
       <div class="society-pills"><span>UPH</span><span>SAF</span><span>UMP</span><span>UCP</span><span>UPA</span></div>
-      <div class="intro-bottom"><app-icon name="heart" />
-        <p>Feito para a rotina de quem serve<br>e organiza a vida em comunidade.</p>
-      </div>
+      <a class="button landing-cta" href="#acesso">Conheça a Ecluniva <app-icon name="arrow" /></a>
+      <div class="intro-bottom"><app-icon name="heart" /><p>Feita para quem serve e organiza<br>a vida em comunidade.</p></div>
     </section>
-    <section class="login-card">
+    <section class="login-card" id="acesso">
       <div class="card-symbol"><app-icon name="church" /></div>
-      <span class="eyebrow">BEM-VINDO À ECLUNIVA</span>
-      <h2>Cuide da rotina da sua sociedade</h2>
-      <p class="muted">Organize os membros, acompanhe a diretoria e registre as reuniões e atas da sua sociedade.</p>
+      <span class="eyebrow">SEU ESPAÇO DE ORGANIZAÇÃO</span>
+      <h2>Comece pela sua sociedade</h2>
+      <p class="muted">Entre com sua conta Google para criar ou acessar uma sociedade.</p>
       @if (error()) { <div class="alert error" role="alert">{{ error() }}</div> }
       <button class="google-button" (click)="login()" [disabled]="loginBusy()"><span class="google-g"
           aria-hidden="true">G</span>{{ loginBusy() ? 'Entrando…' : 'Entrar com Google' }}<app-icon
           name="arrow" /></button>
       <p class="help">Use sua conta Google para acessar suas sociedades e os convites de Comunicação.</p>@if(inviteEntry){<p class="alert" role="status">Entre com o e-mail que recebeu o convite para aceitá-lo.</p>}
-      <div class="login-features">
-        <div><app-icon name="check" />Membros e aniversários</div>
-        <div><app-icon name="check" />Diretoria por ano</div>
-        <div><app-icon name="check" />Reuniões e atas</div>
-      </div>
+      <div class="login-features"><div><app-icon name="check" />Acesso simples com Google</div><div><app-icon name="check" />Plano gratuito para começar</div><div><app-icon name="check" />Dados da sociedade em um só lugar</div></div>
       @if (isEmulator) {
       <details class="emulator-login">
         <summary>Acesso de testes locais</summary>
@@ -50,8 +44,19 @@
       }
     </section>
   </main>
+  <section class="landing-section" id="recursos"><div class="landing-section-heading"><div class="eyebrow">MENOS TEMPO COM PLANILHAS</div><h2>Ferramentas para a rotina real da sociedade</h2><p>Do rol de membros à ata da plenária, acompanhe tarefas importantes em um espaço organizado.</p></div><div class="landing-feature-grid">
+    <article class="landing-feature"><span class="landing-feature-icon"><app-icon name="people" /></span><h3>Membros e aniversários</h3><p>Mantenha o rol organizado, encontre cadastros com facilidade e acompanhe as próximas datas especiais.</p></article>
+    <article class="landing-feature"><span class="landing-feature-icon"><app-icon name="board" /></span><h3>Diretoria por ano</h3><p>Registre funções e responsáveis e consulte a composição da diretoria em cada período.</p></article>
+    <article class="landing-feature"><span class="landing-feature-icon"><app-icon name="calendar" /></span><h3>Reuniões e atas</h3><p>Prepare plenárias, acompanhe presença e gere atas editáveis para guardar a história da sociedade.</p></article>
+    <article class="landing-feature"><span class="landing-feature-icon"><app-icon name="notice" /></span><h3>Convocações</h3><p>Organize pautas e prepare convocações para reuniões executivas, de diretoria ou plenárias.</p></article>
+    <article class="landing-feature"><span class="landing-feature-icon"><app-icon name="heart" /></span><h3>Comunicação</h3><p>Compartilhe aniversariantes e prepare mensagens e cartões para fortalecer os vínculos.</p></article>
+    <article class="landing-feature"><span class="landing-feature-icon"><app-icon name="download" /></span><h3>Seus dados, prontos para usar</h3><p>Exporte informações e documentos para apoiar o trabalho da equipe dentro e fora do app.</p></article>
+  </div></section>
+  <section class="landing-how"><div><div class="eyebrow">COMECE EM POUCOS PASSOS</div><h2>Organização que acompanha sua sociedade</h2></div><ol><li><span>01</span><div><strong>Entre com sua conta Google</strong><p>Acesse com uma conta que você já usa.</p></div></li><li><span>02</span><div><strong>Cadastre sua sociedade</strong><p>Informe a igreja, o tipo e o nome da unidade local.</p></div></li><li><span>03</span><div><strong>Convide sua equipe para organizar</strong><p>Cadastre membros, componha a diretoria e prepare as próximas atividades.</p></div></li></ol></section>
+  <section class="landing-section landing-plans" id="planos"><div class="landing-section-heading"><div class="eyebrow">PLANOS PARA CADA MOMENTO</div><h2>Comece grátis. Evolua quando precisar.</h2><p>Os limites acompanham o tamanho e as necessidades da sua sociedade.</p></div><div class="landing-plan-grid"><article><h3>Grátis</h3><strong>R$ 0</strong><p>1 sociedade · 15 membros · 6 atas e 6 convocações por ano</p></article><article><h3>Essencial</h3><strong>R$ 9,90<span>/mês</span></strong><p>1 sociedade · até 50 membros · 24 atas e convocações por ano</p></article><article class="landing-plan-featured"><span class="billing-badge">Mais escolhido</span><h3>Profissional</h3><strong>R$ 29,90<span>/mês</span></strong><p>Até 3 sociedades · 150 membros por sociedade · atas e convocações ilimitadas</p></article><article><h3>Institucional</h3><strong>R$ 79,90<span>/mês</span></strong><p>Para organizações que administram várias sociedades</p></article></div><p class="landing-plan-note">Os recursos pagos dependem da confirmação da assinatura pelo Mercado Pago.</p></section>
+  <section class="landing-bottom-cta"><div><div class="eyebrow">SUA SOCIEDADE EM UM SÓ LUGAR</div><h2>Mais organização para servir com tranquilidade.</h2><p>Crie sua conta e comece com o plano gratuito.</p></div><a class="button" href="#acesso">Entrar com Google <app-icon name="arrow" /></a></section>
   <footer class="public-footer"><span>Ecluniva</span>
-    <p>Sua sociedade, em um só lugar.</p>
+    <p>Organização para cuidar melhor da vida em comunidade.</p>
   </footer>
 </div>
 } @else if (!data.selected()) {
@@ -540,7 +545,7 @@
         (click)="navigate('birthdays')" aria-label="Aniversariantes" [disabled]="busy() || exportBusy()"><app-icon
           name="calendar" /><span>Anivers.</span></button><button [class.active]="page() === 'board'"
         [attr.aria-current]="page() === 'board' ? 'page' : null" (click)="navigate('board')"
-        [disabled]="busy() || exportBusy()"><app-icon name="board" /><span>Diretoria</span></button><button [class.active]="page() === 'minutes'" [attr.aria-current]="page() === 'minutes' ? 'page' : null" (click)="navigate('minutes')" [disabled]="busy() || exportBusy()"><app-icon name="calendar" /><span>Atas</span></button><button [class.active]="page() === 'notices'" [attr.aria-current]="page() === 'notices' ? 'page' : null" (click)="navigate('notices')" aria-label="Convocações" [disabled]="busy() || exportBusy()"><app-icon name="notice" /><span>Convocar</span></button>}@else{<button class="active" aria-current="page" (click)="navigate('communication')"><app-icon name="calendar" /><span>Comunicação</span></button>}</nav>
+        [disabled]="busy() || exportBusy()"><app-icon name="board" /><span>Diretoria</span></button><button [class.active]="page() === 'minutes'" [attr.aria-current]="page() === 'minutes' ? 'page' : null" (click)="navigate('minutes')" [disabled]="busy() || exportBusy()"><app-icon name="calendar" /><span>Atas</span></button><button [class.active]="page() === 'notices'" [attr.aria-current]="page() === 'notices' ? 'page' : null" (click)="navigate('notices')" aria-label="Convocações" [disabled]="busy() || exportBusy()"><app-icon name="notice" /><span>Convocar</span></button><button [class.active]="page() === 'billing'" [attr.aria-current]="page() === 'billing' ? 'page' : null" (click)="navigate('billing')" [disabled]="busy() || exportBusy()"><app-icon name="card" /><span>Assinatura</span></button>}@else{<button class="active" aria-current="page" (click)="navigate('communication')"><app-icon name="calendar" /><span>Comunicação</span></button>}</nav>
   </div>
 </div>
 }
