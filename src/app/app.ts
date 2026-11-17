@@ -14,6 +14,8 @@ import { CommunicationInvite } from './core/communication';
 import { PublicAttendanceComponent } from './features/attendance/public-attendance.component';
 import { NoticesComponent } from './features/notices/notices.component';
 import { BillingComponent } from './features/billing/billing.component';
+import { BillingService } from './core/billing.service';
+import { PlanKey } from './core/plans';
 import { lookupPostalCode, postalCodeDigits, PostalCodeNotFoundError } from './core/viacep';
 
 type Page = 'overview' | 'members' | 'birthdays' | 'member' | 'board' | 'minutes' | 'notices' | 'communication' | 'billing';
@@ -21,6 +23,8 @@ type DateParts = { day:string; month:string; year:string };
 @Component({ selector:'app-root', standalone:true, imports:[CommonModule, FormsModule, IconComponent, BoardComponent, MinutesComponent, NoticesComponent, CommunicationComponent, PublicAttendanceComponent, BillingComponent], templateUrl:'./app.html' })
 export class AppComponent {
   readonly data = inject(DataService);
+  readonly billing = inject(BillingService);
+  private readonly planLabels: Record<PlanKey, string> = { free: 'Grátis', essential: 'Essencial', professional: 'Profissional', institutional: 'Institucional' };
   private readonly destroyRef = inject(DestroyRef);
   readonly isEmulator = environment.useEmulators;
   readonly isProduction = environment.production;
@@ -115,6 +119,7 @@ export class AppComponent {
 
   skipToMain(event:Event):void{if(!this.presenceEntry())return;event.preventDefault();const main=document.getElementById('main');main?.setAttribute('tabindex','-1');main?.focus();}
   reloadApp():void{location.reload();}
+  currentPlanName():string{return this.planLabels[this.billing.plan()];}
 
   async login(emulator = false): Promise<void> {
     if (this.loginBusy()) return;

@@ -153,6 +153,7 @@
         <div><strong>{{ data.selected()?.type }} · {{ data.selected()?.name }}</strong><span>{{
             data.selected()?.churchName }}</span></div>
       </div>
+      @if(data.isOwner()){<button class="app-plan-indicator" type="button" (click)="navigate('billing')" aria-label="Plano atual: {{currentPlanName()}}. Abrir assinatura"><app-icon name="card" /><span><small>PLANO ATUAL</small><strong>{{currentPlanName()}}</strong></span><app-icon name="arrow" /></button>}
       <details class="account-menu">
         <summary><span class="avatar">{{ initials(data.user()?.displayName || data.user()?.email || 'Conta')
             }}</span><span>Conta e sociedade</span></summary>

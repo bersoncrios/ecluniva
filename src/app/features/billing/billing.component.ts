@@ -2,8 +2,10 @@ import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Auth } from '@angular/fire/auth';
 import { DataService } from '../../core/data.service';
+import { BillingService } from '../../core/billing.service';
+import { PlanKey as ActivePlanKey } from '../../core/plans';
 
-type PlanKey = 'essential' | 'professional' | 'institutional';
+type PlanKey = Exclude<ActivePlanKey, 'free'>;
 const PLANS: { key: PlanKey; name: string; price: string; description: string; featured?: boolean }[] = [
   { key: 'essential', name: 'Essencial', price: 'R$ 9,90/mês', description: '1 sociedade, até 50 membros, 24 atas e 24 convocações por ano.' },
   { key: 'professional', name: 'Profissional', price: 'R$ 29,90/mês', description: 'Até 3 sociedades, 150 membros por sociedade e uso ilimitado.', featured: true },
@@ -12,6 +14,9 @@ const PLANS: { key: PlanKey; name: string; price: string; description: string; f
 @Component({ selector: 'app-billing', standalone: true, imports: [FormsModule], templateUrl: './billing.component.html', styleUrl: './billing.component.css' })
 export class BillingComponent {
   readonly data = inject(DataService); private readonly auth = inject(Auth); readonly plans = PLANS;
+  readonly billing = inject(BillingService);
+  readonly activePlanName = () => this.billing.plan() === 'free' ? 'Grátis' : PLANS.find(plan => plan.key === this.billing.plan())?.name || 'Grátis';
+  isCurrentPlan(plan: PlanKey): boolean { return this.billing.plan() === plan; }
   readonly busy = signal<PlanKey | ''>(''); readonly error = signal('');
   readonly reconciling = signal(false); subscriptionId = '';
   async subscribe(plan: PlanKey): Promise<void> {
