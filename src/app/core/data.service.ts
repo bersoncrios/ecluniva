@@ -1,6 +1,6 @@
 import { Injectable, Injector, computed, inject, runInInjectionContext, signal } from '@angular/core';
 import { Auth, GoogleAuthProvider, User, onAuthStateChanged, signInWithPopup, signInWithEmailAndPassword, signOut } from '@angular/fire/auth';
-import { Firestore, collection, query, where, onSnapshot, addDoc, doc, getDoc, serverTimestamp, Unsubscribe, runTransaction, deleteDoc, writeBatch } from '@angular/fire/firestore';
+import { Firestore, collection, query, where, onSnapshot, addDoc, doc, getDoc, getDocs, serverTimestamp, Unsubscribe, runTransaction, deleteDoc, writeBatch } from '@angular/fire/firestore';
 import { BoardAssignment, Member, MemberInput, Society, SocietyType } from './models';
 import { normalizeMember, todayISO } from './domain';
 import { boardAssignmentId, validBoardYear, validateBoardAssignment } from './board';
@@ -167,7 +167,15 @@ export class DataService {
   async createSociety(churchName: string, type: SocietyType, name: string): Promise<void> {
     const user = this.user();
     if (!user) throw new Error('Sessão encerrada.');
-    if (this.ownedSocieties.length >= PLAN_LIMITS.free.societies!) throw new Error('Seu plano permite até 1 sociedade. Faça upgrade para continuar.');
+    const billing = await runInInjectionContext(this.injector, () => getDocs(collection(this.firestore, `users/${user.uid}/billing`)));
+    const accountPlan = billing.docs.reduce((current, item) => {
+      const data = item.data();
+      if (data['status'] !== 'authorized') return current;
+      const candidate = planFromStatus(data['plan']);
+      return PLAN_LIMITS[candidate].societies === null || (PLAN_LIMITS[current].societies !== null && PLAN_LIMITS[candidate].societies! > PLAN_LIMITS[current].societies!) ? candidate : current;
+    }, 'free' as keyof typeof PLAN_LIMITS);
+    const societyLimit = PLAN_LIMITS[accountPlan].societies;
+    if (societyLimit !== null && this.ownedSocieties.length >= societyLimit) throw new Error(`Seu plano permite até ${societyLimit} sociedade${societyLimit === 1 ? '' : 's'}. Faça upgrade para continuar.`);
     const version = this.authVersion;
     const data = { ownerId: user.uid, churchName: churchName.trim(), type, name: name.trim() };
     const ref = await runInInjectionContext(this.injector, () => addDoc(collection(this.firestore, 'societies'), {
