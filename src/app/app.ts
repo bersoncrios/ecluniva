@@ -17,10 +17,11 @@ import { BillingComponent } from './features/billing/billing.component';
 import { BillingService } from './core/billing.service';
 import { PlanKey } from './core/plans';
 import { lookupPostalCode, postalCodeDigits, PostalCodeNotFoundError } from './core/viacep';
+import { PublicMemberUpdateComponent } from './features/members/public-member-update.component';
 
 type Page = 'overview' | 'members' | 'birthdays' | 'member' | 'board' | 'minutes' | 'notices' | 'communication' | 'billing';
 type DateParts = { day:string; month:string; year:string };
-@Component({ selector:'app-root', standalone:true, imports:[CommonModule, FormsModule, IconComponent, BoardComponent, MinutesComponent, NoticesComponent, CommunicationComponent, PublicAttendanceComponent, BillingComponent], templateUrl:'./app.html' })
+@Component({ selector:'app-root', standalone:true, imports:[CommonModule, FormsModule, IconComponent, BoardComponent, MinutesComponent, NoticesComponent, CommunicationComponent, PublicAttendanceComponent, BillingComponent, PublicMemberUpdateComponent], templateUrl:'./app.html' })
 export class AppComponent {
   readonly data = inject(DataService);
   readonly billing = inject(BillingService);
@@ -33,6 +34,7 @@ export class AppComponent {
   readonly page = signal<Page>('overview');
   readonly pendingInvites=computed(()=>this.data.incomingInvites().filter(invite=>invite.status==='pending'));
   readonly presenceEntry=signal(location.hash.startsWith('#presenca/'));
+  readonly memberUpdateEntry=signal(location.hash.startsWith('#atualizar-cadastro/'));
   readonly inviteEntry=location.hash==='#convites';
   readonly showGuide=signal(location.hash==='#como-usar');
   readonly showFaq=signal(location.hash==='#faq');
@@ -55,9 +57,13 @@ export class AppComponent {
   readonly exportFormat = signal<'pdf'|'xlsx'>('pdf');
   readonly exportBusy = signal(false);
   readonly dialogError = signal('');
-  readonly dialogKind = signal<'status'|'export'|'details'|null>(null);
+  readonly dialogKind = signal<'status'|'export'|'details'|'member-link'|null>(null);
   readonly detailMemberId = signal<string|null>(null);
   readonly detailMember = computed(() => this.data.members().find(member => member.id === this.detailMemberId()) ?? null);
+  readonly memberUpdateLink=signal('');
+  readonly memberUpdateLinkName=signal('');
+  readonly memberUpdateLinkBusy=signal(false);
+  readonly memberUpdateLinkCopied=signal(false);
   readonly postalLoading = signal(false);
   readonly postalMessage = signal('');
   readonly postalRetry = signal(false);
@@ -101,6 +107,7 @@ export class AppComponent {
     const timer = window.setInterval(refreshDay, 30000);
     const navigateBack = ():void => {
       this.presenceEntry.set(location.hash.startsWith('#presenca/'));
+      this.memberUpdateEntry.set(location.hash.startsWith('#atualizar-cadastro/'));
       this.showGuide.set(location.hash==='#como-usar');
       this.showFaq.set(location.hash==='#faq');
       if (this.busy() || this.exportBusy()) { history.pushState({}, '', `#${this.page()}`); return; }
@@ -323,6 +330,33 @@ export class AppComponent {
     this.openDialog('details');
   }
 
+  async createMemberUpdateLink(member:Member):Promise<void>{
+    const society=this.data.selected(),user=this.data.user();
+    if(!society||!user||!this.data.isOwner()||this.memberUpdateLinkBusy())return;
+    this.memberUpdateLinkBusy.set(true);this.dialogError.set('');this.memberUpdateLinkCopied.set(false);
+    try{
+      const token=await user.getIdToken();
+      const response=await fetch('/api/member-update',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`},body:JSON.stringify({action:'create',societyId:society.id,memberId:member.id})});
+      const result=await response.json().catch(()=>({}));
+      if(!response.ok)throw new Error(result.error||'Não foi possível gerar o link.');
+      const url=new URL(location.pathname,location.origin);url.hash=`atualizar-cadastro/${result.token}`;
+      this.memberUpdateLink.set(url.toString());this.memberUpdateLinkName.set(member.name);
+      this.closeDialog(true);this.openDialog('member-link');
+    }catch(error){this.dialogError.set(error instanceof Error?error.message:'Não foi possível gerar o link. Tente novamente.');}
+    finally{this.memberUpdateLinkBusy.set(false);}
+  }
+
+  async copyMemberUpdateLink():Promise<void>{
+    try{await navigator.clipboard.writeText(this.memberUpdateLink());this.memberUpdateLinkCopied.set(true);}
+    catch{this.dialogError.set('Não foi possível copiar automaticamente. Selecione e copie o link exibido.');}
+  }
+
+  sendMemberUpdateLink():void{
+    const name=this.memberUpdateLinkName()||'Olá';
+    const message=`Olá, ${name}! Acesse este link seguro para conferir e atualizar seus dados cadastrais na Ecluniva: ${this.memberUpdateLink()}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(message)}`,'_blank','noopener,noreferrer');
+  }
+
   editDetailMember(): void {
     const member = this.detailMember();
     if (!member) return;
@@ -386,7 +420,7 @@ export class AppComponent {
     event.preventDefault(); this.closeDialog();
   }
 
-  private openDialog(kind: 'status'|'export'|'details'): void {
+  private openDialog(kind: 'status'|'export'|'details'|'member-link'): void {
     this.dialogKind.set(kind); this.dialogError.set('');
     this.previousFocus = document.activeElement as HTMLElement;
     this.confirmation?.nativeElement.showModal();

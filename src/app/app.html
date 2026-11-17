@@ -1,7 +1,9 @@
 <a class="skip-link" href="#main" (click)="skipToMain($event)">Pular para o conteúdo</a>
 @if (!isProduction) { <div class="environment-bar">{{ isEmulator ? 'Ambiente local de testes' : 'Ambiente de
   homologação' }}</div> }
-@if (presenceEntry()) {
+@if (memberUpdateEntry()) {
+@defer(on immediate){<app-public-member-update />}
+} @else if (presenceEntry()) {
 @defer(on immediate){<app-public-attendance />}
 } @else if (!data.ready()) {
 <main id="main" class="initial-loading">
@@ -15,7 +17,7 @@
   <main id="main" class="guide-main"><div class="guide-heading"><div class="eyebrow">CENTRAL DE AJUDA</div><h1 tabindex="-1">Como usar a Ecluniva</h1><p>Um guia rápido para organizar a sociedade, acompanhar as atividades e manter as informações em ordem.</p></div>
     <nav class="guide-index" aria-label="Nesta página"><a href="#guia-comecar">Começar</a><a href="#guia-membros">Membros</a><a href="#guia-diretoria">Diretoria</a><a href="#guia-atas">Atas</a><a href="#guia-convocacoes">Convocações</a><a href="#guia-comunicacao">Comunicação</a><a href="#guia-planos">Planos</a></nav>
     <section class="guide-content" id="guia-comecar"><div class="guide-number">01</div><div><h2>Entre e cadastre sua sociedade</h2><ol><li>Na página inicial, escolha <strong>Entrar com Google</strong>.</li><li>Use a conta que ficará responsável pela sociedade.</li><li>Na primeira entrada, escolha <strong>Criar sociedade</strong> e informe a igreja, o tipo e o nome da unidade local.</li><li>Se você recebeu um convite de Comunicação, entre com o e-mail convidado e aceite o convite para acessar.</li></ol></div></section>
-    <section class="guide-content" id="guia-membros"><div class="guide-number">02</div><div><h2>Cadastre e mantenha o rol de membros</h2><ol><li>Abra <strong>Membros</strong> e selecione <strong>Cadastrar membro</strong>.</li><li>Informe o nome; os demais campos podem ser completados depois.</li><li>Use a busca e os filtros para localizar cadastros. Aniversários usam a data informada e destacam membros ativos.</li><li>Você pode editar os dados e inativar um cadastro para preservá-lo sem contá-lo como membro ativo nos limites do plano.</li></ol></div></section>
+    <section class="guide-content" id="guia-membros"><div class="guide-number">02</div><div><h2>Cadastre e mantenha o rol de membros</h2><ol><li>Abra <strong>Membros</strong> e selecione <strong>Cadastrar membro</strong>.</li><li>Informe o nome; os demais campos podem ser completados depois.</li><li>Use a busca e os filtros para localizar cadastros. Aniversários usam a data informada e destacam membros ativos.</li><li>Você pode editar os dados e inativar um cadastro para preservá-lo sem contá-lo como membro ativo nos limites do plano.</li><li>Para pedir que a própria pessoa atualize seus dados, abra <strong>Ver detalhes</strong> no cadastro escolhido e selecione <strong>Enviar link de atualização</strong>. O link vale 7 dias e pode ser usado uma vez.</li></ol></div></section>
     <section class="guide-content" id="guia-diretoria"><div class="guide-number">03</div><div><h2>Registre a diretoria de cada ano</h2><ol><li>Abra <strong>Diretoria</strong> e selecione o ano.</li><li>Escolha um membro e atribua o cargo. Também é possível registrar funções personalizadas.</li><li>Volte ao ano desejado para consultar ou atualizar a composição.</li></ol></div></section>
     <section class="guide-content" id="guia-atas"><div class="guide-number">04</div><div><h2>Prepare plenárias e atas</h2><ol><li>Em <strong>Atas e plenárias</strong>, crie uma reunião e preencha data, horário, pauta e demais informações.</li><li>Abra a área de presença da reunião para gerar o acesso compartilhável e acompanhar confirmações.</li><li>Revise os dados e conclua a ata quando estiver pronta. Os documentos podem ser baixados nos formatos disponíveis na tela.</li></ol></div></section>
     <section class="guide-content" id="guia-convocacoes"><div class="guide-number">05</div><div><h2>Crie convocações</h2><ol><li>Abra <strong>Convocações</strong> e escolha nova convocação.</li><li>Selecione o tipo de reunião, informe data, horário, local e responsáveis.</li><li>Acrescente os itens de pauta, revise e baixe o documento para compartilhar.</li></ol></div></section>
@@ -32,6 +34,7 @@
       <details><summary>Como começo a usar a Ecluniva?</summary><p>Entre com sua conta Google. Na primeira entrada, crie uma sociedade informando a igreja, o tipo e o nome da unidade local.</p></details>
       <details><summary>Posso organizar mais de uma sociedade?</summary><p>Sim, conforme o plano da conta. O plano Grátis e o Essencial permitem uma sociedade; o Profissional permite até três; o Institucional não tem limite de sociedades.</p></details>
       <details><summary>Posso convidar alguém sem dar acesso administrativo?</summary><p>Sim. O proprietário pode convidar uma pessoa para apoiar a área Comunicação. A pessoa convidada precisa entrar com o e-mail do convite e aceitá-lo.</p></details>
+      <details><summary>Um membro pode atualizar os próprios dados?</summary><p>Sim. A pessoa responsável pelo rol pode gerar um link no detalhe do membro. Ele permite atualizar somente nome, nascimento, telefone, e-mail e endereço daquele cadastro; expira em 7 dias e aceita um envio.</p></details>
       <details><summary>O que acontece quando atinjo o limite do plano?</summary><p>O app bloqueia novos cadastros ou documentos daquela categoria e informa o limite. Os dados existentes permanecem na sociedade.</p></details>
     </section>
     <section class="faq-group"><h2>Planos e pagamentos</h2>
@@ -592,11 +595,12 @@
   </div>
 </div>
 }
-<dialog #confirmation class="confirmation-dialog" [class.member-details-dialog]="dialogKind() === 'details'" aria-labelledby="dialog-title" (cancel)="cancelDialog($event)">
+<dialog #confirmation class="confirmation-dialog" [class.member-details-dialog]="dialogKind() === 'details'" [class.member-link-dialog]="dialogKind() === 'member-link'" aria-labelledby="dialog-title" (cancel)="cancelDialog($event)">
   @if (dialogKind() === 'details') {
     <h2 id="dialog-title" tabindex="-1">Detalhes do membro</h2>
     @if (detailMember(); as person) {
       <div class="member-details-heading"><strong>{{ person.name }}</strong><span class="badge" [class.inactive]="person.status === 'inactive'">{{ person.status === 'active' ? 'Ativo' : 'Inativo' }}</span></div>
+      @if (dialogError()) { <div class="alert error" role="alert">{{dialogError()}}</div> }
       <h3>Identificação e contato</h3>
       <dl class="member-details-grid">
         <div><dt>Data de nascimento</dt><dd>{{ person.birthDate ? date(person.birthDate) : 'Não informada' }}</dd></div>
@@ -616,10 +620,18 @@
         <div><dt>UF</dt><dd>{{ person.address.state || 'Não informada' }}</dd></div>
       </dl>
       <h3>Observações</h3><p class="member-details-notes">{{ person.notes || 'Nenhuma observação registrada.' }}</p>
-      <div class="dialog-actions"><button type="button" class="button secondary" (click)="closeDialog()">Fechar</button><button type="button" class="button" (click)="editDetailMember()"><app-icon name="edit" />Editar cadastro</button></div>
+      <div class="dialog-actions"><button type="button" class="button secondary" (click)="createMemberUpdateLink(person)" [disabled]="memberUpdateLinkBusy()">{{memberUpdateLinkBusy()?'Gerando link…':'Enviar link de atualização'}}</button><button type="button" class="button secondary" (click)="closeDialog()">Fechar</button><button type="button" class="button" (click)="editDetailMember()"><app-icon name="edit" />Editar cadastro</button></div>
     } @else {
       <p>O cadastro deste membro não está disponível.</p><div class="dialog-actions"><button type="button" class="button secondary" (click)="closeDialog()">Fechar</button></div>
     }
+  }
+  @if (dialogKind() === 'member-link') {
+    <span class="dialog-symbol"><app-icon name="people" /></span><h2 id="dialog-title">Link de atualização cadastral</h2>
+    <p class="muted">Envie este link somente para a pessoa deste cadastro. Ele vale por 7 dias e permite uma única atualização. Gerar outro link para o membro invalida este.</p>
+    <label class="sr-only" for="member-update-link">Link individual de atualização</label><textarea id="member-update-link" class="member-update-link-value" [value]="memberUpdateLink()" readonly rows="3" (focus)="$any($event.target).select()"></textarea>
+    @if (dialogError()) { <div class="alert error" role="alert">{{dialogError()}}</div> }
+    @if (memberUpdateLinkCopied()) { <p class="alert success" role="status">Link copiado. Você já pode enviá-lo ao membro.</p> }
+    <div class="dialog-actions"><button type="button" class="button secondary" (click)="closeDialog()">Fechar</button><button type="button" class="button secondary" (click)="copyMemberUpdateLink()">{{memberUpdateLinkCopied()?'Copiar novamente':'Copiar link'}}</button><button type="button" class="button" (click)="sendMemberUpdateLink()">Enviar pelo WhatsApp</button></div>
   }
   @if (dialogKind() === 'status') { <span class="dialog-symbol"><app-icon name="people" /></span>
   <h2 id="dialog-title">{{ statusMember()?.status === 'active' ? 'Inativar membro?' : 'Reativar membro?' }}</h2>

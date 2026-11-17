@@ -3126,6 +3126,10 @@ app-board {
 .table-action .text-button + .text-button { margin-left: 0; }
 .table-action .text-button { display: flex; justify-content: flex-end; width: 100%; min-height: 44px; }
 .member-details-dialog { max-width: 640px; width: min(640px, calc(100% - 32px)); max-height: calc(100dvh - 32px); overflow-y: auto; }
+.member-link-dialog { max-width: 620px; width: min(620px, calc(100% - 32px)); max-height: calc(100dvh - 32px); overflow-y: auto; }
+.member-link-dialog .member-update-link-value { display: block; width: 100%; min-height: 84px; resize: vertical; overflow-wrap: anywhere; margin: 14px 0; }
+.member-link-dialog .dialog-actions { flex-wrap: wrap; }
+.member-link-dialog .dialog-actions .button { flex: 1 1 140px; white-space: normal; }
 .member-details-heading { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin: 20px 0; }
 .member-details-heading strong { font-size: 1.2rem; overflow-wrap: anywhere; }
 .member-details-dialog h3 { margin: 24px 0 12px; font-size: 1rem; }
