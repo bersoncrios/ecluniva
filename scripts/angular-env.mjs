@@ -25,7 +25,7 @@ export function configFor(mode, values) {
   }
   if (mode === 'hml' && !['societas-hml', 'quadrei-hml'].includes(firebase.projectId)) throw new Error('HML deve usar quadrei-hml ou societas-hml.');
   if (mode === 'prod' && !['societas-prd', 'quadrei-prd'].includes(firebase.projectId)) throw new Error('PROD deve usar quadrei-prd ou societas-prd.');
-  return { appName: 'Ecluniva', production: mode === 'prod', mode, useEmulators: mode === 'emulator', firebase };
+  return { appName: 'Ecluniva', production: mode === 'prod', mode, useEmulators: mode === 'emulator', firebase, mercadoPago: { essentialUrl: values.MERCADOPAGO_PLAN_ESSENTIAL_URL || '', professionalUrl: values.MERCADOPAGO_PLAN_PROFESSIONAL_URL || '', institutionalUrl: values.MERCADOPAGO_PLAN_INSTITUTIONAL_URL || '' } };
 }
 export function generate(mode) {
   let local = {};

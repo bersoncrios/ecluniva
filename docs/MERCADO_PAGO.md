@@ -26,6 +26,8 @@ FIREBASE_SERVICE_ACCOUNT_JSON={"type":"service_account",...}
 
 `FIREBASE_SERVICE_ACCOUNT_JSON` é usada somente pelas funções Vercel para validar o usuário Firebase e atualizar o plano no Firestore. Gere uma credencial de conta de serviço no projeto Firebase e armazene o JSON inteiro como segredo na Vercel; nunca o envie ao Angular ou ao Git.
 
+Também é possível configurar três variáveis separadas na Vercel: `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL` e `FIREBASE_PRIVATE_KEY`. Elas vêm de **Firebase Console → Configurações do projeto → Contas de serviço → Gerar nova chave privada**. Em `FIREBASE_PRIVATE_KEY`, mantenha as quebras de linha como `\\n`.
+
 O `ACCESS_TOKEN` autoriza chamadas do servidor ao Mercado Pago. A `PUBLIC_KEY` pode ser enviada ao navegador quando o checkout exigir; o token privado e o segredo do webhook nunca podem ser enviados ao cliente.
 
 ## Teste antes da produção
