@@ -30,7 +30,7 @@ export class MinutesComponent {
   readonly members=computed(()=>this.data.members().filter(member=>member.status==='active').sort((a,b)=>a.name.localeCompare(b.name,'pt-BR')));
   readonly venueOptions=computed(()=>[
     {id:'church',label:`Igreja · ${this.data.selected()?.churchName??''}`,location:`Igreja ${this.data.selected()?.churchName??''}`,address:this.formatAddress(this.data.selected()?.churchAddress)},
-    ...this.members().filter(member=>this.formatAddress(member.address)).map(member=>({id:member.id,label:`Casa · ${member.name}`,location:this.memberHomeLocation(member),address:this.formatAddress(member.address)}))
+    ...this.members().filter(member=>this.formatAddress(member.address)).map(member=>{const location=this.memberHomeLocation(member);return{id:member.id,label:location,location,address:this.formatAddress(member.address)};})
   ]);
   readonly filtered=computed(()=>this.members().filter(member=>member.name.toLocaleLowerCase('pt-BR').includes(this.search().toLocaleLowerCase('pt-BR'))));
   readonly available=computed(()=>{const minute=this.current();return !!minute && attendanceAvailable(minute,this.clock());});
