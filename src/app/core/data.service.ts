@@ -1,6 +1,6 @@
 import { Injectable, Injector, computed, inject, runInInjectionContext, signal } from '@angular/core';
 import { Auth, GoogleAuthProvider, User, onAuthStateChanged, signInWithPopup, signInWithEmailAndPassword, signOut } from '@angular/fire/auth';
-import { Firestore, collection, query, where, onSnapshot, addDoc, doc, getDoc, getDocs, serverTimestamp, Unsubscribe, runTransaction, deleteDoc, writeBatch } from '@angular/fire/firestore';
+import { Firestore, collection, query, where, onSnapshot, addDoc, doc, getDoc, getDocs, serverTimestamp, Unsubscribe, runTransaction, deleteDoc, writeBatch, updateDoc } from '@angular/fire/firestore';
 import { BoardAssignment, Member, MemberInput, Society, SocietyType } from './models';
 import { normalizeMember, todayISO } from './domain';
 import { boardAssignmentId, validBoardYear, validateBoardAssignment } from './board';
@@ -164,7 +164,7 @@ export class DataService {
     });
   }
 
-  async createSociety(churchName: string, type: SocietyType, name: string): Promise<void> {
+  async createSociety(churchName: string, type: SocietyType, name: string, churchAddress = ''): Promise<void> {
     const user = this.user();
     if (!user) throw new Error('Sessão encerrada.');
     const billing = await runInInjectionContext(this.injector, () => getDocs(collection(this.firestore, `users/${user.uid}/billing`)));
@@ -177,7 +177,7 @@ export class DataService {
     const societyLimit = PLAN_LIMITS[accountPlan].societies;
     if (societyLimit !== null && this.ownedSocieties.length >= societyLimit) throw new Error(`Seu plano permite até ${societyLimit} sociedade${societyLimit === 1 ? '' : 's'}. Faça upgrade para continuar.`);
     const version = this.authVersion;
-    const data = { ownerId: user.uid, churchName: churchName.trim(), type, name: name.trim() };
+    const data = { ownerId: user.uid, churchName: churchName.trim(), churchAddress: {postalCode:'',street:churchAddress.trim(),number:'',complement:'',neighborhood:'',city:'',state:''}, type, name: name.trim() };
     const ref = await runInInjectionContext(this.injector, () => addDoc(collection(this.firestore, 'societies'), {
       ...data, createdAt: serverTimestamp(), updatedAt: serverTimestamp(),
     }));
@@ -186,6 +186,15 @@ export class DataService {
     if(!this.ownedSocieties.some(item=>item.id===ref.id))this.ownedSocieties.push(society);
     this.publishSocieties();
     this.select(society);
+  }
+
+  async updateSociety(current: Society, input: {churchName:string;type:SocietyType;name:string;churchAddress:string}): Promise<void> {
+    const user=this.user();if(!user||current.ownerId!==user.uid||this.selected()?.id!==current.id)throw new Error('Sociedade indisponível.');
+    const address={postalCode:'',street:input.churchAddress,number:'',complement:'',neighborhood:'',city:'',state:''};
+    const updated={...current,churchName:input.churchName,type:input.type,name:input.name,churchAddress:address};
+    await runInInjectionContext(this.injector,()=>updateDoc(doc(this.firestore,`societies/${current.id}`),{churchName:updated.churchName,type:updated.type,name:updated.name,churchAddress:address,updatedAt:serverTimestamp()}));
+    if(this.user()?.uid!==user.uid||this.selected()?.id!==current.id)return;
+    this.ownedSocieties=this.ownedSocieties.map(item=>item.id===current.id?updated:item);this.selected.set(updated);this.publishSocieties();
   }
 
   async saveMember(input: MemberInput, id: string | null): Promise<void> {

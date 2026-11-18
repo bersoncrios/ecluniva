@@ -132,6 +132,7 @@
           placeholder="Ex.: Igreja Presbiteriana do Jardim" [attr.aria-invalid]="!!societyErrors()['churchName']"
           aria-describedby="church-error" autocomplete="organization">@if (societyErrors()['churchName']) { <p
           class="field-error" id="church-error">{{ societyErrors()['churchName'] }}</p> }</div>
+      <div class="field"><label for="churchAddress">Endereço da igreja <span>(opcional)</span></label><textarea id="churchAddress" name="churchAddress" [(ngModel)]="churchAddress" maxlength="500" placeholder="Logradouro, número, bairro, cidade, UF e CEP"></textarea></div>
       <div class="field"><label for="societyType">Tipo de sociedade <span
             class="required-label">obrigatório</span></label><select id="societyType" name="societyType"
           [(ngModel)]="societyType" [attr.aria-invalid]="!!societyErrors()['societyType']">
@@ -198,6 +199,7 @@
         <div><strong>{{ data.selected()?.type }} · {{ data.selected()?.name }}</strong><span>{{
             data.selected()?.churchName }}</span></div>
       </div>
+      @if(data.isOwner()){<button class="button secondary" type="button" (click)="beginSocietyEdit()">Editar sociedade</button>}
       @if(data.isOwner()){<button class="app-plan-indicator" type="button" (click)="navigate('billing')" aria-label="Plano atual: {{currentPlanName()}}. Abrir assinatura"><app-icon name="card" /><span><small>PLANO ATUAL</small><strong>{{currentPlanName()}}</strong></span><app-icon name="arrow" /></button>}
       <details class="account-menu">
         <summary><span class="avatar">{{ initials(data.user()?.displayName || data.user()?.email || 'Conta')
@@ -214,6 +216,15 @@
       @if (notice()) { <div class="alert success notice" role="status"><app-icon name="check" /><span>{{ notice()
           }}</span><button aria-label="Fechar mensagem" class="dismiss" (click)="notice.set('')">×</button></div> }
       @if (error()) { <div class="alert error" role="alert">{{ error() }}</div> }
+      @if(societyEditOpen()){
+      <form class="panel society-form" (ngSubmit)="saveSocietyEdit()"><h2>Editar sociedade</h2>
+        <div class="field"><label for="edit-church-name">Igreja</label><input id="edit-church-name" name="editChurchName" [(ngModel)]="editChurchName" maxlength="160" required></div>
+        <div class="field"><label for="edit-church-address">Endereço da igreja <span>(opcional)</span></label><textarea id="edit-church-address" name="editChurchAddress" [(ngModel)]="editChurchAddress" maxlength="500" placeholder="Logradouro, número, bairro, cidade, UF e CEP"></textarea></div>
+        <div class="field"><label for="edit-society-type">Tipo de sociedade</label><select id="edit-society-type" name="editSocietyType" [(ngModel)]="editSocietyType">@for(type of types;track type){<option [value]="type">{{type}}</option>}</select></div>
+        <div class="field"><label for="edit-society-name">Nome da unidade</label><input id="edit-society-name" name="editSocietyName" [(ngModel)]="editSocietyName" maxlength="120" required></div>
+        @if(societyEditError()){<p class="field-error" role="alert">{{societyEditError()}}</p>}
+        <div class="form-actions"><button class="button" type="submit" [disabled]="societyEditBusy()">{{societyEditBusy()?'Salvando…':'Salvar alterações'}}</button><button class="button secondary" type="button" (click)="societyEditOpen.set(false)" [disabled]="societyEditBusy()">Cancelar</button></div>
+      </form>}
       @if (page() === 'overview') {
       <div class="page-heading">
         <div>

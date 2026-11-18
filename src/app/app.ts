@@ -50,6 +50,9 @@ export class AppComponent {
   readonly busy = signal(false);
   readonly loginBusy = signal(false);
   readonly createMode = signal(false);
+  readonly societyEditOpen = signal(false);
+  readonly societyEditError = signal('');
+  readonly societyEditBusy = signal(false);
   readonly fieldErrors = signal<Record<string,string>>({});
   readonly errorKeys = computed(() => Object.keys(this.fieldErrors()));
   readonly societyErrors = signal<Record<string,string>>({});
@@ -73,6 +76,11 @@ export class AppComponent {
   birth: DateParts = {day:'',month:'',year:''};
   received: DateParts = {day:'',month:'',year:''};
   churchName = '';
+  churchAddress = '';
+  editChurchName = '';
+  editChurchAddress = '';
+  editSocietyType: SocietyType = 'UPH';
+  editSocietyName = '';
   societyType: SocietyType = 'UPH';
   societyName = '';
   emulatorEmail = '';
@@ -178,7 +186,7 @@ export class AppComponent {
     this.cancelPostalLookup();
     this.data.clearSelection();
     this.createMode.set(false);
-    this.churchName = ''; this.societyName = ''; this.societyErrors.set({});
+    this.churchName = ''; this.churchAddress = ''; this.societyName = ''; this.societyErrors.set({});
   }
 
   async createSociety(): Promise<void> {
@@ -191,12 +199,27 @@ export class AppComponent {
     if (Object.keys(errors).length) { setTimeout(() => document.getElementById(Object.keys(errors)[0])?.focus()); return; }
     this.busy.set(true); this.error.set('');
     try {
-      await this.data.createSociety(this.churchName, this.societyType, this.societyName);
+      await this.data.createSociety(this.churchName, this.societyType, this.societyName, this.churchAddress);
       this.createMode.set(false);
-      this.churchName = ''; this.societyName = '';
+      this.churchName = ''; this.churchAddress = ''; this.societyName = '';
       this.notice.set('Sociedade criada. Agora você pode cadastrar os membros.');
     } catch (error) { this.error.set(error instanceof Error ? error.message : 'Não foi possível criar a sociedade. Os dados continuam no formulário. Tente novamente.'); }
     finally { this.busy.set(false); }
+  }
+
+  beginSocietyEdit(): void {
+    const society=this.data.selected();if(!society||!this.data.isOwner())return;
+    this.editChurchName=society.churchName;this.editChurchAddress=society.churchAddress?.street??'';
+    this.editSocietyType=society.type;this.editSocietyName=society.name;this.societyEditError.set('');this.societyEditOpen.set(true);
+  }
+
+  async saveSocietyEdit(): Promise<void> {
+    const society=this.data.selected();if(!society||this.societyEditBusy())return;
+    if(this.editChurchName.trim().length<2||this.editChurchName.trim().length>160||this.editSocietyName.trim().length<2||this.editSocietyName.trim().length>120){this.societyEditError.set('Informe nome válido para a igreja e para a sociedade.');return;}
+    this.societyEditBusy.set(true);this.societyEditError.set('');
+    try{await this.data.updateSociety(society,{churchName:this.editChurchName.trim(),type:this.editSocietyType,name:this.editSocietyName.trim(),churchAddress:this.editChurchAddress.trim()});this.societyEditOpen.set(false);this.notice.set('Dados da sociedade atualizados.');}
+    catch(error){this.societyEditError.set(error instanceof Error?error.message:'Não foi possível salvar os dados da sociedade.');}
+    finally{this.societyEditBusy.set(false);}
   }
 
   navigate(page: Page): void {
