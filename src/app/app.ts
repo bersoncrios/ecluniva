@@ -19,10 +19,11 @@ import { PlanKey } from './core/plans';
 import { lookupPostalCode, postalCodeDigits, PostalCodeNotFoundError } from './core/viacep';
 import { PublicMemberUpdateComponent } from './features/members/public-member-update.component';
 import { AdminComponent } from './features/admin/admin.component';
+import { SupportComponent } from './features/support/support.component';
 
-type Page = 'overview' | 'members' | 'birthdays' | 'member' | 'board' | 'minutes' | 'notices' | 'communication' | 'billing' | 'admin';
+type Page = 'overview' | 'members' | 'birthdays' | 'member' | 'board' | 'minutes' | 'notices' | 'communication' | 'billing' | 'admin' | 'support';
 type DateParts = { day:string; month:string; year:string };
-@Component({ selector:'app-root', standalone:true, imports:[CommonModule, FormsModule, IconComponent, BoardComponent, MinutesComponent, NoticesComponent, CommunicationComponent, PublicAttendanceComponent, BillingComponent, PublicMemberUpdateComponent, AdminComponent], templateUrl:'./app.html' })
+@Component({ selector:'app-root', standalone:true, imports:[CommonModule, FormsModule, IconComponent, BoardComponent, MinutesComponent, NoticesComponent, CommunicationComponent, PublicAttendanceComponent, BillingComponent, PublicMemberUpdateComponent, AdminComponent, SupportComponent], templateUrl:'./app.html' })
 export class AppComponent {
   readonly data = inject(DataService);
   readonly billing = inject(BillingService);
@@ -123,8 +124,8 @@ export class AppComponent {
       this.boardMemberId.set(null);
       this.cancelPostalLookup();
       const hash = location.hash.slice(1);
-      const page = (['overview','members','birthdays','board','minutes','notices','communication','billing','admin'].includes(hash) ? hash : 'overview') as Page;
-      this.page.set(this.data.selected()&&!this.data.isOwner()&&page!=='admin'?'communication':page);
+      const page = (['overview','members','birthdays','board','minutes','notices','communication','billing','admin','support'].includes(hash) ? hash : 'overview') as Page;
+      this.page.set(this.data.selected()&&!this.data.isOwner()&&!['admin','support'].includes(page)?'communication':page);
       refreshDay();
     };
     window.addEventListener('popstate', navigateBack);
@@ -227,7 +228,7 @@ export class AppComponent {
     if (this.busy() || this.exportBusy()) return;
     if (page === 'admin' && !this.data.isAdmin()) { this.page.set('overview'); return; }
     this.cancelPostalLookup();
-    this.page.set(this.data.selected()&&!this.data.isOwner()&&page!=='admin'?'communication':page);
+    this.page.set(this.data.selected()&&!this.data.isOwner()&&!['admin','support'].includes(page)?'communication':page);
     this.boardMemberId.set(null);
     this.today.set(todayISO());
     this.error.set('');

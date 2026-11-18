@@ -1,64 +1,58 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { Auth } from '@angular/fire/auth';
 
-interface AdminSubscription {
-  id: string; societyId: string; societyName: string; churchName: string; ownerId: string;
-  plan: string; planName: string; status: string; subscriptionId: string; updatedAt: string | null;
-}
+interface AdminSubscription { id:string; societyId:string; societyName:string; churchName:string; ownerId:string; ownerEmail:string; plan:string; planName:string; status:string; subscriptionId:string; updatedAt:string|null; }
+interface AdminMessage { id:string; senderName:string; senderRole:'admin'|'user'; text:string; createdAt:string; }
+interface AdminThread { id:string; userName:string; userEmail:string; status:string; updatedAt:string|null; unreadByAdmin:boolean; messages:AdminMessage[]; }
+interface AuditEvent { id:string; type:string; actorId:string; target?:string; summary:string; createdAt:string|null; }
+interface PortalData { stats?:{societies:number;subscriptions:number;active:number;pending:number;mrrEstimate:number}; subscriptions?:AdminSubscription[]; attention?:AdminSubscription[]; threads?:AdminThread[]; audits?:AuditEvent[]; error?:string; }
 
 @Component({
-  selector: 'app-admin', standalone: true, imports: [CommonModule],
-  template: `
+  selector:'app-admin',standalone:true,imports:[CommonModule,FormsModule],
+  template:`
     <section class="admin-page">
-      <div class="page-heading"><div><div class="eyebrow">ADMINISTRAÇÃO DA PLATAFORMA</div><h1 tabindex="-1">Painel administrativo</h1><p>Visão geral das assinaturas registradas no Ecluniva.</p></div><button class="button secondary" type="button" (click)="load()" [disabled]="loading()">{{ loading() ? 'Atualizando…' : 'Atualizar' }}</button></div>
-      @if (error()) { <div class="alert error" role="alert">{{ error() }}</div> }
-      @if (loading() && !subscriptions().length) { <div class="panel loading" role="status">Carregando assinaturas…</div> }
+      <div class="page-heading"><div><div class="eyebrow">ADMINISTRAÇÃO DA PLATAFORMA</div><h1 tabindex="-1">Painel administrativo</h1><p>Assinaturas, atendimentos e atividade da plataforma.</p></div><button class="button secondary" type="button" (click)="load()" [disabled]="loading()">{{loading()?'Atualizando…':'Atualizar dados'}}</button></div>
+      @if(error()){<div class="alert error" role="alert">{{error()}}</div>}
+      @if(loading()&&!stats()){<div class="panel loading" role="status">Carregando dados administrativos…</div>}
       @else {
         <div class="stats-grid admin-stats">
-          <article class="panel stat-card"><div class="stat-top"><span>Assinaturas ativas</span></div><strong class="stat-number">{{ activeCount() }}</strong><p>Status autorizado pelo provedor</p></article>
-          <article class="panel stat-card"><div class="stat-top"><span>Pagamentos pendentes</span></div><strong class="stat-number">{{ pendingCount() }}</strong><p>Aguardando confirmação</p></article>
-          <article class="panel stat-card"><div class="stat-top"><span>Registros de assinatura</span></div><strong class="stat-number">{{ subscriptions().length }}</strong><p>Inclui estados ativos e encerrados</p></article>
+          <article class="panel stat-card"><div class="stat-top"><span>Sociedades</span></div><strong class="stat-number">{{stats()?.societies||0}}</strong><p>Cadastradas na plataforma</p></article>
+          <article class="panel stat-card"><div class="stat-top"><span>Assinaturas ativas</span></div><strong class="stat-number">{{stats()?.active||0}}</strong><p>Autorizadas pelo Mercado Pago</p></article>
+          <article class="panel stat-card"><div class="stat-top"><span>Receita recorrente estimada</span></div><strong class="stat-number">{{stats()?.mrrEstimate||0 | currency:'BRL':'symbol':'1.2-2'}}</strong><p>Estimativa mensal dos planos ativos</p></article>
+          <article class="panel stat-card"><div class="stat-top"><span>Pendentes</span></div><strong class="stat-number">{{stats()?.pending||0}}</strong><p>Aguardando confirmação</p></article>
+          <article class="panel stat-card"><div class="stat-top"><span>Atendimentos não lidos</span></div><strong class="stat-number">{{unreadCount()}}</strong><p>Mensagens aguardando resposta</p></article>
         </div>
-        <section class="panel admin-table-panel"><div class="admin-table-heading"><div><h2>Assinaturas</h2><p>Sociedade, responsável, plano e situação</p></div><label>Filtrar <select [value]="filter()" (change)="filter.set($any($event.target).value)"><option value="all">Todas</option><option value="authorized">Ativas</option><option value="pending">Pendentes</option><option value="cancelled">Canceladas</option></select></label></div>
-          @if (visible().length) { <div class="table-scroll"><table><thead><tr><th>Sociedade</th><th>Responsável (UID)</th><th>Plano</th><th>Status</th><th>Atualizada</th></tr></thead><tbody>@for (item of visible(); track item.id) {<tr><td><strong>{{ item.societyName }}</strong><small>{{ item.churchName }}</small></td><td class="uid-cell">{{ item.ownerId }}</td><td>{{ item.planName }}</td><td><span class="admin-status" [class.status-active]="item.status === 'authorized'">{{ statusLabel(item.status) }}</span></td><td>{{ item.updatedAt ? (item.updatedAt | date:'dd/MM/yyyy HH:mm') : '—' }}</td></tr>}</tbody></table></div> }
-          @else { <p class="empty-state">Nenhuma assinatura corresponde a este filtro.</p> }
+
+        <section class="panel admin-table-panel"><div class="admin-table-heading"><div><h2>Assinaturas</h2><p>{{subscriptions().length}} registro(s), atualizados a partir do Firestore</p></div><div class="admin-filters"><input aria-label="Buscar assinatura" placeholder="Buscar sociedade, e-mail ou ID" [value]="search()" (input)="search.set($any($event.target).value)"><select aria-label="Filtrar status" [value]="filter()" (change)="filter.set($any($event.target).value)"><option value="all">Todos os status</option><option value="authorized">Ativas</option><option value="pending">Pendentes</option><option value="cancelled">Canceladas</option><option value="paused">Pausadas</option><option value="rejected">Recusadas</option></select></div></div>
+          @if(visibleSubscriptions().length){<div class="table-scroll"><table><thead><tr><th>Sociedade</th><th>Responsável</th><th>Plano</th><th>Status</th><th>Atualizada</th></tr></thead><tbody>@for(item of visibleSubscriptions();track item.id){<tr><td><strong>{{item.societyName}}</strong><small>{{item.churchName}}</small></td><td><strong>{{item.ownerEmail||'E-mail indisponível'}}</strong><small class="uid-cell">{{item.ownerId}}</small></td><td>{{item.planName}}</td><td><span class="admin-status" [class.status-active]="item.status==='authorized'">{{statusLabel(item.status)}}</span></td><td>{{item.updatedAt?(item.updatedAt|date:'dd/MM/yyyy HH:mm'):'—'}}</td></tr>}</tbody></table></div>}@else{<p class="empty-state">Nenhuma assinatura corresponde à busca e aos filtros.</p>}
         </section>
+
+        <section class="panel admin-table-panel"><div class="admin-table-heading"><div><h2>Precisa de atenção</h2><p>Assinaturas não autorizadas ou aguardando confirmação</p></div></div>@if(attention().length){<div class="table-scroll"><table><thead><tr><th>Sociedade</th><th>Responsável</th><th>Plano</th><th>Status</th><th>Atualizada</th></tr></thead><tbody>@for(item of attention();track item.id){<tr><td>{{item.societyName}}</td><td>{{item.ownerEmail||item.ownerId}}</td><td>{{item.planName}}</td><td>{{statusLabel(item.status)}}</td><td>{{item.updatedAt?(item.updatedAt|date:'dd/MM/yyyy HH:mm'):'—'}}</td></tr>}</tbody></table></div>}@else{<p class="empty-state">Nenhuma pendência no momento.</p>}</section>
+
+        <section class="panel admin-table-panel"><div class="admin-table-heading"><div><h2>Atendimento aos usuários</h2><p>Responda dúvidas diretamente pelo Ecluniva</p></div></div><div class="support-admin-layout"><div class="thread-list">@for(thread of threads();track thread.id){<button type="button" class="thread-choice" [class.selected]="selectedThread()?.id===thread.id" (click)="selectThread(thread)"><strong>{{thread.userName||thread.userEmail||thread.id}}</strong><small>{{thread.userEmail}}</small><small>{{thread.unreadByAdmin?'Nova mensagem · ':''}}{{thread.updatedAt?(thread.updatedAt|date:'dd/MM HH:mm'):'Sem atividade'}}</small></button>}@empty{<p class="empty-state">Nenhum usuário iniciou um atendimento.</p>}</div>
+          @if(selectedThread();as thread){<div class="thread-conversation"><div class="thread-user"><strong>{{thread.userName||'Usuário'}}</strong><small>{{thread.userEmail}}</small></div><div class="thread-messages">@for(message of thread.messages;track message.id){<article class="thread-message" [class.admin-reply]="message.senderRole==='admin'"><strong>{{message.senderRole==='admin'?'Administração':message.senderName}}</strong><p>{{message.text}}</p><small>{{message.createdAt|date:'dd/MM/yyyy HH:mm'}}</small></article>}</div><form class="admin-reply-form" (ngSubmit)="reply()"><textarea name="reply" [(ngModel)]="replyText" rows="3" maxlength="4000" placeholder="Escreva uma resposta…" required></textarea><button class="button" type="submit" [disabled]="sending()||!replyText.trim()">{{sending()?'Enviando…':'Responder'}}</button></form></div>}@else{<p class="empty-state">Selecione um atendimento para ler e responder.</p>}</div></section>
+
+        <section class="panel admin-table-panel"><div class="admin-table-heading"><div><h2>Atividade administrativa</h2><p>Registro de respostas e eventos de auditoria</p></div></div>@if(audits().length){<div class="audit-list">@for(event of audits();track event.id){<article><span class="audit-dot"></span><div><strong>{{event.summary}}</strong><small>{{event.type}} · {{event.actorId}} · {{event.createdAt?(event.createdAt|date:'dd/MM/yyyy HH:mm'):'Data indisponível'}}</small></div></article>}</div>}@else{<p class="empty-state">Ainda não há eventos administrativos registrados.</p>}</section>
       }
     </section>
   `,
-  styles: [`
-    .admin-page{display:grid;gap:24px}.admin-stats{grid-template-columns:repeat(3,minmax(0,1fr))}.admin-table-panel{padding:24px;overflow:hidden}.admin-table-heading{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:20px}.admin-table-heading h2{margin:0}.admin-table-heading p{margin:6px 0 0;color:var(--muted,#52645b)}.admin-table-heading label{display:flex;align-items:center;gap:8px}.admin-table-heading select{padding:10px;border:1px solid #75867c;border-radius:8px;background:white;color:#172d25}.table-scroll{overflow:auto}table{width:100%;border-collapse:collapse;text-align:left}th,td{padding:14px 12px;border-bottom:1px solid #dce4de;white-space:nowrap}th{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:#52645b}td strong,td small{display:block}td small{margin-top:4px;color:#52645b}.uid-cell{font-family:ui-monospace,monospace;font-size:12px}.admin-status{display:inline-block;padding:5px 9px;border-radius:20px;background:#f2eee4;color:#55431c;font-size:12px;font-weight:600}.admin-status.status-active{background:#eaf3ee;color:#103b31}.empty-state{padding:24px;text-align:center;color:#52645b}
-    @media(max-width:760px){.admin-stats{grid-template-columns:1fr}.admin-table-panel{padding:16px}.admin-table-heading{align-items:flex-start;flex-direction:column}.table-scroll{margin:0 -16px;padding:0 16px}}
+  styles:[`
+    .admin-page{display:grid;gap:24px}.admin-stats{grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}.admin-table-panel{padding:24px;overflow:hidden}.admin-table-heading{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:20px}.admin-table-heading h2{margin:0}.admin-table-heading p{margin:6px 0 0;color:#52645b}.admin-filters{display:flex;gap:8px;flex-wrap:wrap}.admin-filters input,.admin-filters select{min-height:42px;padding:8px 12px;border:1px solid #75867c;border-radius:8px;background:#fff;color:#172d25;font:inherit}.table-scroll{overflow:auto}table{width:100%;border-collapse:collapse;text-align:left}th,td{padding:13px 12px;border-bottom:1px solid #dce4de;white-space:nowrap}th{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:#52645b}td strong,td small{display:block}td small{margin-top:4px;color:#52645b}.uid-cell{font-family:ui-monospace,monospace;font-size:11px}.admin-status{display:inline-block;padding:5px 9px;border-radius:20px;background:#f2eee4;color:#55431c;font-size:12px;font-weight:600}.admin-status.status-active{background:#eaf3ee;color:#103b31}.empty-state{padding:20px;text-align:center;color:#52645b}.support-admin-layout{display:grid;grid-template-columns:minmax(200px,280px) minmax(0,1fr);gap:18px;min-height:300px}.thread-list{display:grid;align-content:start;gap:8px;max-height:520px;overflow:auto}.thread-choice{display:grid;gap:4px;text-align:left;padding:12px;border:1px solid #dce4de;border-radius:10px;background:#fff;color:#172d25;cursor:pointer}.thread-choice.selected{border-color:#145443;background:#eaf3ee}.thread-choice small,.thread-user small{color:#52645b}.thread-conversation{display:grid;grid-template-rows:auto minmax(140px,1fr) auto;gap:12px;min-width:0}.thread-user{display:grid;gap:4px;padding-bottom:10px;border-bottom:1px solid #dce4de}.thread-messages{display:grid;align-content:start;gap:10px;max-height:360px;overflow:auto}.thread-message{justify-self:start;max-width:90%;padding:12px;border:1px solid #dce4de;border-radius:10px;background:#f5f7f4}.thread-message.admin-reply{justify-self:end;background:#eaf3ee}.thread-message p{white-space:pre-wrap;margin:6px 0}.thread-message small{color:#52645b}.admin-reply-form{display:grid;justify-items:end;gap:8px}.admin-reply-form textarea{width:100%;padding:10px;border:1px solid #75867c;border-radius:8px;font:inherit;resize:vertical}.audit-list{display:grid}.audit-list article{display:flex;gap:12px;padding:14px 0;border-bottom:1px solid #dce4de}.audit-list article>div{display:grid;gap:4px}.audit-list small{color:#52645b}.audit-dot{width:9px;height:9px;margin-top:5px;border-radius:50%;background:#145443;flex:none}
+    @media(max-width:760px){.admin-table-panel{padding:16px}.admin-table-heading{align-items:flex-start;flex-direction:column}.table-scroll{margin:0 -16px;padding:0 16px}.support-admin-layout{grid-template-columns:1fr}.thread-list{max-height:180px}.admin-filters{width:100%}.admin-filters input,.admin-filters select{width:100%}}
   `]
 })
 export class AdminComponent {
-  private readonly auth = inject(Auth);
-  readonly subscriptions = signal<AdminSubscription[]>([]);
-  readonly loading = signal(false);
-  readonly error = signal('');
-  readonly filter = signal('all');
-  readonly visible = () => this.subscriptions().filter(item => this.filter() === 'all' || item.status === this.filter());
-  readonly activeCount = () => this.subscriptions().filter(item => item.status === 'authorized').length;
-  readonly pendingCount = () => this.subscriptions().filter(item => item.status === 'pending').length;
-
-  constructor() { void this.load(); }
-
-  async load(): Promise<void> {
-    const user = this.auth.currentUser;
-    if (!user || this.loading()) return;
-    this.loading.set(true); this.error.set('');
-    try {
-      const token = await user.getIdToken();
-      const response = await fetch('/api/admin/subscriptions', { headers: { Authorization: `Bearer ${token}` } });
-      const body = await response.json() as { subscriptions?: AdminSubscription[]; error?: string };
-      if (!response.ok) throw new Error(body.error || 'Não foi possível carregar as assinaturas.');
-      this.subscriptions.set(body.subscriptions || []);
-    } catch (error) { this.error.set(error instanceof Error ? error.message : 'Não foi possível carregar as assinaturas.'); }
-    finally { this.loading.set(false); }
-  }
-
-  statusLabel(status: string): string {
-    return ({ authorized: 'Ativa', pending: 'Pendente', paused: 'Pausada', cancelled: 'Cancelada', cancelled_by_user: 'Cancelada', rejected: 'Recusada' } as Record<string, string>)[status] || status;
-  }
+  private readonly auth=inject(Auth);
+  readonly stats=signal<PortalData['stats']|null>(null);readonly subscriptions=signal<AdminSubscription[]>([]);readonly attention=signal<AdminSubscription[]>([]);readonly threads=signal<AdminThread[]>([]);readonly audits=signal<AuditEvent[]>([]);
+  readonly loading=signal(false);readonly sending=signal(false);readonly error=signal('');readonly filter=signal('all');readonly search=signal('');readonly selectedThread=signal<AdminThread|null>(null);replyText='';
+  readonly unreadCount=()=>this.threads().filter(item=>item.unreadByAdmin).length;
+  readonly visibleSubscriptions=()=>this.subscriptions().filter(item=>(this.filter()==='all'||item.status===this.filter())&&`${item.societyName} ${item.churchName} ${item.ownerEmail} ${item.ownerId} ${item.subscriptionId}`.toLowerCase().includes(this.search().toLowerCase().trim()));
+  constructor(){void this.load();}
+  private async api(method:'GET'|'POST',body?:object):Promise<PortalData>{const user=this.auth.currentUser;if(!user)throw new Error('Entre novamente para acessar a administração.');const token=await user.getIdToken();const response=await fetch('/api/admin/portal',{method,headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},...(body?{body:JSON.stringify(body)}:{})});const result=await response.json() as PortalData;if(!response.ok)throw new Error(result.error||'Não foi possível acessar o painel administrativo.');return result;}
+  async load():Promise<void>{if(this.loading())return;this.loading.set(true);this.error.set('');try{const data=await this.api('GET');this.stats.set(data.stats||null);this.subscriptions.set(data.subscriptions||[]);this.attention.set(data.attention||[]);this.threads.set(data.threads||[]);this.audits.set(data.audits||[]);if(this.selectedThread())this.selectedThread.set(this.threads().find(item=>item.id===this.selectedThread()?.id)||null);}catch(error){this.error.set(error instanceof Error?error.message:'Não foi possível carregar os dados.');}finally{this.loading.set(false);}}
+  async selectThread(thread:AdminThread):Promise<void>{this.selectedThread.set(thread);this.replyText='';if(thread.unreadByAdmin){this.threads.update(items=>items.map(item=>item.id===thread.id?{...item,unreadByAdmin:false}:item));try{await this.api('POST',{threadId:thread.id,action:'markRead'});}catch(error){this.error.set(error instanceof Error?error.message:'Não foi possível atualizar o atendimento.');}}}
+  async reply():Promise<void>{const thread=this.selectedThread(),message=this.replyText.trim();if(!thread||!message||this.sending())return;this.sending.set(true);this.error.set('');try{await this.api('POST',{threadId:thread.id,message});this.replyText='';await this.load();}catch(error){this.error.set(error instanceof Error?error.message:'Não foi possível enviar a resposta.');}finally{this.sending.set(false);}}
+  statusLabel(status:string):string{return({authorized:'Ativa',pending:'Pendente',paused:'Pausada',cancelled:'Cancelada',cancelled_by_user:'Cancelada',rejected:'Recusada'} as Record<string,string>)[status]||status;}
 }

@@ -104,10 +104,21 @@
   </footer>
 </div>
 }
+} @else if (page() === 'admin' && data.isAdmin()) {
+<div class="selection-page">
+  <header class="selection-header"><a class="brand" href="#" (click)="$event.preventDefault(); navigate('overview')"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 64 64"><circle cx="22" cy="23" r="5"/><circle cx="42" cy="23" r="5"/><circle cx="32" cy="18" r="6"/><path d="M12 45c0-7 4-11 10-11 3 0 5 1 7 3M52 45c0-7-4-11-10-11-3 0-5 1-7 3M19 48c0-10 5-15 13-15s13 5 13 15"/></svg></span>Ecluniva</a><div class="selection-header-actions"><button type="button" class="button secondary" (click)="navigate('overview')">Voltar às sociedades</button><button class="button subtle" (click)="logout()" [disabled]="busy()"><app-icon name="logout" />Sair</button></div></header>
+  <main id="main" class="selection-main admin-selection-main"><app-admin /></main>
+  <footer class="public-footer"><span>Ecluniva</span><p>Área administrativa</p></footer>
+</div>
+} @else if (page() === 'support') {
+<div class="selection-page">
+  <header class="selection-header"><a class="brand" href="#" (click)="$event.preventDefault(); navigate('overview')"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 64 64"><circle cx="22" cy="23" r="5"/><circle cx="42" cy="23" r="5"/><circle cx="32" cy="18" r="6"/><path d="M12 45c0-7 4-11 10-11 3 0 5 1 7 3M52 45c0-7-4-11-10-11-3 0-5 1-7 3M19 48c0-10 5-15 13-15s13 5 13 15"/></svg></span>Ecluniva</a><div class="selection-header-actions"><button type="button" class="button secondary" (click)="navigate('overview')">Voltar às sociedades</button><button class="button subtle" (click)="logout()" [disabled]="busy()"><app-icon name="logout" />Sair</button></div></header>
+  <main id="main" class="selection-main admin-selection-main"><app-support /></main>
+  <footer class="public-footer"><span>Ecluniva</span><p>Sua sociedade, em um só lugar.</p></footer>
+</div>
 } @else if (!data.selected()) {
 <div class="selection-page">
-  <header class="selection-header"><a class="brand" href="#"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 64 64"><circle cx="22" cy="23" r="5"/><circle cx="42" cy="23" r="5"/><circle cx="32" cy="18" r="6"/><path d="M12 45c0-7 4-11 10-11 3 0 5 1 7 3M52 45c0-7-4-11-10-11-3 0-5 1-7 3M19 48c0-10 5-15 13-15s13 5 13 15"/></svg></span>Ecluniva</a><button
-      class="button subtle" (click)="logout()" [disabled]="busy()"><app-icon name="logout" />Sair</button></header>
+  <header class="selection-header"><a class="brand" href="#"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 64 64"><circle cx="22" cy="23" r="5"/><circle cx="42" cy="23" r="5"/><circle cx="32" cy="18" r="6"/><path d="M12 45c0-7 4-11 10-11 3 0 5 1 7 3M52 45c0-7-4-11-10-11-3 0-5 1-7 3M19 48c0-10 5-15 13-15s13 5 13 15"/></svg></span>Ecluniva</a><div class="selection-header-actions"><button class="button secondary" type="button" (click)="navigate('support')">Falar com o admin</button>@if(data.isAdmin()){<button class="button secondary" type="button" (click)="navigate('admin')"><app-icon name="grid" />Administração</button>}<button class="button subtle" (click)="logout()" [disabled]="busy()"><app-icon name="logout" />Sair</button></div></header>
   <main id="main" class="selection-main">
     <div class="eyebrow">SEU ESPAÇO DE ORGANIZAÇÃO</div>
     <h1 tabindex="-1">{{ createMode() || (!data.societies().length && !pendingInvites().length && !data.societiesLoading() &&
@@ -185,6 +196,7 @@
         [disabled]="busy() || exportBusy()"><app-icon name="board" />Diretoria</button><button [class.active]="page() === 'minutes'" [attr.aria-current]="page() === 'minutes' ? 'page' : null" (click)="navigate('minutes')" [disabled]="busy() || exportBusy()"><app-icon name="calendar" />Atas e plenárias</button><button [class.active]="page() === 'notices'" [attr.aria-current]="page() === 'notices' ? 'page' : null" (click)="navigate('notices')" [disabled]="busy() || exportBusy()"><app-icon name="notice" />Convocações</button>}@else{<button class="active" aria-current="page" (click)="navigate('communication')"><app-icon name="calendar" />Comunicação</button>}</nav>
     <div class="sidebar-bottom">
       @if(data.isOwner()){<button class="switch-button" (click)="navigate('billing')" [disabled]="busy() || exportBusy()"><app-icon name="card" />Assinatura</button>}
+      <button class="switch-button" [class.active]="page() === 'support'" (click)="navigate('support')"><app-icon name="info" />Falar com o admin</button>
       @if(data.isAdmin()){<button class="switch-button" [class.active]="page() === 'admin'" (click)="navigate('admin')"><app-icon name="grid" />Administração</button>}
       <div class="sidebar-note"><app-icon name="heart" /><span>Sua sociedade, em um só lugar.</span></div><button
         class="switch-button" (click)="switchSociety()" [disabled]="busy() || exportBusy()"><app-icon
@@ -274,6 +286,8 @@
       </div>
       } @else if (page() === 'communication') {
       @defer (on immediate) {<app-communication (savingChange)="busy.set($event)" (back)="navigate('birthdays')" />} @loading {<div class="panel loading" role="status">Carregando Comunicação…</div>} @error {<div class="alert error" role="alert">Não foi possível abrir Comunicação. <button type="button" class="button secondary" (click)="reloadApp()">Atualizar página</button></div>}
+      } @else if (page() === 'support') {
+      <app-support />
       } @else if (page() === 'notices') {
       <app-notices (savingChange)="busy.set($event)" />
       } @else if (page() === 'minutes') {

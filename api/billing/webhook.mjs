@@ -1,6 +1,15 @@
 import admin from 'firebase-admin';
 import { db, json, mercado, plans, validWebhook } from './_shared.mjs';
 
+async function saveBillingState(store, billingRef, next) {
+  const previousSnapshot = await billingRef.get();
+  const previous = previousSnapshot.data() || {};
+  await billingRef.set(next, { merge: true });
+  if (previous.status !== next.status || previous.plan !== next.plan) {
+    await store.collection('adminAuditEvents').add({ type: 'subscription_status_changed', actorId: 'mercadopago', target: billingRef.path, summary: `Assinatura ${previous.status || 'nova'} → ${next.status} (${next.plan})`, createdAt: new Date() });
+  }
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return json(res, 405, { error: 'Método não permitido.' });
   if (!validWebhook(req)) return json(res, 401, { error: 'Assinatura inválida.' });
@@ -22,7 +31,7 @@ export default async function handler(req, res) {
           const intent = known.docs[0], data = intent.data();
           const account = await admin.auth().getUser(data.uid);
           if (account.email?.toLowerCase() === email) {
-            await store.doc(`users/${data.uid}/billing/${data.societyId}`).set({ plan, status: subscription.status, subscriptionId: subscription.id, payerEmail: email, updatedAt: new Date() }, { merge: true });
+            await saveBillingState(store, store.doc(`users/${data.uid}/billing/${data.societyId}`), { plan, status: subscription.status, subscriptionId: subscription.id, payerEmail: email, updatedAt: new Date() });
           }
         } else {
         const intents = await store.collection('billingCheckoutIntents').where('payerEmail', '==', email).get();
@@ -40,7 +49,7 @@ export default async function handler(req, res) {
           const society = await store.doc(`societies/${data.societyId}`).get();
           const account = await admin.auth().getUser(data.uid);
           if (society.exists && society.data()?.ownerId === data.uid && account.email?.toLowerCase() === email) {
-            await billingRef.set({ plan, status: subscription.status, subscriptionId: subscription.id, payerEmail: email, updatedAt: new Date() }, { merge: true });
+            await saveBillingState(store, billingRef, { plan, status: subscription.status, subscriptionId: subscription.id, payerEmail: email, updatedAt: new Date() });
             await intent.ref.update({ status: 'completed', subscriptionId: subscription.id, completedAt: new Date() });
           }
         }

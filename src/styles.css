@@ -746,6 +746,17 @@ input[type=radio] {
     flex: 1
 }
 
+.admin-selection-main {
+    max-width: 1160px;
+    margin-top: 48px;
+}
+
+.selection-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
 .selection-main h1 {
     margin: 10px 0 12px
 }
