@@ -30,7 +30,7 @@ export class MinutesComponent {
   readonly members=computed(()=>this.data.members().filter(member=>member.status==='active').sort((a,b)=>a.name.localeCompare(b.name,'pt-BR')));
   readonly venueOptions=computed(()=>[
     {id:'church',label:`Igreja · ${this.data.selected()?.churchName??''}`,location:`Igreja ${this.data.selected()?.churchName??''}`,address:this.formatAddress(this.data.selected()?.churchAddress)},
-    ...this.members().filter(member=>this.formatAddress(member.address)).map(member=>({id:member.id,label:`Casa · ${member.name}`,location:`Casa de ${member.name}`,address:this.formatAddress(member.address)}))
+    ...this.members().filter(member=>this.formatAddress(member.address)).map(member=>({id:member.id,label:`Casa · ${member.name}`,location:this.memberHomeLocation(member),address:this.formatAddress(member.address)}))
   ]);
   readonly filtered=computed(()=>this.members().filter(member=>member.name.toLocaleLowerCase('pt-BR').includes(this.search().toLocaleLowerCase('pt-BR'))));
   readonly available=computed(()=>{const minute=this.current();return !!minute && attendanceAvailable(minute,this.clock());});
@@ -87,6 +87,11 @@ export class MinutesComponent {
   newSchedule():void{const society=this.data.selected();const draft=emptyMinute();this.schedule={...draft,number:this.service.nextNumber(draft.year),churchName:society?.churchName??'',societyName:society?`${society.type} ${society.name}`:''};this.errors.set({});this.failure.set('');this.scheduleOpen.set(true);}
   chooseVenue(id:string):void{const venue=this.venueOptions().find(item=>item.id===id);if(!venue)return;this.schedule.meetingLocation=venue.location;this.schedule.templeAddress=venue.address;}
   private formatAddress(address?:import('../../core/models').Address):string{return address?[address.street,address.number,address.complement,address.neighborhood,address.city,address.state,address.postalCode?`CEP ${address.postalCode}`:''].filter(Boolean).join(', '):'';}
+  private memberHomeLocation(member:import('../../core/models').Member):string{
+    const office=member.office.trim();if(!office)return `Casa de ${member.name}`;
+    const feminine=/^irmã\b/i.test(office);
+    return `Casa ${feminine?'da':'do'} ${office.toLocaleLowerCase('pt-BR')} ${member.name}`;
+  }
   async create():Promise<void>{this.schedule.year=Number(this.schedule.date.slice(0,4));this.errors.set(validateMinute(this.schedule));if(Object.keys(this.errors()).length)return;await this.perform(async()=>{const context=this.context;const id=await this.service.schedule(this.schedule);if(!this.validContext(context))return;this.scheduleOpen.set(false);this.message.set('Plenária agendada com o número de ata informado.');const minute=this.service.minutes().find(item=>item.id===id);if(minute)this.open(minute);});}
   open(minute:Minute):void{if(this.busy())return;this.baseline=structuredClone(minute);this.current.set(structuredClone(minute));this.errors.set({});this.failure.set('');this.message.set('');this.search.set('');this.admissionName='';if(minute.status!=='concluded'&&this.data.boardYear()!==minute.year)this.data.loadBoard(minute.year);}
   update(key:TextKey,value:string):void{this.current.update(minute=>minute?{...minute,[key]:value}:null);}

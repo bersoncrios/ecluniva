@@ -389,9 +389,9 @@ service cloud.firestore {
             && getAfter(/databases/$(database)/documents/societies/$(societyId)/minutes/$(data.minuteId)).data.createdAt == request.time;
         }
         allow read: if ownsSociety(societyId);
-        allow create: if ownsSociety(societyId) && validNumberReservation(request.resource.data,numberId)
+        allow create: if ownsSociety(societyId) && validNumberReservation(request.resource.data)
           && !exists(/databases/$(database)/documents/societies/$(societyId)/minutes/$(request.resource.data.minuteId));
-        allow update: if ownsSociety(societyId) && validNumberReservation(request.resource.data,numberId)
+        allow update: if ownsSociety(societyId) && validNumberReservation(request.resource.data)
           && get(/databases/$(database)/documents/societies/$(societyId)/minutes/$(resource.data.minuteId)).data.deletedAt != null;
         allow delete: if ownsSociety(societyId)
           && getAfter(/databases/$(database)/documents/societies/$(societyId)/minutes/$(resource.data.minuteId)).data.deletedAt == request.time;
