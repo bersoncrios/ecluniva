@@ -3,46 +3,35 @@ import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Auth } from '@angular/fire/auth';
 
-interface SupportMessage { id: string; senderName: string; senderRole: 'admin' | 'user'; text: string; createdAt: string; }
+interface SupportMessage {id:string;senderName:string;senderRole:'admin'|'user';text:string;createdAt:string;}
+interface SupportThread {id:string;status:string;messages:SupportMessage[];rating:number|null;feedback:string;updatedAt:string|null;}
 
-@Component({
-  selector: 'app-support', standalone: true, imports: [CommonModule, FormsModule],
-  template: `
-    <section class="support-page">
-      <div class="page-heading"><div><div class="eyebrow">FALE COM A EQUIPE</div><h1 tabindex="-1">Atendimento</h1><p>Envie sua dúvida ou conte como podemos ajudar.</p></div><button class="button secondary" type="button" (click)="load()" [disabled]="loading()">Atualizar</button></div>
-      @if(error()){<div class="alert error" role="alert">{{error()}}</div>}
-      <section class="panel support-thread"><div class="support-messages" aria-live="polite">
-        @if(loading() && !messages().length){<p role="status">Carregando mensagens…</p>}
-        @else if(!messages().length){<p class="empty-state">Ainda não há mensagens. Escreva abaixo para iniciar um atendimento.</p>}
-        @for(message of messages();track message.id){<article class="support-message" [class.from-admin]="message.senderRole==='admin'"><strong>{{message.senderRole==='admin'?'Equipe Ecluniva':message.senderName}}</strong><p>{{message.text}}</p><small>{{message.createdAt | date:'dd/MM/yyyy HH:mm'}}</small></article>}
-      </div><form class="support-compose" (ngSubmit)="send()"><label for="support-message">Sua mensagem</label><textarea id="support-message" name="message" [(ngModel)]="draft" maxlength="4000" rows="4" placeholder="Digite sua mensagem…" required></textarea><div><small>{{draft.length}}/4000</small><button class="button" type="submit" [disabled]="sending() || !draft.trim()">{{sending()?'Enviando…':'Enviar mensagem'}}</button></div></form></section>
-    </section>
-  `,
-  styles: [`
-    .support-page{display:grid;gap:22px}.support-thread{padding:24px}.support-messages{display:grid;gap:14px;max-height:52vh;overflow:auto;padding:4px}.support-message{max-width:min(720px,90%);justify-self:start;border:1px solid #dce4de;background:#f5f7f4;border-radius:12px;padding:14px 16px}.support-message.from-admin{justify-self:end;background:#eaf3ee;border-color:#c8ded1}.support-message p{white-space:pre-wrap;margin:8px 0}.support-message small{color:#52645b}.support-compose{border-top:1px solid #dce4de;margin-top:20px;padding-top:20px;display:grid;gap:10px}.support-compose label{font-weight:600}.support-compose textarea{width:100%;padding:12px;border:1px solid #75867c;border-radius:8px;font:inherit;resize:vertical}.support-compose>div{display:flex;justify-content:space-between;align-items:center}.support-compose small{color:#52645b}.empty-state{padding:20px;text-align:center;color:#52645b}
-    @media(max-width:600px){.support-thread{padding:16px}.support-message{max-width:96%}}
-  `]
-})
+@Component({selector:'app-support',standalone:true,imports:[CommonModule,FormsModule],template:`
+  <section class="support-page"><div class="page-heading"><div><div class="eyebrow">FALE COM A EQUIPE</div><h1 tabindex="-1">Atendimento</h1><p>Consulte seus atendimentos ou inicie uma nova conversa.</p></div><button class="button secondary" type="button" (click)="load()" [disabled]="loading()">Atualizar</button></div>
+    @if(error()){<div class="alert error" role="alert">{{error()}}</div>}
+    <div class="support-layout"><aside class="panel support-list"><div class="support-list-heading"><h2>Seus atendimentos</h2><button class="button" type="button" (click)="startNew()">Novo atendimento</button></div>
+      @for(thread of threads();track thread.id){<button type="button" class="ticket-choice" [class.selected]="selected()?.id===thread.id" (click)="select(thread)"><strong>{{thread.messages[0]?.text||'Atendimento'|slice:0:58}}</strong><small>{{thread.status==='resolved'?'Finalizado':'Em andamento'}} · {{thread.updatedAt?(thread.updatedAt|date:'dd/MM/yyyy HH:mm'):'—'}}</small></button>}@empty{<p class="empty-state">Você ainda não tem atendimentos.</p>}
+    </aside>
+    <section class="panel support-thread">
+      @if(selected();as thread){<div class="thread-title"><div><h2>Conversa</h2><span class="ticket-status" [class.done]="thread.status==='resolved'">{{thread.status==='resolved'?'Finalizado':'Em andamento'}}</span></div>@if(thread.status!=='resolved'){<button class="button secondary" type="button" (click)="resolve()" [disabled]="sending()">Finalizar atendimento</button>}</div>
+        <div class="support-messages" aria-live="polite">@for(message of thread.messages;track message.id){<article class="support-message" [class.from-admin]="message.senderRole==='admin'"><strong>{{message.senderRole==='admin'?'Equipe Ecluniva':message.senderName}}</strong><p>{{message.text}}</p><small>{{message.createdAt|date:'dd/MM/yyyy HH:mm'}}</small></article>}</div>
+        @if(thread.status==='resolved'){<section class="rating-box"><h3>Avalie este atendimento</h3><p>Como foi o suporte recebido? Sua nota ajuda a melhorar o atendimento.</p>@if(thread.rating){<p class="rating-saved" role="status">Sua avaliação: <strong>{{'★'.repeat(thread.rating)}}{{'☆'.repeat(5-thread.rating)}}</strong>@if(thread.feedback){<span><br>{{thread.feedback}}</span>}</p>}@else{<div class="rating-stars" aria-label="Escolha uma nota de 1 a 5">@for(star of stars;track star){<button type="button" [class.chosen]="rating()>=star" [attr.aria-label]="star+' de 5 estrelas'" (click)="rating.set(star)">★</button>}</div><label class="feedback-label" for="support-feedback">Comentário (opcional)</label><textarea id="support-feedback" name="feedback" [(ngModel)]="feedback" maxlength="1000" rows="3" placeholder="Conte um pouco sobre sua experiência"></textarea><button class="button" type="button" (click)="rate()" [disabled]="sending()||rating()<1">{{sending()?'Salvando…':'Enviar avaliação'}}</button>}</section>}
+        @else {<form class="support-compose" (ngSubmit)="send()"><label for="support-message">Sua mensagem</label><textarea id="support-message" name="message" [(ngModel)]="draft" maxlength="4000" rows="4" placeholder="Digite sua mensagem…" required></textarea><div><small>{{draft.length}}/4000</small><button class="button" type="submit" [disabled]="sending()||!draft.trim()">{{sending()?'Enviando…':'Enviar mensagem'}}</button></div></form>}
+      }@else{<div class="new-ticket"><h2>Novo atendimento</h2><p>Descreva sua dúvida. A equipe responderá nesta conversa.</p><form class="support-compose" (ngSubmit)="send()"><label for="support-message">Sua mensagem</label><textarea id="support-message" name="message" [(ngModel)]="draft" maxlength="4000" rows="5" placeholder="Digite sua mensagem…" required></textarea><div><small>{{draft.length}}/4000</small><button class="button" type="submit" [disabled]="sending()||!draft.trim()">{{sending()?'Enviando…':'Iniciar atendimento'}}</button></div></form></div>}
+    </section></div>
+  </section>
+`,styles:[`
+  .support-page{display:grid;gap:22px}.support-layout{display:grid;grid-template-columns:minmax(230px,320px) minmax(0,1fr);gap:16px;align-items:start}.support-list,.support-thread{padding:20px}.support-list{display:grid;align-content:start;gap:10px}.support-list-heading{display:grid;gap:12px;margin-bottom:6px}.support-list-heading h2,.thread-title h2{margin:0}.ticket-choice{display:grid;gap:6px;text-align:left;padding:12px;border:1px solid #dce4de;border-radius:10px;background:#fff;color:#172d25;cursor:pointer}.ticket-choice.selected{border-color:#145443;background:#eaf3ee}.ticket-choice small{color:#52645b}.thread-title{display:flex;justify-content:space-between;align-items:center;gap:10px;padding-bottom:14px;border-bottom:1px solid #dce4de}.thread-title>div{display:flex;align-items:center;gap:10px}.ticket-status{border-radius:20px;padding:5px 9px;background:#eaf3ee;color:#103b31;font-size:12px}.ticket-status.done{background:#edf0ed;color:#52645b}.support-messages{display:grid;gap:14px;max-height:45vh;overflow:auto;padding:16px 4px}.support-message{max-width:min(720px,90%);justify-self:start;border:1px solid #dce4de;background:#f5f7f4;border-radius:12px;padding:14px 16px}.support-message.from-admin{justify-self:end;background:#eaf3ee;border-color:#c8ded1}.support-message p{white-space:pre-wrap;margin:8px 0}.support-message small{color:#52645b}.support-compose{border-top:1px solid #dce4de;margin-top:16px;padding-top:18px;display:grid;gap:10px}.support-compose label,.feedback-label{font-weight:600}.support-compose textarea,.rating-box textarea{width:100%;padding:12px;border:1px solid #75867c;border-radius:8px;font:inherit;resize:vertical}.support-compose>div{display:flex;justify-content:space-between;align-items:center}.support-compose small{color:#52645b}.empty-state{padding:18px;text-align:center;color:#52645b}.new-ticket{padding:10px}.rating-box{display:grid;justify-items:start;gap:10px;margin-top:12px;padding:18px;border:1px solid #dce4de;border-radius:12px;background:#fafcf9}.rating-box h3,.rating-box p{margin:0}.rating-stars{display:flex;gap:6px}.rating-stars button{border:0;background:transparent;color:#aab4ad;font-size:30px;cursor:pointer}.rating-stars button.chosen,.rating-saved strong{color:#b17a00}.rating-saved{line-height:1.8}.feedback-label{margin-top:4px}
+  @media(max-width:760px){.support-layout{grid-template-columns:1fr}.support-list{max-height:240px;overflow:auto}.thread-title{align-items:flex-start;flex-direction:column}.support-thread,.support-list{padding:16px}}
+`]})
 export class SupportComponent {
-  private readonly auth = inject(Auth);
-  readonly messages = signal<SupportMessage[]>([]);
-  readonly loading = signal(false);
-  readonly sending = signal(false);
-  readonly error = signal('');
-  draft = '';
-
+  private readonly auth=inject(Auth);readonly threads=signal<SupportThread[]>([]);readonly selected=signal<SupportThread|null>(null);readonly loading=signal(false);readonly sending=signal(false);readonly error=signal('');readonly rating=signal(0);draft='';feedback='';readonly stars=[1,2,3,4,5];
   constructor(){void this.load();}
-
-  private async request(method: 'GET'|'POST', body?: object): Promise<{messages?:SupportMessage[];message?:SupportMessage;error?:string}> {
-    const user=this.auth.currentUser;if(!user)throw new Error('Entre novamente para enviar uma mensagem.');
-    const token=await user.getIdToken();
-    const response=await fetch('/api/support',{method,headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},...(body?{body:JSON.stringify(body)}:{})});
-    const result=await response.json() as {messages?:SupportMessage[];message?:SupportMessage;error?:string};
-    if(!response.ok)throw new Error(result.error||'Não foi possível acessar o atendimento.');
-    return result;
-  }
-
-  async load():Promise<void>{if(this.loading())return;this.loading.set(true);this.error.set('');try{const result=await this.request('GET');this.messages.set(result.messages||[]);}catch(error){this.error.set(error instanceof Error?error.message:'Não foi possível carregar as mensagens.');}finally{this.loading.set(false);}}
-
-  async send():Promise<void>{const text=this.draft.trim();if(!text||this.sending())return;this.sending.set(true);this.error.set('');try{await this.request('POST',{message:text});this.draft='';await this.load();}catch(error){this.error.set(error instanceof Error?error.message:'Não foi possível enviar a mensagem.');}finally{this.sending.set(false);}}
+  private async request(method:'GET'|'POST',body?:object):Promise<{threads?:SupportThread[];error?:string}>{const user=this.auth.currentUser;if(!user)throw new Error('Entre novamente para acessar o atendimento.');const token=await user.getIdToken();const response=await fetch('/api/support',{method,headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},...(body?{body:JSON.stringify(body)}:{})});const result=await response.json() as {threads?:SupportThread[];error?:string};if(!response.ok)throw new Error(result.error||'Não foi possível acessar o atendimento.');return result;}
+  async load():Promise<void>{if(this.loading())return;this.loading.set(true);this.error.set('');try{const keep=this.selected()?.id;const result=await this.request('GET');this.threads.set(result.threads||[]);this.selected.set(this.threads().find(item=>item.id===keep)||this.threads()[0]||null);}catch(error){this.error.set(error instanceof Error?error.message:'Não foi possível carregar as mensagens.');}finally{this.loading.set(false);}}
+  select(thread:SupportThread):void{this.selected.set(thread);this.rating.set(thread.rating||0);this.feedback=thread.feedback||'';this.draft='';}
+  startNew():void{this.selected.set(null);this.draft='';this.rating.set(0);this.feedback='';}
+  async send():Promise<void>{const message=this.draft.trim();if(!message||this.sending())return;this.sending.set(true);this.error.set('');try{await this.request('POST',{...(this.selected()?{threadId:this.selected()!.id}:{}),message});this.draft='';await this.load();}catch(error){this.error.set(error instanceof Error?error.message:'Não foi possível enviar a mensagem.');}finally{this.sending.set(false);}}
+  async resolve():Promise<void>{const thread=this.selected();if(!thread||this.sending())return;this.sending.set(true);try{await this.request('POST',{action:'resolve',threadId:thread.id});await this.load();}catch(error){this.error.set(error instanceof Error?error.message:'Não foi possível finalizar o atendimento.');}finally{this.sending.set(false);}}
+  async rate():Promise<void>{const thread=this.selected();if(!thread||this.rating()<1||this.sending())return;this.sending.set(true);try{await this.request('POST',{action:'rate',threadId:thread.id,rating:this.rating(),feedback:this.feedback});await this.load();}catch(error){this.error.set(error instanceof Error?error.message:'Não foi possível salvar a avaliação.');}finally{this.sending.set(false);}}
 }

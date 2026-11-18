@@ -34,6 +34,15 @@ export default async function handler(req, res) {
         });
         return json(res, 200, { ok: true });
       }
+      if (body.action === 'resolve') {
+        await store.runTransaction(async transaction => {
+          const thread = await transaction.get(threadRef);
+          if (!thread.exists) throw new Error('Atendimento não encontrado.');
+          transaction.update(threadRef, { status: 'resolved', resolvedAt: new Date(), resolvedBy: token.uid, updatedAt: new Date() });
+          transaction.set(eventRef, { type: 'support_resolved', actorId: token.uid, threadId, summary: 'Administração finalizou um atendimento', createdAt: new Date() });
+        });
+        return json(res, 200, { ok: true, status: 'resolved' });
+      }
       if (!message || message.length > 4000) return json(res, 400, { error: 'Escreva uma resposta de até 4.000 caracteres.' });
       const item = { id: store.collection('_ids').doc().id, senderId: token.uid, senderName: account.displayName || account.email || 'Administração', senderRole: 'admin', text: message, createdAt: new Date().toISOString() };
       await store.runTransaction(async transaction => {
@@ -60,7 +69,7 @@ export default async function handler(req, res) {
     const active = subscriptions.filter(item => item.status === 'authorized');
     const mrr = active.reduce((sum, item) => sum + (planPrices[item.plan] || 0), 0);
     const attention = subscriptions.filter(item => ['pending', 'paused', 'cancelled', 'cancelled_by_user', 'rejected'].includes(item.status));
-    const threads = threadsSnapshot.docs.map(doc => ({ id: doc.id, userName: doc.data().userName || '', userEmail: doc.data().userEmail || '', status: doc.data().status || 'open', updatedAt: doc.data().updatedAt?.toDate?.()?.toISOString?.() || null, unreadByAdmin: doc.data().unreadByAdmin === true, messages: doc.data().messages || [] })).sort((a, b) => Number(b.unreadByAdmin) - Number(a.unreadByAdmin) || (b.updatedAt || '').localeCompare(a.updatedAt || ''));
+    const threads = threadsSnapshot.docs.map(doc => ({ id: doc.id, userName: doc.data().userName || '', userEmail: doc.data().userEmail || '', status: doc.data().status || 'open', rating: doc.data().rating || null, feedback: doc.data().feedback || '', updatedAt: doc.data().updatedAt?.toDate?.()?.toISOString?.() || null, unreadByAdmin: doc.data().unreadByAdmin === true, messages: doc.data().messages || [] })).sort((a, b) => Number(b.unreadByAdmin) - Number(a.unreadByAdmin) || (b.updatedAt || '').localeCompare(a.updatedAt || ''));
     const audits = auditsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), createdAt: doc.data().createdAt?.toDate?.()?.toISOString?.() || null }));
     return json(res, 200, { stats: { societies: societySnapshots.size, subscriptions: subscriptions.length, active: active.length, pending: subscriptions.filter(item => item.status === 'pending').length, mrrEstimate: mrr }, subscriptions, attention, threads, audits });
   } catch (error) {
