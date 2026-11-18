@@ -185,6 +185,7 @@
         [disabled]="busy() || exportBusy()"><app-icon name="board" />Diretoria</button><button [class.active]="page() === 'minutes'" [attr.aria-current]="page() === 'minutes' ? 'page' : null" (click)="navigate('minutes')" [disabled]="busy() || exportBusy()"><app-icon name="calendar" />Atas e plenárias</button><button [class.active]="page() === 'notices'" [attr.aria-current]="page() === 'notices' ? 'page' : null" (click)="navigate('notices')" [disabled]="busy() || exportBusy()"><app-icon name="notice" />Convocações</button>}@else{<button class="active" aria-current="page" (click)="navigate('communication')"><app-icon name="calendar" />Comunicação</button>}</nav>
     <div class="sidebar-bottom">
       @if(data.isOwner()){<button class="switch-button" (click)="navigate('billing')" [disabled]="busy() || exportBusy()"><app-icon name="card" />Assinatura</button>}
+      @if(data.isAdmin()){<button class="switch-button" [class.active]="page() === 'admin'" (click)="navigate('admin')"><app-icon name="grid" />Administração</button>}
       <div class="sidebar-note"><app-icon name="heart" /><span>Sua sociedade, em um só lugar.</span></div><button
         class="switch-button" (click)="switchSociety()" [disabled]="busy() || exportBusy()"><app-icon
           name="switch" />Trocar sociedade</button><button class="sidebar-account" (click)="logout()"
@@ -282,6 +283,8 @@
         (returnToMembers)="navigate('members')" />
       } @else if (page() === 'billing') {
       <app-billing />
+      } @else if (page() === 'admin' && data.isAdmin()) {
+      <app-admin />
       } @else if (page() === 'overview') {
       <section class="stats-grid" aria-label="Resumo da sociedade">
         <article class="panel stat-card">

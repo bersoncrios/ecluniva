@@ -15,6 +15,7 @@ export class DataService {
   private readonly injector = inject(Injector);
   readonly ready = signal(false);
   readonly user = signal<User | null>(null);
+  readonly isAdmin = signal(false);
   readonly societies = signal<Society[]>([]);
   readonly selected = signal<Society | null>(null);
   readonly members = signal<Member[]>([]);
@@ -44,10 +45,16 @@ export class DataService {
       this.clearAll();
       this.user.set(user);
       this.ready.set(true);
-      if (user) this.loadSocieties();
+      if (user) {
+        this.loadSocieties();
+        void runInInjectionContext(this.injector, () => getDoc(doc(this.firestore, `users/${user.uid}`)))
+          .then(profile => { if (this.user()?.uid === user.uid) this.isAdmin.set(profile.exists() && profile.data()?.['role'] === 'admin'); })
+          .catch(() => { if (this.user()?.uid === user.uid) this.isAdmin.set(false); });
+      }
     }, () => {
       this.clearAll();
       this.user.set(null);
+      this.isAdmin.set(false);
       this.ready.set(true);
     }));
   }
@@ -301,6 +308,7 @@ export class DataService {
   }
 
   private clearAll(): void {
+    this.isAdmin.set(false);
     this.unsubscribeSocieties?.();
     this.unsubscribeSocieties = undefined;
     this.unsubscribeInvites?.();this.unsubscribeInvites=undefined;this.incomingInvites.set([]);this.ownedSocieties=[];

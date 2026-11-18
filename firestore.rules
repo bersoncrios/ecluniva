@@ -5,6 +5,12 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    function isAdmin() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
     function ownsSociety(societyId) {
       return signedIn()
         && get(/databases/$(database)/documents/societies/$(societyId)).data.ownerId == request.auth.uid;
@@ -507,8 +513,13 @@ service cloud.firestore {
     }
 
     match /users/{userId}/billing/{societyId} {
-      allow read: if signedIn() && request.auth.uid == userId;
+      allow read: if (signedIn() && request.auth.uid == userId) || isAdmin();
       allow write: if false;
+    }
+
+    match /users/{userId} {
+      allow get: if signedIn() && request.auth.uid == userId;
+      allow list, create, update, delete: if false;
     }
 
     match /{document=**} {
