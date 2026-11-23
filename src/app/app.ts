@@ -2,7 +2,7 @@ import { Component, DestroyRef, ElementRef, ViewChild, computed, effect, inject,
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DataService } from './core/data.service';
-import { Member, MemberInput, Society, SocietyAdminInvite, SocietyType, SOCIETY_TYPES, STATES } from './core/models';
+import { Member, MemberInput, Society, SocietyAdmin, SocietyAdminInvite, SocietyType, SOCIETY_TYPES, STATES } from './core/models';
 import { emptyMember, validateMember, filterMembers, todayISO, displayDate, birthdayEvents, summarize } from './core/domain';
 import { exportRoster } from './core/export';
 import { environment } from '../environments/environment';
@@ -385,6 +385,14 @@ export class AppComponent {
     try { await this.data.inviteSocietyAdmin(member); this.notice.set(`Convite de administrador enviado para ${member.email}.`); this.closeDialog(); }
     catch (error) { this.dialogError.set(error instanceof Error ? error.message : 'Não foi possível criar o convite.'); }
     finally { this.busy.set(false); }
+  }
+
+  async removeMemberAsAdmin(member:Member,admin:SocietyAdmin):Promise<void>{
+    if(this.busy())return;
+    this.busy.set(true);this.dialogError.set('');
+    try{await this.data.removeSocietyAdmin(admin);this.notice.set(`Acesso de administrador removido de ${member.name}.`);this.closeDialog();}
+    catch(error){this.dialogError.set(error instanceof Error?error.message:'Não foi possível remover o administrador.');}
+    finally{this.busy.set(false);}
   }
 
   async createMemberUpdateLink(member:Member):Promise<void>{
