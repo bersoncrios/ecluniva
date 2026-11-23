@@ -193,7 +193,7 @@ export class DataService {
 
   loadMembers(): void {
     const society = this.selected();
-    if (!society || society.ownerId !== this.user()?.uid) return;
+    if (!society || !this.hasSocietyAccess()) return;
     this.unsubscribeMembers?.();
     this.memberVersion++;
     const version = this.memberVersion;
