@@ -2,6 +2,7 @@ import { Injectable, Injector, computed, inject, runInInjectionContext, signal }
 import { Auth, GoogleAuthProvider, User, onAuthStateChanged, signInWithPopup, signInWithEmailAndPassword, signOut } from '@angular/fire/auth';
 import { Firestore, collection, query, where, onSnapshot, addDoc, doc, getDoc, getDocs, serverTimestamp, Unsubscribe, runTransaction, deleteDoc, writeBatch, updateDoc, setDoc } from '@angular/fire/firestore';
 import { BoardAssignment, Member, MemberInput, Society, SocietyAdminInvite, SocietyType } from './models';
+import { EmailService } from './email.service';
 import { normalizeMember, todayISO } from './domain';
 import { boardAssignmentId, validBoardYear, validateBoardAssignment } from './board';
 import { sharedBirthday, CommunicationInvite } from './communication';
@@ -11,6 +12,7 @@ import { LEGAL_VERSION } from './legal';
 
 @Injectable({ providedIn: 'root' })
 export class DataService {
+  private readonly email=inject(EmailService);
   private readonly auth = inject(Auth);
   private readonly firestore = inject(Firestore);
   private readonly injector = inject(Injector);
@@ -180,6 +182,7 @@ export class DataService {
     const society=this.authorizedOwnerSociety();
     const email=member.email.trim().toLowerCase();
     if(!email)throw new Error('Este membro não possui e-mail cadastrado.');
+    this.email.assertConfigured();
     const id=`${society.id}__${email}`;
     await runInInjectionContext(this.injector,()=>runTransaction(this.firestore,async transaction=>{
       const ref=doc(this.firestore,`societyAdminInvites/${id}`),stored=await transaction.get(ref);
@@ -187,6 +190,11 @@ export class DataService {
       if(stored.exists()&&stored.data()['status']==='accepted')throw new Error('Este membro já possui acesso à sociedade.');
       if(stored.exists())transaction.update(ref,{...data,createdAt:stored.data()['createdAt']});else transaction.set(ref,data);
     }));
+    try {
+      await this.email.sendAdminInvite({email,memberName:member.name,societyName:society.name,churchName:society.churchName,societyType:society.type,inviterEmail:this.user()?.email||''});
+    } catch(error) {
+      throw error instanceof Error?error:new Error('O convite foi criado, mas não foi possível enviar o e-mail.');
+    }
   }
 
   clearSelection(): void {
