@@ -239,9 +239,9 @@ export class DataService {
     const inviteRef=doc(this.firestore,`societyAdminInvites/${admin.inviteId}`);
     await runInInjectionContext(this.injector,()=>runTransaction(this.firestore,async transaction=>{
       const stored=await transaction.get(adminRef);
+      const invite=await transaction.get(inviteRef);
       if(!stored.exists()||stored.data()['active']!==true)throw new Error('Este administrador já foi removido.');
       transaction.update(adminRef,{active:false,updatedAt:serverTimestamp()});
-      const invite=await transaction.get(inviteRef);
       if(invite.exists()&&invite.data()['status']==='accepted')transaction.update(inviteRef,{status:'revoked',updatedAt:serverTimestamp()});
     }));
     this.societyAdmins.update(items=>items.filter(item=>item.userId!==admin.userId));
