@@ -391,8 +391,10 @@ service cloud.firestore {
     }
 
     match /publicPages/{pageId} {
-      allow get: if (resource.data.published == true && eligiblePublicPage(pageId)) || ownsSociety(pageId);
-      allow list: if resource.data.published == true && eligiblePublicPage(pageId);
+      // Public queries must be constrained by published == true. Plan eligibility
+      // is enforced when the page is created or changed by an authenticated owner.
+      allow get: if resource.data.published == true || ownsSociety(pageId);
+      allow list: if resource.data.published == true;
       allow create: if ownsSociety(pageId) && eligiblePublicPage(pageId) && validPublicPage(request.resource.data,pageId)
         && request.resource.data.createdAt == request.time;
       allow update: if ownsSociety(pageId) && eligiblePublicPage(pageId) && validPublicPage(request.resource.data,pageId)
@@ -402,7 +404,7 @@ service cloud.firestore {
       match /posts/{postId} {
         allow read: if (get(/databases/$(database)/documents/publicPages/$(pageId)).data.published == true
           && get(/databases/$(database)/documents/publicPages/$(pageId)).data.societyId == pageId
-          && eligiblePublicPage(pageId) && resource.data.status == 'published') || ownsSociety(pageId);
+          && resource.data.status == 'published') || ownsSociety(pageId);
         allow create: if ownsSociety(pageId) && eligiblePublicPage(pageId) && validPublicPost(request.resource.data,postId)
           && request.resource.data.createdAt == request.time;
         allow update: if ownsSociety(pageId) && eligiblePublicPage(pageId) && validPublicPost(request.resource.data,postId)
