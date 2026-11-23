@@ -13,7 +13,14 @@ service cloud.firestore {
 
     function ownsSociety(societyId) {
       return signedIn()
-        && get(/databases/$(database)/documents/societies/$(societyId)).data.ownerId == request.auth.uid;
+        && (get(/databases/$(database)/documents/societies/$(societyId)).data.ownerId == request.auth.uid
+          || (exists(/databases/$(database)/documents/societies/$(societyId)/admins/$(request.auth.uid))
+            && get(/databases/$(database)/documents/societies/$(societyId)/admins/$(request.auth.uid)).data.active == true
+            && get(/databases/$(database)/documents/societies/$(societyId)/admins/$(request.auth.uid)).data.email == request.auth.token.email.lower()));
+    }
+
+    function ownerSociety(societyId) {
+      return signedIn() && get(/databases/$(database)/documents/societies/$(societyId)).data.ownerId == request.auth.uid;
     }
 
     function text(value, maximum) {
@@ -228,6 +235,44 @@ service cloud.firestore {
         && data.status in ['pending','accepted','revoked'] && text(data.acceptedBy,128)
         && data.createdAt is timestamp && data.updatedAt == request.time;
     }
+
+    function validSocietyAdminInvite(data, inviteId) {
+      let society = get(/databases/$(database)/documents/societies/$(data.societyId)).data;
+      return data.keys().hasAll(['societyId','ownerId','email','societyName','churchName','societyType','status','acceptedBy','acceptedAt','createdAt','updatedAt'])
+        && data.keys().hasOnly(['societyId','ownerId','email','societyName','churchName','societyType','status','acceptedBy','acceptedAt','createdAt','updatedAt'])
+        && data.societyId is string && data.societyId.size() > 0 && data.societyId.size() <= 128
+        && data.societyId.matches('^[^/]+$') && data.ownerId == society.ownerId
+        && data.societyName == society.name && data.churchName == society.churchName && data.societyType == society.type
+        && text(data.email,254) && data.email == data.email.lower()
+        && data.email.matches('^[^\\s/@]+@[^\\s/@]+\\.[^\\s/@]+$')
+        && inviteId == data.societyId + '__' + data.email
+        && data.status in ['pending','accepted','revoked'] && text(data.acceptedBy,128)
+        && data.createdAt is timestamp && data.updatedAt == request.time;
+    }
+
+    function acceptingAdminInvite(data, inviteId) {
+      return verifiedEmail() && resource.data.status == 'pending' && data.status == 'accepted'
+        && resource.data.email == request.auth.token.email.lower() && data.acceptedBy == request.auth.uid
+        && data.acceptedAt == request.time
+        && data.diff(resource.data).affectedKeys().hasOnly(['status','acceptedBy','acceptedAt','updatedAt'])
+        && getAfter(/databases/$(database)/documents/societies/$(data.societyId)/admins/$(request.auth.uid)).data.active == true
+        && getAfter(/databases/$(database)/documents/societies/$(data.societyId)/admins/$(request.auth.uid)).data.inviteId == inviteId;
+    }
+
+    function validSocietyAdmin(data, userId) {
+      return data.keys().hasAll(['userId','email','inviteId','active','createdAt','updatedAt'])
+        && data.keys().hasOnly(['userId','email','inviteId','active','createdAt','updatedAt'])
+        && data.userId == userId && text(data.email,254) && text(data.inviteId,400)
+        && data.active is bool && data.createdAt is timestamp && data.updatedAt == request.time;
+    }
+
+    function joiningSocietyAdmin(societyId, userId, data) {
+      let invite = getAfter(/databases/$(database)/documents/societyAdminInvites/$(data.inviteId)).data;
+      return verifiedEmail() && userId == request.auth.uid && data.active == true
+        && data.email == request.auth.token.email.lower() && invite.email == data.email
+        && invite.societyId == societyId && invite.status == 'accepted' && invite.acceptedBy == userId
+        && invite.acceptedAt == request.time;
+    }
     function acceptingInvite(data, inviteId) {
       return verifiedEmail() && resource.data.status == 'pending' && data.status == 'accepted'
         && resource.data.email == request.auth.token.email.lower() && data.acceptedBy == request.auth.uid
@@ -294,6 +339,25 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    match /societyAdminInvites/{inviteId} {
+      allow get: if signedIn() && ((resource == null && ownerSociety(inviteId.split('__')[0]))
+        || (resource != null && (ownerSociety(resource.data.societyId) || (verifiedEmail() && resource.data.email == request.auth.token.email.lower()))));
+      allow list: if signedIn() && (ownerSociety(resource.data.societyId) || (verifiedEmail() && resource.data.email == request.auth.token.email.lower()));
+      allow create: if signedIn() && ownerSociety(request.resource.data.societyId)
+        && validSocietyAdminInvite(request.resource.data,inviteId)
+        && request.resource.data.status == 'pending' && request.resource.data.acceptedBy == '' && request.resource.data.acceptedAt == null
+        && request.resource.data.createdAt == request.time;
+      allow update: if signedIn() && validSocietyAdminInvite(request.resource.data,inviteId)
+        && request.resource.data.createdAt == resource.data.createdAt
+        && (acceptingAdminInvite(request.resource.data,inviteId)
+          || (ownerSociety(resource.data.societyId)
+            && ((request.resource.data.status == 'revoked' && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','updatedAt']))
+              || (resource.data.status == 'revoked' && request.resource.data.status == 'pending'
+                && request.resource.data.acceptedBy == '' && request.resource.data.acceptedAt == null
+                && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','acceptedBy','acceptedAt','updatedAt'])))));
+      allow delete: if false;
+    }
+
     // Capability links expose meeting metadata, never the membership roster.
     match /plenaryAttendance/{token} {
       function linkedMinute(data) {
@@ -347,7 +411,7 @@ service cloud.firestore {
         && request.resource.data.ownerId == request.auth.uid
         && request.resource.data.createdAt == request.time
         && request.resource.data.updatedAt == request.time;
-      allow update: if signedIn() && resource.data.ownerId == request.auth.uid
+      allow update: if signedIn() && ownerSociety(societyId)
         && validSociety(request.resource.data)
         && request.resource.data.ownerId == resource.data.ownerId
         && request.resource.data.createdAt == resource.data.createdAt
@@ -466,6 +530,17 @@ service cloud.firestore {
         allow read: if ownsSociety(societyId) || (communicationAccess(societyId) && resource.data.active == true);
         allow create, update: if ownsSociety(societyId)
           && sharedBirthdayMatches(request.resource.data,getAfter(/databases/$(database)/documents/societies/$(societyId)/members/$(memberId)).data);
+        allow delete: if false;
+      }
+      match /admins/{userId} {
+        allow get: if ownsSociety(societyId) || (signedIn() && userId == request.auth.uid);
+        allow list: if ownerSociety(societyId);
+        allow create: if validSocietyAdmin(request.resource.data,userId)
+          && joiningSocietyAdmin(societyId,userId,request.resource.data) && request.resource.data.createdAt == request.time;
+        allow update: if validSocietyAdmin(request.resource.data,userId) && request.resource.data.createdAt == resource.data.createdAt
+          && (joiningSocietyAdmin(societyId,userId,request.resource.data)
+            || (ownerSociety(societyId) && request.resource.data.active == false
+              && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['active','updatedAt'])));
         allow delete: if false;
       }
       match /communicationTeam/{userId} {

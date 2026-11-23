@@ -1,7 +1,7 @@
 import { Injectable, Injector, computed, inject, runInInjectionContext, signal } from '@angular/core';
 import { Auth, GoogleAuthProvider, User, onAuthStateChanged, signInWithPopup, signInWithEmailAndPassword, signOut } from '@angular/fire/auth';
 import { Firestore, collection, query, where, onSnapshot, addDoc, doc, getDoc, getDocs, serverTimestamp, Unsubscribe, runTransaction, deleteDoc, writeBatch, updateDoc } from '@angular/fire/firestore';
-import { BoardAssignment, Member, MemberInput, Society, SocietyType } from './models';
+import { BoardAssignment, Member, MemberInput, Society, SocietyAdminInvite, SocietyType } from './models';
 import { normalizeMember, todayISO } from './domain';
 import { boardAssignmentId, validBoardYear, validateBoardAssignment } from './board';
 import { sharedBirthday, CommunicationInvite } from './communication';
@@ -20,9 +20,15 @@ export class DataService {
   readonly selected = signal<Society | null>(null);
   readonly members = signal<Member[]>([]);
   readonly isOwner = computed(()=>!!this.selected()&&this.selected()!.ownerId===this.user()?.uid);
+  readonly isSocietyAdmin = computed(()=>!!this.selected()&&!!this.user()&&!this.isOwner()&&this.adminSocietyIds.has(this.selected()!.id));
+  readonly hasSocietyAccess = computed(()=>this.isOwner()||this.isSocietyAdmin());
   readonly incomingInvites = signal<CommunicationInvite[]>([]);
+  readonly incomingAdminInvites = signal<SocietyAdminInvite[]>([]);
   private ownedSocieties:Society[]=[];
+  private adminSocieties:Society[]=[];
+  private adminSocietyIds = new Set<string>();
   private unsubscribeInvites?:Unsubscribe;
+  private unsubscribeAdminInvites?:Unsubscribe;
   private unsubscribeSharedAccess?:Unsubscribe;
   readonly societiesLoading = signal(false);
   readonly membersLoading = signal(false);
@@ -80,10 +86,10 @@ export class DataService {
 
   loadSocieties(): void {
     const user=this.user();if(!user)return;
-    this.unsubscribeSocieties?.();this.unsubscribeInvites?.();
-    this.ownedSocieties=[];this.societies.set([]);this.incomingInvites.set([]);this.societiesError.set('');this.societiesLoading.set(true);
-    const version=this.authVersion;let ownedLoaded=false,invitesLoaded=!user.emailVerified||!user.email;
-    const publish=()=>{if(version!==this.authVersion)return;this.publishSocieties();this.societiesLoading.set(!ownedLoaded||!invitesLoaded);};
+    this.unsubscribeSocieties?.();this.unsubscribeInvites?.();this.unsubscribeAdminInvites?.();
+    this.ownedSocieties=[];this.adminSocieties=[];this.adminSocietyIds.clear();this.societies.set([]);this.incomingInvites.set([]);this.incomingAdminInvites.set([]);this.societiesError.set('');this.societiesLoading.set(true);
+    const version=this.authVersion;let ownedLoaded=false,invitesLoaded=!user.emailVerified||!user.email,adminInvitesLoaded=!user.emailVerified||!user.email;
+    const publish=()=>{if(version!==this.authVersion)return;this.publishSocieties();this.societiesLoading.set(!ownedLoaded||!invitesLoaded||!adminInvitesLoaded);};
     runInInjectionContext(this.injector,()=>{
       this.unsubscribeSocieties=onSnapshot(query(collection(this.firestore,'societies'),where('ownerId','==',user.uid)),snapshot=>{
         if(version!==this.authVersion)return;
@@ -93,12 +99,18 @@ export class DataService {
         if(version!==this.authVersion)return;
         this.incomingInvites.set(snapshot.docs.map(item=>({...item.data(),id:item.id}) as CommunicationInvite));invitesLoaded=true;publish();
       },()=>{if(version===this.authVersion){this.incomingInvites.set([]);invitesLoaded=true;this.societiesError.set('Não foi possível carregar os convites de Comunicação.');publish();}});
+      if(!adminInvitesLoaded)this.unsubscribeAdminInvites=onSnapshot(query(collection(this.firestore,'societyAdminInvites'),where('email','==',user.email!.toLowerCase())),snapshot=>{
+        if(version!==this.authVersion)return;
+        this.incomingAdminInvites.set(snapshot.docs.map(item=>({...item.data(),id:item.id}) as SocietyAdminInvite));adminInvitesLoaded=true;publish();
+      },()=>{if(version===this.authVersion){this.incomingAdminInvites.set([]);adminInvitesLoaded=true;this.societiesError.set('Não foi possível carregar os convites de administração.');publish();}});
     });
   }
 
   private publishSocieties():void{
     const uid=this.user()?.uid;
-    const shared=this.incomingInvites().filter(invite=>invite.status==='accepted'&&invite.acceptedBy===uid).map(invite=>({id:invite.societyId,ownerId:invite.ownerId,churchName:invite.churchName,type:invite.societyType,name:invite.societyName}));
+    const acceptedAdmins=this.incomingAdminInvites().filter(invite=>invite.status==='accepted'&&invite.acceptedBy===uid);
+    acceptedAdmins.forEach(invite=>this.adminSocietyIds.add(invite.societyId));
+    const shared=[...acceptedAdmins.map(invite=>({id:invite.societyId,ownerId:invite.ownerId,churchName:invite.churchName,type:invite.societyType,name:invite.societyName})),...this.adminSocieties];
     const merged=new Map([...shared,...this.ownedSocieties].map(society=>[society.id,society]));
     this.societies.set([...merged.values()].sort((a,b)=>a.name.localeCompare(b.name,'pt-BR')));
     const current=this.selected();if(current&&!merged.has(current.id))this.clearSelection();
@@ -107,7 +119,7 @@ export class DataService {
   select(society: Society): void {
     const allowed=this.societies().find(item=>item.id===society.id);if(!allowed)return;
     this.clearSelection();this.selected.set(allowed);
-    if(this.isOwner()){this.loadMembers();this.loadBoard(this.boardYear());}
+    if(this.isOwner()||this.adminSocietyIds.has(allowed.id)){this.loadMembers();this.loadBoard(this.boardYear());}
     else{
       const uid=this.user()!.uid;
       this.unsubscribeSharedAccess=runInInjectionContext(this.injector,()=>onSnapshot(doc(this.firestore,`societies/${allowed.id}/communicationTeam/${uid}`),snapshot=>{
@@ -128,6 +140,37 @@ export class DataService {
     }));
     if(version!==this.authVersion)return;
     this.incomingInvites.update(items=>items.map(item=>item.id===invite.id?{...item,status:'accepted',acceptedBy:user.uid}:item));this.publishSocieties();
+  }
+
+  async acceptSocietyAdminInvite(invite:SocietyAdminInvite):Promise<void>{
+    const user=this.user();if(!user?.emailVerified||user.email?.toLowerCase()!==invite.email)throw new Error('Entre com o e-mail confirmado que recebeu o convite.');
+    const version=this.authVersion;
+    await runInInjectionContext(this.injector,()=>runTransaction(this.firestore,async transaction=>{
+      const ref=doc(this.firestore,'societyAdminInvites',invite.id),adminRef=doc(this.firestore,`societies/${invite.societyId}/admins/${user.uid}`);
+      const stored=await transaction.get(ref),admin=await transaction.get(adminRef);
+      if(version!==this.authVersion||!stored.exists()||stored.data()['status']!=='pending')throw new Error('Este convite não está mais disponível.');
+      transaction.update(ref,{status:'accepted',acceptedBy:user.uid,acceptedAt:serverTimestamp(),updatedAt:serverTimestamp()});
+      transaction.set(adminRef,{userId:user.uid,email:invite.email,inviteId:invite.id,active:true,createdAt:admin.exists()?admin.data()['createdAt']:serverTimestamp(),updatedAt:serverTimestamp()});
+    }));
+    if(version!==this.authVersion)return;
+    this.incomingAdminInvites.update(items=>items.map(item=>item.id===invite.id?{...item,status:'accepted',acceptedBy:user.uid}:item));
+    this.adminSocietyIds.add(invite.societyId);
+    const society={id:invite.societyId,ownerId:invite.ownerId,churchName:invite.churchName,type:invite.societyType,name:invite.societyName};
+    if(!this.adminSocieties.some(item=>item.id===society.id))this.adminSocieties.push(society);
+    this.publishSocieties();
+  }
+
+  async inviteSocietyAdmin(member: Member):Promise<void>{
+    const society=this.authorizedOwnerSociety();
+    const email=member.email.trim().toLowerCase();
+    if(!email)throw new Error('Este membro não possui e-mail cadastrado.');
+    const id=`${society.id}__${email}`;
+    await runInInjectionContext(this.injector,()=>runTransaction(this.firestore,async transaction=>{
+      const ref=doc(this.firestore,`societyAdminInvites/${id}`),stored=await transaction.get(ref);
+      const data={societyId:society.id,ownerId:society.ownerId,email,societyName:society.name,churchName:society.churchName,societyType:society.type,status:'pending',acceptedBy:'',acceptedAt:null,createdAt:serverTimestamp(),updatedAt:serverTimestamp()};
+      if(stored.exists()&&stored.data()['status']==='accepted')throw new Error('Este membro já possui acesso à sociedade.');
+      if(stored.exists())transaction.update(ref,{...data,createdAt:stored.data()['createdAt']});else transaction.set(ref,data);
+    }));
   }
 
   clearSelection(): void {
@@ -248,7 +291,7 @@ export class DataService {
     this.boardYear.set(year);
     const society = this.selected();
     const uid = this.user()?.uid;
-    if (!society || society.ownerId !== uid) return;
+    if (!society || !this.hasSocietyAccess()) return;
     const version = this.boardVersion;
     this.boardLoading.set(true);
     runInInjectionContext(this.injector, () => {
@@ -303,15 +346,19 @@ export class DataService {
 
   private authorizedSociety(): Society {
     const society = this.selected();
-    if (!society || society.ownerId !== this.user()?.uid) throw new Error('Sociedade indisponível.');
+    if (!society || !this.hasSocietyAccess()) throw new Error('Sociedade indisponível.');
     return society;
+  }
+
+  private authorizedOwnerSociety(): Society {
+    const society=this.selected();if(!society||!this.isOwner())throw new Error('Somente o responsável pode convidar administradores.');return society;
   }
 
   private clearAll(): void {
     this.isAdmin.set(false);
     this.unsubscribeSocieties?.();
     this.unsubscribeSocieties = undefined;
-    this.unsubscribeInvites?.();this.unsubscribeInvites=undefined;this.incomingInvites.set([]);this.ownedSocieties=[];
+    this.unsubscribeInvites?.();this.unsubscribeInvites=undefined;this.unsubscribeAdminInvites?.();this.unsubscribeAdminInvites=undefined;this.incomingInvites.set([]);this.incomingAdminInvites.set([]);this.ownedSocieties=[];this.adminSocieties=[];this.adminSocietyIds.clear();
     this.clearSelection();
     this.societies.set([]);
     this.societiesLoading.set(false);

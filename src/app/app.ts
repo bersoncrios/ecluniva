@@ -2,7 +2,7 @@ import { Component, DestroyRef, ElementRef, ViewChild, computed, effect, inject,
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DataService } from './core/data.service';
-import { Member, MemberInput, Society, SocietyType, SOCIETY_TYPES, STATES } from './core/models';
+import { Member, MemberInput, Society, SocietyAdminInvite, SocietyType, SOCIETY_TYPES, STATES } from './core/models';
 import { emptyMember, validateMember, filterMembers, todayISO, displayDate, birthdayEvents, summarize } from './core/domain';
 import { exportRoster } from './core/export';
 import { environment } from '../environments/environment';
@@ -35,6 +35,7 @@ export class AppComponent {
   readonly states = STATES;
   readonly page = signal<Page>('overview');
   readonly pendingInvites=computed(()=>this.data.incomingInvites().filter(invite=>invite.status==='pending'));
+  readonly pendingAdminInvites=computed(()=>this.data.incomingAdminInvites().filter(invite=>invite.status==='pending'));
   readonly presenceEntry=signal(location.hash.startsWith('#presenca/'));
   readonly memberUpdateEntry=signal(location.hash.startsWith('#atualizar-cadastro/'));
   readonly inviteEntry=location.hash==='#convites';
@@ -102,7 +103,7 @@ export class AppComponent {
         this.previousContext = context;
         this.busy.set(false);
         this.boardMemberId.set(null);
-        this.page.set(this.data.selected()&&!this.data.isOwner()?'communication':'overview');
+        this.page.set(this.data.selected()&&!this.data.hasSocietyAccess()?'communication':'overview');
         this.query.set('');
         this.status.set('active');
         this.member = emptyMember();
@@ -125,7 +126,7 @@ export class AppComponent {
       this.cancelPostalLookup();
       const hash = location.hash.slice(1);
       const page = (['overview','members','birthdays','board','minutes','notices','communication','billing','admin','support'].includes(hash) ? hash : 'overview') as Page;
-      this.page.set(this.data.selected()&&!this.data.isOwner()&&!['admin','support'].includes(page)?'communication':page);
+      this.page.set(this.data.selected()&&!this.data.hasSocietyAccess()&&!['admin','support'].includes(page)?'communication':page);
       refreshDay();
     };
     window.addEventListener('popstate', navigateBack);
@@ -183,6 +184,13 @@ export class AppComponent {
     try{await this.data.acceptCommunicationInvite(invite);this.notice.set('Convite aceito. Abra a sociedade para acessar Comunicação.');}catch(error){this.error.set(error instanceof Error?error.message:'Não foi possível aceitar o convite.');}finally{this.busy.set(false);}
   }
 
+  async acceptAdminInvite(invite:SocietyAdminInvite):Promise<void>{
+    if(this.busy())return;this.busy.set(true);this.error.set('');
+    try{await this.data.acceptSocietyAdminInvite(invite);this.notice.set('Convite aceito. A sociedade já está disponível para você.');}
+    catch(error){this.error.set(error instanceof Error?error.message:'Não foi possível aceitar o convite de administração.');}
+    finally{this.busy.set(false);}
+  }
+
   switchSociety(): void {
     if (this.busy() || this.exportBusy()) return;
     this.cancelPostalLookup();
@@ -228,7 +236,7 @@ export class AppComponent {
     if (this.busy() || this.exportBusy()) return;
     if (page === 'admin' && !this.data.isAdmin()) { this.page.set('overview'); return; }
     this.cancelPostalLookup();
-    this.page.set(this.data.selected()&&!this.data.isOwner()&&!['admin','support'].includes(page)?'communication':page);
+    this.page.set(this.data.selected()&&!this.data.hasSocietyAccess()&&!['admin','support'].includes(page)?'communication':page);
     this.boardMemberId.set(null);
     this.today.set(todayISO());
     this.error.set('');
@@ -354,6 +362,14 @@ export class AppComponent {
   viewMember(member: Member): void {
     this.detailMemberId.set(member.id);
     this.openDialog('details');
+  }
+
+  async inviteMemberAsAdmin(member: Member): Promise<void> {
+    if (this.busy()) return;
+    this.busy.set(true); this.dialogError.set('');
+    try { await this.data.inviteSocietyAdmin(member); this.notice.set(`Convite de administrador enviado para ${member.email}.`); this.closeDialog(); }
+    catch (error) { this.dialogError.set(error instanceof Error ? error.message : 'Não foi possível criar o convite.'); }
+    finally { this.busy.set(false); }
   }
 
   async createMemberUpdateLink(member:Member):Promise<void>{

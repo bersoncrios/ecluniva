@@ -109,6 +109,12 @@ A projeção `communicationBirthdays` contém somente nome, mês, dia e um indic
 
 Identidade visual fica em `communicationSettings/identity`, com cores hexadecimais, imagem PNG/JPEG em data URL até 250.000 caracteres e mensagem até 1.000 caracteres; só o responsável pode alterar. Os estados em `birthdayPublications` validam a ocorrência contra o mês/dia compartilhado, têm revisão e autor/carimbo de servidor. Revogação é verificada no convite e no vínculo em cada acesso. Índices simples atendem às consultas por e-mail, sociedade, ativo e faixa de datas.
 
+## Administradores convidados
+
+`societyAdminInvites/{societyId}__{email}` guarda convites para administração completa da sociedade, usando o e-mail cadastrado no membro. O aceite exige conta autenticada com e-mail confirmado igual ao convite e, na mesma transação, atualiza o convite e cria `societies/{societyId}/admins/{userId}`. A conta aceita passa a ter acesso às coleções operacionais da sociedade e pode alternar entre sociedades normalmente.
+
+Somente `society.ownerId` pode criar, revogar ou reativar convites e desativar vínculos de administradores. O administrador convidado só pode aceitar o próprio convite; não pode alterar a lista de administradores nem remover o criador. A chave por sociedade e e-mail evita duplicidade de convites ativos.
+
 ## Presença pública das plenárias
 
 `societies/{societyId}/attendanceSessions/{minuteId}` guarda `token` e `code`, restritos ao proprietário. `plenaryAttendance/{token}` guarda somente `societyId`, `minuteId`, `title`, `date`, `timeZone` e `open`. Em `requests/{receipt}`, cada envio tem `name`, `code`, `status`, `memberId`, `createdAt` e `processedAt`. Tokens e comprovantes são capacidades aleatórias de 192 bits. Consulta pública somente por documento conhecido; listagem dos envios e conferência somente pelo proprietário. Criação exige código correto, horário de servidor dentro do dia civil e ata não concluída. Conferência atualiza a chamada em transação com revisão e preserva ofício/cargo. A conclusão encerra o link atomicamente. Detalhes em [Presença nas plenárias](docs/PRESENCA_PLENARIAS.md).

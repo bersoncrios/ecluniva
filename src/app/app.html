@@ -121,12 +121,13 @@
   <header class="selection-header"><a class="brand" href="#"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 64 64"><circle cx="22" cy="23" r="5"/><circle cx="42" cy="23" r="5"/><circle cx="32" cy="18" r="6"/><path d="M12 45c0-7 4-11 10-11 3 0 5 1 7 3M52 45c0-7-4-11-10-11-3 0-5 1-7 3M19 48c0-10 5-15 13-15s13 5 13 15"/></svg></span>Ecluniva</a><div class="selection-header-actions"><button class="button secondary" type="button" (click)="navigate('support')">Falar com o admin</button>@if(data.isAdmin()){<button class="button secondary" type="button" (click)="navigate('admin')"><app-icon name="grid" />Administração</button>}<button class="button subtle" (click)="logout()" [disabled]="busy()"><app-icon name="logout" />Sair</button></div></header>
   <main id="main" class="selection-main">
     <div class="eyebrow">SEU ESPAÇO DE ORGANIZAÇÃO</div>
-    <h1 tabindex="-1">{{ createMode() || (!data.societies().length && !pendingInvites().length && !data.societiesLoading() &&
+    <h1 tabindex="-1">{{ createMode() || (!data.societies().length && !pendingInvites().length && !pendingAdminInvites().length && !data.societiesLoading() &&
       !data.societiesError()) ? 'Vamos começar pela sua sociedade' : 'Suas sociedades' }}</h1>
-    <p class="lead small">{{ createMode() || (!data.societies().length&&!pendingInvites().length) ? 'Informe a igreja, o tipo de sociedade e o nome
+    <p class="lead small">{{ createMode() || (!data.societies().length&&!pendingInvites().length&&!pendingAdminInvites().length) ? 'Informe a igreja, o tipo de sociedade e o nome
       da unidade local.' : 'Escolha a sociedade que deseja organizar.' }}</p>
     @if (notice()) { <div class="alert success" role="status">{{ notice() }}</div> }
     @if (error()) { <div class="alert error" role="alert">{{ error() }}</div> }
+    @if(pendingAdminInvites().length){<section class="pending-invites" aria-label="Convites de administração"><h2>Convites de administração</h2>@for(invite of pendingAdminInvites();track invite.id){<article class="panel pending-invite"><div><span class="badge">Administrador</span><h3>{{invite.societyType}} · {{invite.societyName}}</h3><p>{{invite.churchName}}</p><p class="help">Acesso aos membros, diretoria, atas, convocações e demais recursos da sociedade.</p></div><button type="button" class="button" (click)="acceptAdminInvite(invite)" [disabled]="busy()" [attr.aria-label]="'Aceitar convite de '+invite.societyName">Aceitar convite</button></article>}</section>}
     @if(pendingInvites().length){<section class="pending-invites" aria-label="Convites de Comunicação"><h2>Convites de Comunicação</h2>@for(invite of pendingInvites();track invite.id){<article class="panel pending-invite"><div><span class="badge">Comunicação</span><h3>{{invite.societyType}} · {{invite.societyName}}</h3><p>{{invite.churchName}}</p><p class="help">Acesso aos nomes e dia/mês dos aniversariantes, mensagens, cartões e acompanhamento das publicações.</p></div><button type="button" class="button" (click)="acceptInvite(invite)" [disabled]="busy()" [attr.aria-label]="'Aceitar convite de '+invite.societyName">Aceitar convite</button></article>}</section>}
     @if (data.societiesLoading()) {
     <div class="panel loading" role="status"><span class="spinner"></span>Carregando sociedades…</div>
@@ -136,7 +137,7 @@
       <p>Verifique a conexão e tente novamente.</p><button class="button" (click)="data.loadSocieties()">Tentar
         novamente</button>
     </div>
-    } @else if (createMode() || (!data.societies().length&&!pendingInvites().length)) {
+    } @else if (createMode() || (!data.societies().length&&!pendingInvites().length&&!pendingAdminInvites().length)) {
     <form class="panel society-form" (ngSubmit)="createSociety()" novalidate>
       <div class="field"><label for="churchName">Igreja <span class="required-label">obrigatório</span></label><input
           id="churchName" name="churchName" [(ngModel)]="churchName" maxlength="160"
@@ -184,7 +185,7 @@
     <a class="brand" href="#overview" (click)="$event.preventDefault(); navigate('overview')"><span
         class="brand-mark" aria-hidden="true"><svg viewBox="0 0 64 64"><circle cx="22" cy="23" r="5"/><circle cx="42" cy="23" r="5"/><circle cx="32" cy="18" r="6"/><path d="M12 45c0-7 4-11 10-11 3 0 5 1 7 3M52 45c0-7-4-11-10-11-3 0-5 1-7 3M19 48c0-10 5-15 13-15s13 5 13 15"/></svg></span>Ecluniva</a>
     <div class="sidebar-caption">PESSOAS, ENCONTROS E HISTÓRIA</div>
-    <nav>@if(data.isOwner()){<button [class.active]="page() === 'overview'" [attr.aria-current]="page() === 'overview' ? 'page' : null"
+    <nav>@if(data.hasSocietyAccess()){<button [class.active]="page() === 'overview'" [attr.aria-current]="page() === 'overview' ? 'page' : null"
         (click)="navigate('overview')" [disabled]="busy() || exportBusy()"><app-icon name="grid" />Visão
         geral</button><button [class.active]="page() === 'members' || page() === 'member'"
         [attr.aria-current]="page() === 'members' || page() === 'member' ? 'page' : null" (click)="navigate('members')"
@@ -609,7 +610,7 @@
       <footer class="workspace-footer"><span>Ecluniva</span><span>{{ data.selected()?.type }} · {{ data.selected()?.name
           }}</span></footer>
     </main>
-    <nav class="mobile-nav" [class.communication-only]="!data.isOwner()" aria-label="Navegação principal">@if(data.isOwner()){<button [class.active]="page() === 'overview'"
+    <nav class="mobile-nav" [class.communication-only]="!data.hasSocietyAccess()" aria-label="Navegação principal">@if(data.hasSocietyAccess()){<button [class.active]="page() === 'overview'"
         [attr.aria-current]="page() === 'overview' ? 'page' : null" (click)="navigate('overview')"
         [disabled]="busy() || exportBusy()"><app-icon name="grid" /><span>Início</span></button><button
         [class.active]="page() === 'members' || page() === 'member'"
@@ -648,7 +649,7 @@
         <div><dt>UF</dt><dd>{{ person.address.state || 'Não informada' }}</dd></div>
       </dl>
       <h3>Observações</h3><p class="member-details-notes">{{ person.notes || 'Nenhuma observação registrada.' }}</p>
-      <div class="dialog-actions"><button type="button" class="button secondary" (click)="createMemberUpdateLink(person)" [disabled]="memberUpdateLinkBusy()">{{memberUpdateLinkBusy()?'Gerando link…':'Enviar link de atualização'}}</button><button type="button" class="button secondary" (click)="closeDialog()">Fechar</button><button type="button" class="button" (click)="editDetailMember()"><app-icon name="edit" />Editar cadastro</button></div>
+      <div class="dialog-actions">@if(data.isOwner()){<button type="button" class="button secondary" (click)="inviteMemberAsAdmin(person)" [disabled]="busy() || !person.email">{{busy()?'Enviando convite…':'Convidar como administrador'}}</button>}<button type="button" class="button secondary" (click)="createMemberUpdateLink(person)" [disabled]="memberUpdateLinkBusy()">{{memberUpdateLinkBusy()?'Gerando link…':'Enviar link de atualização'}}</button><button type="button" class="button secondary" (click)="closeDialog()">Fechar</button><button type="button" class="button" (click)="editDetailMember()"><app-icon name="edit" />Editar cadastro</button></div>
     } @else {
       <p>O cadastro deste membro não está disponível.</p><div class="dialog-actions"><button type="button" class="button secondary" (click)="closeDialog()">Fechar</button></div>
     }
