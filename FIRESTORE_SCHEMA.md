@@ -115,6 +115,12 @@ Identidade visual fica em `communicationSettings/identity`, com cores hexadecima
 
 Somente `society.ownerId` pode criar, revogar ou reativar convites e desativar vínculos de administradores. O administrador convidado só pode aceitar o próprio convite; não pode alterar a lista de administradores nem remover o criador. A chave por sociedade e e-mail evita duplicidade de convites ativos.
 
+## Página pública — `publicPages/{societyId}`
+
+Sociedades com plano Essencial, Profissional ou Institucional podem publicar uma página pública em `/s/{slug}`. A configuração contém `societyId`, `slug`, `title`, `description`, `phone`, `email`, `instagram`, `whatsapp`, `address`, `published`, `createdAt` e `updatedAt`. A subcoleção `posts` contém `type` (`event` ou `notice`), `title`, `body`, `date`, `time`, `location`, `status` (`draft` ou `published`), `createdAt` e `updatedAt`.
+
+Visitantes não autenticados leem somente páginas elegíveis e publicadas e somente posts publicados. Nenhum dado de membros, diretoria, atas ou convocações privadas é exposto. Proprietário e administradores da sociedade podem editar a página e os posts; o plano é validado nas regras do Firestore pelo documento de cobrança autorizado.
+
 ## Presença pública das plenárias
 
 `societies/{societyId}/attendanceSessions/{minuteId}` guarda `token` e `code`, restritos ao proprietário. `plenaryAttendance/{token}` guarda somente `societyId`, `minuteId`, `title`, `date`, `timeZone` e `open`. Em `requests/{receipt}`, cada envio tem `name`, `code`, `status`, `memberId`, `createdAt` e `processedAt`. Tokens e comprovantes são capacidades aleatórias de 192 bits. Consulta pública somente por documento conhecido; listagem dos envios e conferência somente pelo proprietário. Criação exige código correto, horário de servidor dentro do dia civil e ata não concluída. Conferência atualiza a chamada em transação com revisão e preserva ofício/cargo. A conclusão encerra o link atomicamente. Detalhes em [Presença nas plenárias](docs/PRESENCA_PLENARIAS.md).

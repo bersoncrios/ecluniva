@@ -20,10 +20,12 @@ import { lookupPostalCode, postalCodeDigits, PostalCodeNotFoundError } from './c
 import { PublicMemberUpdateComponent } from './features/members/public-member-update.component';
 import { AdminComponent } from './features/admin/admin.component';
 import { SupportComponent } from './features/support/support.component';
+import { PublicPageComponent } from './features/public-page/public-page.component';
+import { PublicSocietyPageComponent } from './features/public-page/public-society-page.component';
 
-type Page = 'overview' | 'members' | 'birthdays' | 'member' | 'board' | 'minutes' | 'notices' | 'communication' | 'billing' | 'admin' | 'support';
+type Page = 'overview' | 'members' | 'birthdays' | 'member' | 'board' | 'minutes' | 'notices' | 'communication' | 'billing' | 'public' | 'admin' | 'support';
 type DateParts = { day:string; month:string; year:string };
-@Component({ selector:'app-root', standalone:true, imports:[CommonModule, FormsModule, IconComponent, BoardComponent, MinutesComponent, NoticesComponent, CommunicationComponent, PublicAttendanceComponent, BillingComponent, PublicMemberUpdateComponent, AdminComponent, SupportComponent], templateUrl:'./app.html' })
+@Component({ selector:'app-root', standalone:true, imports:[CommonModule, FormsModule, IconComponent, BoardComponent, MinutesComponent, NoticesComponent, CommunicationComponent, PublicAttendanceComponent, BillingComponent, PublicMemberUpdateComponent, AdminComponent, SupportComponent, PublicPageComponent, PublicSocietyPageComponent], templateUrl:'./app.html' })
 export class AppComponent {
   readonly data = inject(DataService);
   readonly billing = inject(BillingService);
@@ -41,6 +43,7 @@ export class AppComponent {
   readonly inviteEntry=location.hash==='#convites';
   readonly showGuide=signal(location.hash==='#como-usar');
   readonly showFaq=signal(location.hash==='#faq');
+  readonly publicPageSlug=signal<string|null>(location.pathname.match(/^\/s\/([^/]+)\/?$/)?.[1] ? decodeURIComponent(location.pathname.match(/^\/s\/([^/]+)\/?$/)![1]) : null);
   readonly boardMemberId = signal<string|null>(null);
   readonly query = signal('');
   readonly status = signal<'all'|'active'|'inactive'>('active');
@@ -125,7 +128,7 @@ export class AppComponent {
       this.boardMemberId.set(null);
       this.cancelPostalLookup();
       const hash = location.hash.slice(1);
-      const page = (['overview','members','birthdays','board','minutes','notices','communication','billing','admin','support'].includes(hash) ? hash : 'overview') as Page;
+      const page = (['overview','members','birthdays','board','minutes','notices','communication','billing','public','admin','support'].includes(hash) ? hash : 'overview') as Page;
       this.page.set(this.data.selected()&&!this.data.hasSocietyAccess()&&!['admin','support'].includes(page)?'communication':page);
       refreshDay();
     };

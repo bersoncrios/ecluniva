@@ -10,6 +10,8 @@
   <div class="brand"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 64 64"><circle cx="22" cy="23" r="5"/><circle cx="42" cy="23" r="5"/><circle cx="32" cy="18" r="6"/><path d="M12 45c0-7 4-11 10-11 3 0 5 1 7 3M52 45c0-7-4-11-10-11-3 0-5 1-7 3M19 48c0-10 5-15 13-15s13 5 13 15"/></svg></span>Ecluniva</div>
   <p class="muted" role="status">Preparando seu espaço…</p>
 </main>
+} @else if (publicPageSlug(); as slug) {
+@defer(on immediate){<app-public-society-page [slug]="slug" />}
 } @else if (!data.user()) {
 @if(showGuide()){
 <div class="login-page guide-page">
@@ -214,6 +216,7 @@
             data.selected()?.churchName }}</span></div>
       </div>
       @if(data.isOwner()){<button class="button secondary" type="button" (click)="beginSocietyEdit()">Editar sociedade</button>}
+      @if(data.hasSocietyAccess()){<button class="button secondary" type="button" (click)="navigate('public')">Página pública</button>}
       @if(data.isOwner()){<button class="app-plan-indicator" type="button" (click)="navigate('billing')" aria-label="Plano atual: {{currentPlanName()}}. Abrir assinatura"><app-icon name="card" /><span><small>PLANO ATUAL</small><strong>{{currentPlanName()}}</strong></span><app-icon name="arrow" /></button>}
       <details class="account-menu">
         <summary><span class="avatar">{{ initials(data.user()?.displayName || data.user()?.email || 'Conta')
@@ -291,6 +294,8 @@
       <app-support />
       } @else if (page() === 'notices') {
       <app-notices (savingChange)="busy.set($event)" />
+      } @else if (page() === 'public') {
+      <app-public-page />
       } @else if (page() === 'minutes') {
       <app-minutes (savingChange)="busy.set($event)" />
       } @else if (page() === 'board') {
