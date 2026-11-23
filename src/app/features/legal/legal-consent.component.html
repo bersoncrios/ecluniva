@@ -1,1 +1,27 @@
-<main class="consent-page"><section class="consent-card"><span class="card-symbol">E</span><span class="eyebrow">PRIMEIRO ACESSO</span><h1>Antes de começar</h1><p class="muted">Leia os documentos abaixo. Para criar ou acessar uma sociedade, precisamos registrar seu aceite da versão atual.</p>@if(error()){<div class="alert error" role="alert">{{error()}}</div>}<label class="consent-option"><input type="checkbox" [checked]="terms()" (change)="terms.set($any($event.target).checked)"><span>Li e aceito os <a href="#termos" target="_blank">Termos de Uso</a>.</span></label><label class="consent-option"><input type="checkbox" [checked]="privacy()" (change)="privacy.set($any($event.target).checked)"><span>Li e aceito a <a href="#privacidade" target="_blank">Política de Privacidade</a>.</span></label><button class="button" type="button" (click)="accept()" [disabled]="busy()||!terms()||!privacy()">{{busy()?'Registrando aceite…':'Continuar para a Ecluniva'}}</button></section></main>
+<main class="consent-page">
+  <section class="consent-card" aria-labelledby="consent-title">
+    <span class="card-symbol" aria-hidden="true">E</span>
+    <span class="eyebrow">PRIMEIRO ACESSO</span>
+    <h1 id="consent-title">Antes de começar</h1>
+    <p class="muted">Leia os documentos abaixo. Para criar ou acessar uma sociedade, precisamos registrar seu aceite da versão atual.</p>
+
+    @if (error()) {
+      <div class="alert error" role="alert">{{ error() }}</div>
+    }
+
+    <div class="consent-options">
+      <label class="consent-option">
+        <input type="checkbox" [checked]="terms()" (change)="terms.set($any($event.target).checked)">
+        <span>Li e aceito os <a href="#termos" target="_blank">Termos de Uso</a>.</span>
+      </label>
+      <label class="consent-option">
+        <input type="checkbox" [checked]="privacy()" (change)="privacy.set($any($event.target).checked)">
+        <span>Li e aceito a <a href="#privacidade" target="_blank">Política de Privacidade</a>.</span>
+      </label>
+    </div>
+
+    <button class="button" type="button" (click)="accept()" [disabled]="busy() || !terms() || !privacy()">
+      {{ busy() ? 'Registrando aceite…' : 'Continuar para a Ecluniva' }}
+    </button>
+  </section>
+</main>
