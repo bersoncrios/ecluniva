@@ -43,6 +43,14 @@ service cloud.firestore {
         && data.createdAt is timestamp && data.updatedAt is timestamp;
     }
 
+    function validLegalAcceptance(data, userId) {
+      return data.keys().hasAll(['uid','email','termsVersion','privacyVersion','acceptedAt','updatedAt'])
+        && data.keys().hasOnly(['uid','email','termsVersion','privacyVersion','acceptedAt','updatedAt'])
+        && data.uid == userId && text(data.email,254)
+        && data.termsVersion == '2026-11-23' && data.privacyVersion == '2026-11-23'
+        && data.acceptedAt is timestamp && data.updatedAt == request.time;
+    }
+
     function eligiblePublicPage(societyId) {
       let society = get(/databases/$(database)/documents/societies/$(societyId)).data;
       let billingPath = /databases/$(database)/documents/users/$(society.ownerId)/billing/$(societyId);
@@ -640,6 +648,16 @@ service cloud.firestore {
     match /users/{userId} {
       allow get: if signedIn() && request.auth.uid == userId;
       allow list, create, update, delete: if false;
+    }
+
+    match /legalAcceptances/{userId} {
+      allow get: if signedIn() && request.auth.uid == userId;
+      allow list: if false;
+      allow create: if signedIn() && request.auth.uid == userId && validLegalAcceptance(request.resource.data,userId)
+        && request.resource.data.acceptedAt == request.time && request.resource.data.updatedAt == request.time;
+      allow update: if signedIn() && request.auth.uid == userId && validLegalAcceptance(request.resource.data,userId)
+        && request.resource.data.acceptedAt == request.time && request.resource.data.updatedAt == request.time;
+      allow delete: if false;
     }
 
     match /{document=**} {

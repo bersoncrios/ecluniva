@@ -12,6 +12,8 @@
 </main>
 } @else if (publicPageSlug(); as slug) {
 @defer(on immediate){<app-public-society-page [slug]="slug" />}
+} @else if (legalDocument(); as legal) {
+<app-legal-document [kind]="legal" />
 } @else if (!data.user()) {
 @if(showGuide()){
 <div class="login-page guide-page">
@@ -102,10 +104,14 @@
   <section class="landing-section landing-plans" id="planos"><div class="landing-section-heading"><div class="eyebrow">PLANOS PARA CADA MOMENTO</div><h2>Comece grátis. Evolua quando precisar.</h2><p>Os limites acompanham o tamanho e as necessidades da sua sociedade.</p></div><div class="landing-plan-grid"><article><h3>Grátis</h3><strong>R$ 0</strong><p>1 sociedade · 15 membros · 6 atas e 6 convocações por ano</p></article><article><h3>Essencial</h3><strong>R$ 9,90<span>/mês</span></strong><p>1 sociedade · até 35 membros · 24 atas e convocações por ano</p></article><article class="landing-plan-featured"><span class="billing-badge">Mais escolhido</span><h3>Profissional</h3><strong>R$ 29,90<span>/mês</span></strong><p>Até 3 sociedades · 150 membros por sociedade · atas e convocações ilimitadas</p></article><article><h3>Institucional</h3><strong>R$ 79,90<span>/mês</span></strong><p>Para organizações que administram várias sociedades</p></article></div><p class="landing-plan-note">Os recursos pagos dependem da confirmação da assinatura pelo Mercado Pago.</p></section>
   <section class="landing-bottom-cta"><div><div class="eyebrow">SUA SOCIEDADE EM UM SÓ LUGAR</div><h2>Mais organização para servir com tranquilidade.</h2><p>Crie sua conta e comece com o plano gratuito.</p></div><a class="button" href="#acesso">Entrar com Google <app-icon name="arrow" /></a></section>
   <footer class="public-footer"><span>Ecluniva</span>
-    <p>Organização para cuidar melhor da vida em comunidade.</p>
+    <p>Organização para cuidar melhor da vida em comunidade.</p><p><a href="#termos" (click)="openLegal('terms',$event)">Termos de Uso</a> · <a href="#privacidade" (click)="openLegal('privacy',$event)">Política de Privacidade</a></p>
   </footer>
 </div>
 }
+} @else if (!data.legalReady()) {
+<main class="initial-loading"><p class="muted" role="status">Verificando os documentos da conta…</p></main>
+} @else if (!data.legalAccepted()) {
+<app-legal-consent />
 } @else if (page() === 'admin' && data.isAdmin()) {
 <div class="selection-page">
   <header class="selection-header"><a class="brand" href="#" (click)="$event.preventDefault(); navigate('overview')"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 64 64"><circle cx="22" cy="23" r="5"/><circle cx="42" cy="23" r="5"/><circle cx="32" cy="18" r="6"/><path d="M12 45c0-7 4-11 10-11 3 0 5 1 7 3M52 45c0-7-4-11-10-11-3 0-5 1-7 3M19 48c0-10 5-15 13-15s13 5 13 15"/></svg></span>Ecluniva</a><div class="selection-header-actions"><button type="button" class="button secondary" (click)="navigate('overview')">Voltar às sociedades</button><button class="button subtle" (click)="logout()" [disabled]="busy()"><app-icon name="logout" />Sair</button></div></header>

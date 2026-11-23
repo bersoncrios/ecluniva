@@ -22,10 +22,13 @@ import { AdminComponent } from './features/admin/admin.component';
 import { SupportComponent } from './features/support/support.component';
 import { PublicPageComponent } from './features/public-page/public-page.component';
 import { PublicSocietyPageComponent } from './features/public-page/public-society-page.component';
+import { LegalDocumentComponent } from './features/legal/legal-document.component';
+import { LegalConsentComponent } from './features/legal/legal-consent.component';
+import type { LegalDocument } from './core/legal';
 
 type Page = 'overview' | 'members' | 'birthdays' | 'member' | 'board' | 'minutes' | 'notices' | 'communication' | 'billing' | 'public' | 'admin' | 'support';
 type DateParts = { day:string; month:string; year:string };
-@Component({ selector:'app-root', standalone:true, imports:[CommonModule, FormsModule, IconComponent, BoardComponent, MinutesComponent, NoticesComponent, CommunicationComponent, PublicAttendanceComponent, BillingComponent, PublicMemberUpdateComponent, AdminComponent, SupportComponent, PublicPageComponent, PublicSocietyPageComponent], templateUrl:'./app.html' })
+@Component({ selector:'app-root', standalone:true, imports:[CommonModule, FormsModule, IconComponent, BoardComponent, MinutesComponent, NoticesComponent, CommunicationComponent, PublicAttendanceComponent, BillingComponent, PublicMemberUpdateComponent, AdminComponent, SupportComponent, PublicPageComponent, PublicSocietyPageComponent, LegalDocumentComponent, LegalConsentComponent], templateUrl:'./app.html' })
 export class AppComponent {
   readonly data = inject(DataService);
   readonly billing = inject(BillingService);
@@ -44,6 +47,7 @@ export class AppComponent {
   readonly showGuide=signal(location.hash==='#como-usar');
   readonly showFaq=signal(location.hash==='#faq');
   readonly publicPageSlug=signal<string|null>(location.pathname.match(/^\/s\/([^/]+)\/?$/)?.[1] ? decodeURIComponent(location.pathname.match(/^\/s\/([^/]+)\/?$/)![1]) : null);
+  readonly legalDocument=signal<LegalDocument|null>(location.hash==='#termos'?'terms':location.hash==='#privacidade'?'privacy':null);
   readonly boardMemberId = signal<string|null>(null);
   readonly query = signal('');
   readonly status = signal<'all'|'active'|'inactive'>('active');
@@ -124,6 +128,7 @@ export class AppComponent {
       this.memberUpdateEntry.set(location.hash.startsWith('#atualizar-cadastro/'));
       this.showGuide.set(location.hash==='#como-usar');
       this.showFaq.set(location.hash==='#faq');
+      this.legalDocument.set(location.hash==='#termos'?'terms':location.hash==='#privacidade'?'privacy':null);
       if (this.busy() || this.exportBusy()) { history.pushState({}, '', `#${this.page()}`); return; }
       this.boardMemberId.set(null);
       this.cancelPostalLookup();
@@ -147,6 +152,7 @@ export class AppComponent {
   currentPlanName():string{return this.planLabels[this.billing.plan()];}
   openGuide(event:Event):void{event.preventDefault();this.showFaq.set(false);this.showGuide.set(true);history.pushState({},'','#como-usar');window.scrollTo({top:0,behavior:'instant'});}
   openFaq(event:Event):void{event.preventDefault();this.showGuide.set(false);this.showFaq.set(true);history.pushState({},'','#faq');window.scrollTo({top:0,behavior:'instant'});}
+  openLegal(kind:LegalDocument,event?:Event):void{event?.preventDefault();this.showGuide.set(false);this.showFaq.set(false);this.legalDocument.set(kind);history.pushState({},'',kind==='terms'?'#termos':'#privacidade');window.scrollTo({top:0,behavior:'instant'});}
   openLanding(event:Event):void{event.preventDefault();this.showGuide.set(false);this.showFaq.set(false);history.pushState({},'','/');window.scrollTo({top:0,behavior:'instant'});}
 
   async login(emulator = false): Promise<void> {

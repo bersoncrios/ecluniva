@@ -121,6 +121,10 @@ Sociedades com plano Essencial, Profissional ou Institucional podem publicar uma
 
 Visitantes não autenticados leem somente páginas elegíveis e publicadas e somente posts publicados. Nenhum dado de membros, diretoria, atas ou convocações privadas é exposto. Proprietário e administradores da sociedade podem editar a página e os posts; o plano é validado nas regras do Firestore pelo documento de cobrança autorizado.
 
+## Aceite legal — `legalAcceptances/{userId}`
+
+O primeiro acesso exige aceite dos Termos de Uso e da Política de Privacidade. O documento guarda `uid`, `email`, `termsVersion`, `privacyVersion`, `acceptedAt` e `updatedAt`. As versões atuais são `2026-11-23`; quando uma versão mudar, o usuário volta a ficar bloqueado até aceitar os documentos atualizados. O usuário só pode gravar o próprio documento, com versões fixadas pelas regras e timestamps do servidor; exclusão e listagem são negadas.
+
 ## Presença pública das plenárias
 
 `societies/{societyId}/attendanceSessions/{minuteId}` guarda `token` e `code`, restritos ao proprietário. `plenaryAttendance/{token}` guarda somente `societyId`, `minuteId`, `title`, `date`, `timeZone` e `open`. Em `requests/{receipt}`, cada envio tem `name`, `code`, `status`, `memberId`, `createdAt` e `processedAt`. Tokens e comprovantes são capacidades aleatórias de 192 bits. Consulta pública somente por documento conhecido; listagem dos envios e conferência somente pelo proprietário. Criação exige código correto, horário de servidor dentro do dia civil e ata não concluída. Conferência atualiza a chamada em transação com revisão e preserva ofício/cargo. A conclusão encerra o link atomicamente. Detalhes em [Presença nas plenárias](docs/PRESENCA_PLENARIAS.md).

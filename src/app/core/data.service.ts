@@ -1,12 +1,13 @@
 import { Injectable, Injector, computed, inject, runInInjectionContext, signal } from '@angular/core';
 import { Auth, GoogleAuthProvider, User, onAuthStateChanged, signInWithPopup, signInWithEmailAndPassword, signOut } from '@angular/fire/auth';
-import { Firestore, collection, query, where, onSnapshot, addDoc, doc, getDoc, getDocs, serverTimestamp, Unsubscribe, runTransaction, deleteDoc, writeBatch, updateDoc } from '@angular/fire/firestore';
+import { Firestore, collection, query, where, onSnapshot, addDoc, doc, getDoc, getDocs, serverTimestamp, Unsubscribe, runTransaction, deleteDoc, writeBatch, updateDoc, setDoc } from '@angular/fire/firestore';
 import { BoardAssignment, Member, MemberInput, Society, SocietyAdminInvite, SocietyType } from './models';
 import { normalizeMember, todayISO } from './domain';
 import { boardAssignmentId, validBoardYear, validateBoardAssignment } from './board';
 import { sharedBirthday, CommunicationInvite } from './communication';
 import { environment } from '../../environments/environment';
 import { PLAN_LIMITS, planFromStatus } from './plans';
+import { LEGAL_VERSION } from './legal';
 
 @Injectable({ providedIn: 'root' })
 export class DataService {
@@ -14,6 +15,8 @@ export class DataService {
   private readonly firestore = inject(Firestore);
   private readonly injector = inject(Injector);
   readonly ready = signal(false);
+  readonly legalReady = signal(false);
+  readonly legalAccepted = signal(false);
   readonly user = signal<User | null>(null);
   readonly isAdmin = signal(false);
   readonly societies = signal<Society[]>([]);
@@ -54,6 +57,7 @@ export class DataService {
       this.ready.set(true);
       if (user) {
         this.loadSocieties();
+        void this.loadLegalAcceptance(user);
         void runInInjectionContext(this.injector, () => getDoc(doc(this.firestore, `users/${user.uid}`)))
           .then(profile => { if (this.user()?.uid === user.uid) this.isAdmin.set(profile.exists() && profile.data()?.['role'] === 'admin'); })
           .catch(() => { if (this.user()?.uid === user.uid) this.isAdmin.set(false); });
@@ -83,6 +87,17 @@ export class DataService {
       if (this.user()) this.loadSocieties();
       throw error;
     }
+  }
+
+  async acceptLegal(): Promise<void> {
+    const user=this.user();if(!user)throw new Error('Sessão encerrada.');
+    await runInInjectionContext(this.injector,()=>setDoc(doc(this.firestore,`legalAcceptances/${user.uid}`),{uid:user.uid,email:user.email?.toLowerCase()||'',termsVersion:LEGAL_VERSION,privacyVersion:LEGAL_VERSION,acceptedAt:serverTimestamp(),updatedAt:serverTimestamp()}));
+    this.legalAccepted.set(true);
+  }
+
+  private async loadLegalAcceptance(user:User):Promise<void>{
+    this.legalReady.set(false);this.legalAccepted.set(false);
+    try{const snapshot=await runInInjectionContext(this.injector,()=>getDoc(doc(this.firestore,`legalAcceptances/${user.uid}`)));const data=snapshot.data();this.legalAccepted.set(snapshot.exists()&&data?.['termsVersion']===LEGAL_VERSION&&data?.['privacyVersion']===LEGAL_VERSION);}catch{this.legalAccepted.set(false);}finally{if(this.user()?.uid===user.uid)this.legalReady.set(true);}
   }
 
   loadSocieties(): void {
@@ -357,6 +372,7 @@ export class DataService {
 
   private clearAll(): void {
     this.isAdmin.set(false);
+    this.legalReady.set(false);this.legalAccepted.set(false);
     this.unsubscribeSocieties?.();
     this.unsubscribeSocieties = undefined;
     this.unsubscribeInvites?.();this.unsubscribeInvites=undefined;this.unsubscribeAdminInvites?.();this.unsubscribeAdminInvites=undefined;this.incomingInvites.set([]);this.incomingAdminInvites.set([]);this.ownedSocieties=[];this.adminSocieties=[];this.adminSocietyIds.clear();
