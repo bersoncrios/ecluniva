@@ -22,6 +22,7 @@ export class DataService {
   readonly isOwner = computed(()=>!!this.selected()&&this.selected()!.ownerId===this.user()?.uid);
   readonly isSocietyAdmin = computed(()=>!!this.selected()&&!!this.user()&&!this.isOwner()&&this.adminSocietyIds.has(this.selected()!.id));
   readonly hasSocietyAccess = computed(()=>this.isOwner()||this.isSocietyAdmin());
+  isSocietyAdminFor(societyId: string): boolean { return this.adminSocietyIds.has(societyId); }
   readonly incomingInvites = signal<CommunicationInvite[]>([]);
   readonly incomingAdminInvites = signal<SocietyAdminInvite[]>([]);
   private ownedSocieties:Society[]=[];

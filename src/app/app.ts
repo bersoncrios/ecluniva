@@ -176,7 +176,13 @@ export class AppComponent {
   select(society: Society): void {
     this.createMode.set(false);
     this.data.select(society);
-    this.navigate(this.data.isOwner()?'overview':'communication');
+    this.navigate(this.data.hasSocietyAccess()?'overview':'communication');
+  }
+
+  societyAccessLabel(society: Society): string {
+    if (society.ownerId === this.data.user()?.uid) return 'Organizar sociedade';
+    if (this.data.isSocietyAdminFor(society.id)) return 'Acessar organização';
+    return 'Acessar Comunicação';
   }
 
   async acceptInvite(invite:CommunicationInvite):Promise<void>{

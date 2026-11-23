@@ -170,7 +170,7 @@
     <div class="society-grid">@for (society of data.societies(); track society.id) { <button
         class="society-choice panel" (click)="select(society)"><span class="society-type">{{ society.type
           }}</span><strong>{{ society.name }}</strong><span class="muted">{{ society.churchName }}</span><span
-          class="choice-action">{{society.ownerId===data.user()?.uid?'Organizar sociedade':'Acessar Comunicação'}}<app-icon name="arrow" /></span></button> }<button
+          class="choice-action">{{societyAccessLabel(society)}}<app-icon name="arrow" /></span></button> }<button
         class="society-choice create-choice" (click)="createMode.set(true)"><app-icon name="plus" /><strong>Criar
           sociedade</strong><span class="muted">Organize outra unidade local.</span></button></div>
     }
