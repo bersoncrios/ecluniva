@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DataService } from '../../core/data.service';
 import { PublicPageService } from '../../core/public-page.service';
-import { PublicPostType } from '../../core/public-page';
+import { PublicPageTheme, PublicPostType } from '../../core/public-page';
 
 @Component({selector:'app-public-page',standalone:true,imports:[CommonModule,FormsModule],templateUrl:'./public-page.component.html',styleUrl:'./public-page.component.css'})
 export class PublicPageComponent implements OnInit {
   readonly data=inject(DataService); readonly service=inject(PublicPageService); readonly message=signal(''); readonly error=signal('');
+  readonly themes:{value:PublicPageTheme;label:string;description:string}[]=[{value:'forest',label:'Floresta',description:'Verde profundo e areia'},{value:'ocean',label:'Oceano',description:'Azul e azul-petróleo'},{value:'terracotta',label:'Terracota',description:'Quente e acolhedor'},{value:'plum',label:'Ameixa',description:'Vinho e lavanda'}];
   readonly postType=signal<PublicPostType>('event'); readonly postStatus=signal<'draft'|'published'>('published'); readonly postTitle=signal(''); readonly postBody=signal(''); readonly postDate=signal(''); readonly postTime=signal(''); readonly postLocation=signal('');
   ngOnInit():void{const society=this.data.selected();if(society)this.service.loadForSociety(society);}
   async save():Promise<void>{const page=this.service.page();if(!page)return;this.error.set('');this.message.set('');try{await this.service.savePage(page);this.message.set('Página salva.');}catch(e){this.error.set(e instanceof Error?e.message:'Não foi possível salvar a página.');}}

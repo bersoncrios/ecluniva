@@ -60,10 +60,12 @@ service cloud.firestore {
 
     function validPublicPage(data, pageId) {
       return data.keys().hasAll(['societyId','slug','title','description','phone','email','instagram','whatsapp','address','published','createdAt','updatedAt'])
-        && data.keys().hasOnly(['societyId','slug','title','description','phone','email','instagram','whatsapp','address','published','createdAt','updatedAt'])
+        && data.keys().hasOnly(['societyId','slug','title','description','phone','email','instagram','whatsapp','address','theme','published','createdAt','updatedAt'])
         && data.societyId == pageId && text(data.slug,64) && data.slug.matches('^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$')
         && requiredName(data.title,120) && text(data.description,1200) && text(data.phone,30) && text(data.email,254)
-        && text(data.instagram,120) && text(data.whatsapp,30) && text(data.address,500) && data.published is bool
+        && text(data.instagram,120) && text(data.whatsapp,30) && text(data.address,500)
+        && (!data.keys().hasAny(['theme']) || data.theme in ['forest','ocean','terracotta','plum'])
+        && data.published is bool
         && data.createdAt is timestamp && data.updatedAt == request.time;
     }
 

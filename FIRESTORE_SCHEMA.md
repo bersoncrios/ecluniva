@@ -117,7 +117,7 @@ Somente `society.ownerId` pode criar, revogar ou reativar convites e desativar v
 
 ## Página pública — `publicPages/{societyId}`
 
-Sociedades com plano Essencial, Profissional ou Institucional podem publicar uma página pública em `/s/{slug}`. A configuração contém `societyId`, `slug`, `title`, `description`, `phone`, `email`, `instagram`, `whatsapp`, `address`, `published`, `createdAt` e `updatedAt`. A subcoleção `posts` contém `type` (`event` ou `notice`), `title`, `body`, `date`, `time`, `location`, `status` (`draft` ou `published`), `createdAt` e `updatedAt`.
+Sociedades com plano Essencial, Profissional ou Institucional podem publicar uma página pública em `/s/{slug}`. A configuração contém `societyId`, `slug`, `title`, `description`, `phone`, `email`, `instagram`, `whatsapp`, `address`, `theme` (`forest`, `ocean`, `terracotta` ou `plum`), `published`, `createdAt` e `updatedAt`. A subcoleção `posts` contém `type` (`event` ou `notice`), `title`, `body`, `date`, `time`, `location`, `status` (`draft` ou `published`), `createdAt` e `updatedAt`.
 
 Visitantes não autenticados leem somente páginas elegíveis e publicadas e somente posts publicados. Nenhum dado de membros, diretoria, atas ou convocações privadas é exposto. Proprietário e administradores da sociedade podem editar a página e os posts; o plano é validado nas regras do Firestore pelo documento de cobrança autorizado.
 
