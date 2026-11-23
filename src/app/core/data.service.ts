@@ -184,6 +184,15 @@ export class DataService {
     this.publishSocieties();
   }
 
+  async rejectSocietyAdminInvite(invite:SocietyAdminInvite):Promise<void>{
+    const user=this.user();
+    if(!user?.emailVerified||user.email?.toLowerCase()!==invite.email)throw new Error('Entre com o e-mail confirmado que recebeu o convite.');
+    if(invite.status!=='pending')throw new Error('Este convite não está mais pendente.');
+    await runInInjectionContext(this.injector,()=>updateDoc(doc(this.firestore,`societyAdminInvites/${invite.id}`),{status:'revoked',updatedAt:serverTimestamp()}));
+    this.incomingAdminInvites.update(items=>items.map(item=>item.id===invite.id?{...item,status:'revoked'}:item));
+    this.publishSocieties();
+  }
+
   async inviteSocietyAdmin(member: Member):Promise<void>{
     const society=this.authorizedOwnerSociety();
     const email=member.email.trim().toLowerCase();
@@ -232,6 +241,13 @@ export class DataService {
   }
 
   societyAdminInviteForMember(member:Member):SocietyAdminInvite|null{const email=member.email.trim().toLowerCase();return email?this.societyAdminInvites().find(invite=>invite.email===email&&invite.status==='pending')||null:null;}
+
+  async cancelSocietyAdminInvite(invite:SocietyAdminInvite):Promise<void>{
+    const society=this.authorizedOwnerSociety();
+    if(invite.societyId!==society.id||invite.status!=='pending')throw new Error('Este convite não está pendente.');
+    await runInInjectionContext(this.injector,()=>updateDoc(doc(this.firestore,`societyAdminInvites/${invite.id}`),{status:'revoked',updatedAt:serverTimestamp()}));
+    this.societyAdminInvites.update(items=>items.map(item=>item.id===invite.id?{...item,status:'revoked'}:item));
+  }
 
   async removeSocietyAdmin(admin:SocietyAdmin):Promise<void>{
     const society=this.authorizedOwnerSociety();

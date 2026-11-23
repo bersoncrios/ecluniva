@@ -293,6 +293,13 @@ service cloud.firestore {
         && getAfter(/databases/$(database)/documents/societies/$(data.societyId)/admins/$(request.auth.uid)).data.inviteId == inviteId;
     }
 
+    function rejectingAdminInvite(data) {
+      return verifiedEmail() && resource.data.status == 'pending' && data.status == 'revoked'
+        && resource.data.email == request.auth.token.email.lower() && resource.data.acceptedBy == ''
+        && resource.data.acceptedAt == null && data.acceptedBy == '' && data.acceptedAt == null
+        && data.diff(resource.data).affectedKeys().hasOnly(['status','updatedAt']);
+    }
+
     function validSocietyAdmin(data, userId) {
       return data.keys().hasAll(['userId','email','inviteId','active','createdAt','updatedAt'])
         && data.keys().hasOnly(['userId','email','inviteId','active','createdAt','updatedAt'])
@@ -384,6 +391,7 @@ service cloud.firestore {
       allow update: if signedIn() && validSocietyAdminInvite(request.resource.data,inviteId)
         && request.resource.data.createdAt == resource.data.createdAt
         && (acceptingAdminInvite(request.resource.data,inviteId)
+          || rejectingAdminInvite(request.resource.data)
           || (ownerSociety(resource.data.societyId)
             && ((request.resource.data.status == 'revoked' && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','updatedAt']))
               || (resource.data.status == 'revoked' && request.resource.data.status == 'pending'

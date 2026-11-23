@@ -3170,7 +3170,7 @@ app-board {
   .results-meta>.text-button{min-height:44px}
 }
 
-.pending-invites{margin:24px 0}.pending-invites>h2{margin-bottom:16px}.pending-invite{display:flex;gap:20px;justify-content:space-between;align-items:center;padding:24px;margin-bottom:16px}.pending-invite>div{min-width:0;overflow-wrap:anywhere}.pending-invite h3{margin:10px 0}.pending-invite p{color:var(--muted);font-size:14px}.birthday-heading-actions{display:flex;flex-direction:column;align-items:flex-end;gap:12px}.mobile-nav.communication-only{grid-template-columns:minmax(0,1fr)}@media(max-width:767px){.pending-invite{padding:18px;flex-direction:column;align-items:stretch}.birthday-heading-actions{align-items:flex-start}.pending-invite .button{width:100%}}
+.pending-invites{margin:24px 0}.pending-invites>h2{margin-bottom:16px}.pending-invite{display:flex;gap:20px;justify-content:space-between;align-items:center;padding:24px;margin-bottom:16px}.pending-invite>div{min-width:0;overflow-wrap:anywhere}.pending-invite h3{margin:10px 0}.pending-invite p{color:var(--muted);font-size:14px}.pending-invite-actions{display:flex;flex-wrap:wrap;gap:10px;flex-shrink:0}.birthday-heading-actions{display:flex;flex-direction:column;align-items:flex-end;gap:12px}.mobile-nav.communication-only{grid-template-columns:minmax(0,1fr)}@media(max-width:767px){.pending-invite{padding:18px;flex-direction:column;align-items:stretch}.pending-invite-actions{display:grid}.birthday-heading-actions{align-items:flex-start}.pending-invite .button{width:100%}}
 
 /* Public product landing */
 .landing-header nav{display:flex;align-items:center;gap:28px;font-size:13px;font-weight:600}

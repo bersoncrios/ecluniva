@@ -206,6 +206,13 @@ export class AppComponent {
     finally{this.busy.set(false);}
   }
 
+  async rejectAdminInvite(invite:SocietyAdminInvite):Promise<void>{
+    if(this.busy())return;this.busy.set(true);this.error.set('');
+    try{await this.data.rejectSocietyAdminInvite(invite);this.notice.set('Convite de administração recusado.');}
+    catch(error){this.error.set(error instanceof Error?error.message:'Não foi possível recusar o convite.');}
+    finally{this.busy.set(false);}
+  }
+
   switchSociety(): void {
     if (this.busy() || this.exportBusy()) return;
     this.cancelPostalLookup();
@@ -392,6 +399,14 @@ export class AppComponent {
     this.busy.set(true);this.dialogError.set('');
     try{await this.data.removeSocietyAdmin(admin);this.notice.set(`Acesso de administrador removido de ${member.name}.`);this.closeDialog();}
     catch(error){this.dialogError.set(error instanceof Error?error.message:'Não foi possível remover o administrador.');}
+    finally{this.busy.set(false);}
+  }
+
+  async cancelMemberAdminInvite(member:Member,invite:SocietyAdminInvite):Promise<void>{
+    if(this.busy())return;
+    this.busy.set(true);this.dialogError.set('');
+    try{await this.data.cancelSocietyAdminInvite(invite);this.notice.set(`Convite de administrador de ${member.name} cancelado.`);this.closeDialog();}
+    catch(error){this.dialogError.set(error instanceof Error?error.message:'Não foi possível cancelar o convite.');}
     finally{this.busy.set(false);}
   }
 
