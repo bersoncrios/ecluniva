@@ -2285,6 +2285,38 @@ input[type=radio] {
     }
 }
 
+/* Small laptops keep the sidebar, but the content column is too narrow for
+   the full desktop header in one row. */
+@media(max-width:1200px) {
+    .app-header {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px 12px
+    }
+
+    .society-context {
+        grid-column: 1 / -1;
+        width: 100%;
+        min-width: 0
+    }
+
+    .app-header > .button.secondary,
+    .app-header > .app-plan-indicator {
+        width: 100%;
+        min-width: 0;
+        padding-inline: 10px
+    }
+
+    .app-header > .button.secondary {
+        white-space: normal
+    }
+
+    .account-menu {
+        justify-self: end;
+        align-self: center
+    }
+}
+
 @media(max-width:767px) {
     .login-page {
         padding: 0 24px
