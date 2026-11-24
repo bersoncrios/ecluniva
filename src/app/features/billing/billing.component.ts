@@ -16,6 +16,7 @@ export class BillingComponent {
   readonly data = inject(DataService); private readonly auth = inject(Auth); readonly plans = PLANS;
   readonly billing = inject(BillingService);
   readonly activePlanName = () => this.billing.plan() === 'free' ? 'Grátis' : PLANS.find(plan => plan.key === this.billing.plan())?.name || 'Grátis';
+  readonly planValidityLabel = () => { const end = this.billing.planEndsAt(); if (end === null) return ''; const days = Math.ceil((end - Date.now()) / 86400000); return days <= 0 ? 'Plano expira hoje' : `Plano válido por mais ${days} ${days === 1 ? 'dia' : 'dias'}`; };
   isCurrentPlan(plan: PlanKey): boolean { return this.billing.plan() === plan; }
   readonly busy = signal<PlanKey | ''>(''); readonly error = signal('');
   readonly reconciling = signal(false); subscriptionId = '';
