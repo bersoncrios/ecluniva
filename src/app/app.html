@@ -221,8 +221,7 @@
         <div><strong>{{ data.selected()?.type }} · {{ data.selected()?.name }}</strong><span>{{
             data.selected()?.churchName }}</span></div>
       </div>
-      @if(data.isOwner()){<button class="button secondary" type="button" (click)="beginSocietyEdit()">Editar sociedade</button>}
-      @if(data.hasSocietyAccess()){<button class="button secondary" type="button" (click)="navigate('public')">Página pública</button>}
+      <details class="header-actions"><summary><app-icon name="grid" /><span>Ações</span></summary><div class="header-actions-menu">@if(data.isOwner()){<button class="button secondary" type="button" (click)="beginSocietyEdit()">Editar sociedade</button>}@if(data.hasSocietyAccess()){<button class="button secondary" type="button" (click)="navigate('public')">Página pública</button>}</div></details>
       @if(data.isOwner()){<button class="app-plan-indicator" type="button" (click)="navigate('billing')" aria-label="Plano atual: {{currentPlanName()}}. Abrir assinatura"><app-icon name="card" /><span><small>PLANO ATUAL</small><strong>{{currentPlanName()}}</strong></span><app-icon name="arrow" /></button>}
       <details class="account-menu">
         <summary><span class="avatar">{{ initials(data.user()?.displayName || data.user()?.email || 'Conta')
@@ -384,27 +383,28 @@
               <option value="active">Ativos</option>
               <option value="inactive">Inativos</option>
               <option value="all">Todos</option>
-            </select></div><button class="button secondary export-button" (click)="openExport()"
+            </select></div><div class="status-filter sort-filter"><label for="member-sort">Ordenar por</label><select id="member-sort" [ngModel]="memberSort()" (ngModelChange)="memberSort.set($event); memberPage.set(1)"><option value="name">Nome</option><option value="birthday">Aniversário</option><option value="status">Status</option></select></div><button class="button secondary export-button" (click)="openExport()"
             [disabled]="!results().length"
             [attr.aria-describedby]="!results().length ? 'export-empty-help' : null"><app-icon
               name="download" />Exportar rol</button>
         </div>
+        @if (selectedMemberIds().size) { <div class="bulk-actions" role="region" aria-label="Ações para membros selecionados"><strong>{{ selectedMemberIds().size }} selecionado(s)</strong><button type="button" class="button secondary" (click)="bulkSetStatus('active')" [disabled]="busy()">Marcar ativos</button><button type="button" class="button secondary" (click)="bulkSetStatus('inactive')" [disabled]="busy()">Marcar inativos</button><button type="button" class="text-button" (click)="clearMemberSelection()">Limpar seleção</button></div> }
         <div class="results-meta" aria-live="polite">
           <p><strong>{{ results().length }}</strong> {{ results().length === 1 ? 'membro encontrado' : 'membros
-            encontrados' }}@if (results().length > memberPageSize) { <span> · exibindo {{ memberRangeStart() }}–{{ memberRangeEnd() }}</span> }</p>@if (query() || status() !== 'active') { <button class="text-button"
+            encontrados' }}@if (results().length > memberPageSize) { <span> · exibindo {{ memberRangeStart() }}–{{ memberRangeEnd() }}</span> }</p>@if (query() || status() !== 'active' || memberSort() !== 'name') { <button class="text-button"
             (click)="clearFilters()">Limpar filtros</button> }
         </div>
         @if (results().length) { <table class="members-table">
           <thead>
             <tr>
-              <th scope="col">Nome</th>
+              <th scope="col" class="selection-column"><input type="checkbox" [checked]="pageFullySelected()" (change)="togglePageSelection()" aria-label="Selecionar página atual"></th><th scope="col">Nome</th>
               <th scope="col">Contato</th>
               <th scope="col">Status</th>
               <th scope="col"><span class="sr-only">Ações</span></th>
             </tr>
           </thead>
           <tbody>@for (item of pagedResults(); track item.id) { <tr>
-              <td>
+              <td class="selection-column"><input type="checkbox" [checked]="selectedMemberIds().has(item.id)" (change)="toggleMemberSelection(item.id)" [attr.aria-label]="'Selecionar ' + item.name"></td><td>
                 <div class="member-name"><span class="person-initial">{{ initials(item.name) }}</span><strong>{{
                     item.name }}</strong></div>
               </td>
@@ -417,7 +417,7 @@
             </tr> }</tbody>
         </table>
         <div class="mobile-members">@for (item of pagedResults(); track item.id) { <article class="member-card">
-            <div class="member-card-top"><span class="person-initial">{{ initials(item.name) }}</span><strong>{{
+            <div class="member-card-top"><input type="checkbox" [checked]="selectedMemberIds().has(item.id)" (change)="toggleMemberSelection(item.id)" [attr.aria-label]="'Selecionar ' + item.name"><span class="person-initial">{{ initials(item.name) }}</span><strong>{{
                 item.name }}</strong><span class="badge" [class.inactive]="item.status === 'inactive'">{{ item.status
                 === 'active' ? 'Ativo' : 'Inativo' }}</span></div>
             <div class="member-card-contact">
@@ -470,7 +470,8 @@
         </section>
       </div>
       } @else if (page() === 'member') {
-      <form class="member-form" (ngSubmit)="saveMember()" novalidate>
+      <form class="member-form" (ngSubmit)="saveMember()" (input)="saveMemberDraft()" novalidate>
+        @if (memberDraftAvailable()) { <div class="draft-banner" role="status"><div><strong>Rascunho encontrado</strong><span>Há dados não enviados deste cadastro.</span></div><div class="draft-actions"><button type="button" class="button secondary" (click)="restoreMemberDraft()">Continuar rascunho</button><button type="button" class="text-button" (click)="discardMemberDraft()">Descartar</button></div></div> }
         @if (errorKeys().length) { <div id="form-errors" class="alert error error-summary" role="alert" tabindex="-1">
           <strong>Confira os campos indicados antes de salvar.</strong>
           <ul>@for (key of errorKeys(); track key) { <li><a [href]="'#' + errorId(key)">{{ fieldErrors()[key] }}</a>
@@ -626,17 +627,7 @@
       <footer class="workspace-footer"><span>Ecluniva</span><span>{{ data.selected()?.type }} · {{ data.selected()?.name
           }}</span></footer>
     </main>
-    <nav class="mobile-nav" [class.communication-only]="!data.hasSocietyAccess()" aria-label="Navegação principal">@if(data.hasSocietyAccess()){<button [class.active]="page() === 'overview'"
-        [attr.aria-current]="page() === 'overview' ? 'page' : null" (click)="navigate('overview')"
-        [disabled]="busy() || exportBusy()"><app-icon name="grid" /><span>Início</span></button><button
-        [class.active]="page() === 'members' || page() === 'member'"
-        [attr.aria-current]="page() === 'members' || page() === 'member' ? 'page' : null" (click)="navigate('members')"
-        [disabled]="busy() || exportBusy()"><app-icon name="people" /><span>Membros</span></button><button
-        [class.active]="(page() === 'birthdays' || page() === 'communication')" [attr.aria-current]="(page() === 'birthdays' || page() === 'communication') ? 'page' : null"
-        (click)="navigate('birthdays')" aria-label="Aniversariantes" [disabled]="busy() || exportBusy()"><app-icon
-          name="calendar" /><span>Anivers.</span></button><button [class.active]="page() === 'board'"
-        [attr.aria-current]="page() === 'board' ? 'page' : null" (click)="navigate('board')"
-        [disabled]="busy() || exportBusy()"><app-icon name="board" /><span>Diretoria</span></button><button [class.active]="page() === 'minutes'" [attr.aria-current]="page() === 'minutes' ? 'page' : null" (click)="navigate('minutes')" [disabled]="busy() || exportBusy()"><app-icon name="calendar" /><span>Atas</span></button><button [class.active]="page() === 'notices'" [attr.aria-current]="page() === 'notices' ? 'page' : null" (click)="navigate('notices')" aria-label="Convocações" [disabled]="busy() || exportBusy()"><app-icon name="notice" /><span>Convocar</span></button><button [class.active]="page() === 'billing'" [attr.aria-current]="page() === 'billing' ? 'page' : null" (click)="navigate('billing')" [disabled]="busy() || exportBusy()"><app-icon name="card" /><span>Assinatura</span></button>}@else{<button class="active" aria-current="page" (click)="navigate('communication')"><app-icon name="calendar" /><span>Comunicação</span></button>}</nav>
+    <nav class="mobile-nav" [class.communication-only]="!data.hasSocietyAccess()" aria-label="Navegação principal">@if(data.hasSocietyAccess()){<button [class.active]="page() === 'overview'" [attr.aria-current]="page() === 'overview' ? 'page' : null" (click)="navigate('overview')" [disabled]="busy() || exportBusy()"><app-icon name="grid" /><span>Início</span></button><button [class.active]="page() === 'members' || page() === 'member'" [attr.aria-current]="page() === 'members' || page() === 'member' ? 'page' : null" (click)="navigate('members')" [disabled]="busy() || exportBusy()"><app-icon name="people" /><span>Membros</span></button><button [class.active]="page() === 'birthdays' || page() === 'board' || page() === 'minutes' || page() === 'notices'" [attr.aria-current]="page() === 'birthdays' || page() === 'board' || page() === 'minutes' || page() === 'notices' ? 'page' : null" (click)="navigate('birthdays')" aria-label="Atividades" [disabled]="busy() || exportBusy()"><app-icon name="calendar" /><span>Atividades</span></button><button [class.active]="page() === 'communication'" [attr.aria-current]="page() === 'communication' ? 'page' : null" (click)="navigate('communication')" [disabled]="busy() || exportBusy()"><app-icon name="notice" /><span>Comunicação</span></button><details class="mobile-more" [open]="page() === 'billing' || page() === 'support'"><summary [class.active]="page() === 'billing' || page() === 'support'"><app-icon name="grid" /><span>Mais</span></summary><div class="mobile-more-menu"><button type="button" [class.active]="page() === 'board'" (click)="navigate('board')" [disabled]="busy() || exportBusy()"><app-icon name="board" />Diretoria</button><button type="button" [class.active]="page() === 'minutes'" (click)="navigate('minutes')" [disabled]="busy() || exportBusy()"><app-icon name="calendar" />Atas e plenárias</button><button type="button" [class.active]="page() === 'notices'" (click)="navigate('notices')" [disabled]="busy() || exportBusy()"><app-icon name="notice" />Convocações</button><button type="button" [class.active]="page() === 'billing'" (click)="navigate('billing')" [disabled]="busy() || exportBusy()"><app-icon name="card" />Assinatura</button><button type="button" [class.active]="page() === 'support'" (click)="navigate('support')" [disabled]="busy() || exportBusy()"><app-icon name="info" />Falar com o admin</button></div></details>}@else{<button class="active" aria-current="page" (click)="navigate('communication')"><app-icon name="notice" /><span>Comunicação</span></button>}</nav>
   </div>
 </div>
 }

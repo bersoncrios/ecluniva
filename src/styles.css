@@ -497,6 +497,16 @@ input[type=radio] {
     color: var(--muted)
 }
 
+.loading-skeleton,
+.public-skeleton { background: linear-gradient(90deg, #edf2ee 25%, #f8faf7 37%, #edf2ee 63%); background-size: 400% 100%; animation: skeleton-shimmer 1.4s ease infinite; border-radius: 10px; }
+.loading-skeleton { min-height: 72px; width: 100%; }
+.public-society-loading { padding: 40px 20px; }
+.public-society-loading .public-skeleton-mark { width: 72px; height: 72px; }
+.public-society-loading .public-skeleton-title { width: min(420px, 80vw); height: 38px; }
+.public-society-loading .public-skeleton-copy { width: min(580px, 90vw); height: 18px; }
+.public-society-loading .public-skeleton-card { width: min(760px, 92vw); height: 220px; margin-top: 20px; }
+@keyframes skeleton-shimmer { 0% { background-position: 100% 0 } 100% { background-position: -100% 0 } }
+
 @keyframes spin {
     to {
         transform: rotate(360deg)
@@ -1098,6 +1108,52 @@ input[type=radio] {
 
 .account-menu summary::-webkit-details-marker {
     display: none
+}
+
+.header-actions {
+    position: relative;
+    flex-shrink: 0
+}
+
+.header-actions summary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 10px 14px;
+    border: 1px solid #bac9bf;
+    border-radius: 8px;
+    background: #fff;
+    color: var(--green);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    list-style: none
+}
+
+.header-actions summary::-webkit-details-marker {
+    display: none
+}
+
+.header-actions-menu {
+    position: absolute;
+    top: 52px;
+    right: 0;
+    z-index: 20;
+    display: grid;
+    gap: 6px;
+    width: 210px;
+    padding: 8px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: 0 10px 28px #103b3118
+}
+
+.header-actions-menu .button {
+    width: 100%;
+    min-height: 44px
 }
 
 .account-dropdown {
@@ -2197,6 +2253,199 @@ input[type=radio] {
     }
 }
 
+/* The compact navigation keeps three primary destinations visible and groups
+   secondary areas behind one predictable action. */
+@media(max-width:1023px) {
+    .mobile-nav {
+        position: fixed;
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        align-items: stretch;
+        gap: 2px;
+        padding-left: 6px;
+        padding-right: 6px
+    }
+
+    .mobile-more {
+        position: relative;
+        min-width: 0
+    }
+
+    .mobile-more > summary {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 4px;
+        min-height: 50px;
+        padding: 6px 4px;
+        border-radius: 8px;
+        color: var(--muted);
+        cursor: pointer;
+        list-style: none;
+        font-size: 11px
+    }
+
+    .mobile-more > summary::-webkit-details-marker {
+        display: none
+    }
+
+    .mobile-more > summary.active,
+    .mobile-more > summary:hover {
+        background: var(--mint);
+        color: var(--green)
+    }
+
+    .mobile-more > summary app-icon {
+        font-size: 18px
+    }
+
+    .mobile-more-menu {
+        position: absolute;
+        right: 0;
+        bottom: calc(100% + 8px);
+        display: grid;
+        gap: 4px;
+        width: min(250px, calc(100vw - 24px));
+        padding: 8px;
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        box-shadow: 0 12px 32px #103b3120
+    }
+
+    .mobile-more-menu button {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+        min-height: 44px;
+        padding: 10px 12px;
+        border: 0;
+        border-radius: 8px;
+        background: #fff;
+        color: var(--ink);
+        text-align: left;
+        font-size: 13px
+    }
+
+    .mobile-more-menu button.active,
+    .mobile-more-menu button:hover {
+        background: var(--mint);
+        color: var(--green)
+    }
+}
+
+/* Public page actions and event emphasis. */
+.public-society-header {
+    position: relative
+}
+
+.public-share {
+    flex-shrink: 0;
+    min-height: 44px;
+    padding: 10px 14px;
+    border: 1px solid #bad8c2;
+    border-radius: 999px;
+    background: #eaf5ed;
+    color: var(--green);
+    font-weight: 700
+}
+
+.public-share:hover {
+    background: #dcefe1
+}
+
+.public-share-message {
+    margin: 12px 0 -20px;
+    color: var(--green);
+    font-size: 13px;
+    text-align: right
+}
+
+/* Small-screen action bars stay available after long forms without hiding
+   content behind the fixed navigation. */
+@media(max-width:767px) {
+    .member-form-footer {
+        position: sticky;
+        bottom: calc(82px + env(safe-area-inset-bottom, 0px));
+        z-index: 8;
+        margin-inline: -4px;
+        padding: 12px 4px;
+        background: #f5f7f4eF;
+        backdrop-filter: blur(10px);
+        border-top: 1px solid var(--line)
+    }
+
+    .member-form-footer .form-actions {
+        margin: 0
+    }
+
+    .member-form-footer > .button {
+        margin: 0
+    }
+}
+
+.featured-post {
+    padding: 30px 18px;
+    margin-inline: -18px;
+    border: 1px solid #c8ded1;
+    border-radius: 14px;
+    background: #f7fbf6
+}
+
+.calendar-button {
+    margin-top: 12px;
+    min-height: 44px
+}
+
+@media(max-width:700px) {
+    .public-society-header {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        gap: 14px
+    }
+
+    .public-society-header .public-share {
+        grid-column: 1 / -1;
+        width: 100%
+    }
+
+    .public-share-message {
+        text-align: left
+    }
+
+    .featured-post {
+        margin-inline: -8px;
+        padding: 22px 12px
+    }
+}
+
+/* Keep long forms legible and give users a stable place to return to. */
+.form-section,
+.member-form-footer,
+.schedule-form,
+.minute-form,
+.notice-form {
+    scroll-margin-top: 24px
+}
+
+@media(max-width:767px) {
+    .form-actions,
+    .dialog-actions {
+        width: 100%
+    }
+
+    .form-actions > .button,
+    .dialog-actions > .button {
+        min-width: 0
+    }
+
+    .member-form-footer {
+        padding-bottom: 8px
+    }
+}
+
 @media(max-width:1023px) {
     .app-layout {
         display: block
@@ -2301,7 +2550,8 @@ input[type=radio] {
     }
 
     .app-header > .button.secondary,
-    .app-header > .app-plan-indicator {
+    .app-header > .app-plan-indicator,
+    .app-header > .header-actions {
         width: 100%;
         min-width: 0;
         padding-inline: 10px
@@ -2314,6 +2564,15 @@ input[type=radio] {
     .account-menu {
         justify-self: end;
         align-self: center
+    }
+
+    .header-actions {
+        width: 100%;
+        padding-inline: 0
+    }
+
+    .header-actions summary {
+        width: 100%
     }
 }
 
@@ -2453,11 +2712,20 @@ input[type=radio] {
         min-width: 0
     }
 
-    .app-header > .button.secondary,
-    .app-header > .app-plan-indicator {
+    .app-header > .app-plan-indicator,
+    .app-header > .header-actions {
         width: 100%;
         min-width: 0;
         padding-inline: 10px
+    }
+
+    .header-actions {
+        width: 100%;
+        padding-inline: 0
+    }
+
+    .header-actions summary {
+        width: 100%
     }
 
     .app-header > .button.secondary {
@@ -3418,5 +3686,40 @@ app-board {
 
     .support-compose > div .button {
         width: 100%
+    }
+}
+
+.bulk-actions { display:flex; align-items:center; flex-wrap:wrap; gap:10px; padding:12px 14px; margin:0 0 14px; border:1px solid #b9d8c5; border-radius:12px; background:var(--mint); }
+.bulk-actions strong { margin-right:auto; color:var(--green); }
+.selection-column { width:44px; text-align:center !important; }
+.selection-column input[type="checkbox"], .member-card-top input[type="checkbox"] { width:18px; height:18px; accent-color:var(--green); }
+.draft-banner { display:flex; align-items:center; justify-content:space-between; gap:18px; margin-bottom:18px; padding:14px 16px; border:1px solid #b9d8c5; border-radius:12px; background:var(--mint); }
+.draft-banner > div:first-child { display:grid; gap:4px; }
+.draft-banner span { color:var(--muted); font-size:13px; }
+.draft-actions { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+@media(max-width:767px) { .bulk-actions, .draft-banner { align-items:stretch; flex-direction:column; } .bulk-actions strong { margin-right:0; } .bulk-actions .button, .draft-actions .button { width:100%; justify-content:center; } }
+
+/* Final mobile navigation contract: four direct destinations plus Mais. */
+@media(max-width:1023px) {
+    .mobile-nav {
+        grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+        gap: 2px !important;
+        padding-left: 6px !important;
+        padding-right: 6px !important
+    }
+
+    .mobile-nav button,
+    .mobile-more > summary {
+        min-width: 0;
+        padding-left: 3px;
+        padding-right: 3px
+    }
+
+    .mobile-nav button span,
+    .mobile-more > summary span {
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap
     }
 }

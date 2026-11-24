@@ -51,10 +51,22 @@ export class AppComponent {
   readonly boardMemberId = signal<string|null>(null);
   readonly query = signal('');
   readonly status = signal<'all'|'active'|'inactive'>('active');
+  readonly memberSort = signal<'name'|'status'|'birthday'>('name');
   readonly memberPage = signal(1);
   readonly memberPageSize = 10;
+  readonly selectedMemberIds = signal<Set<string>>(new Set());
+  readonly memberDraftAvailable = signal(false);
+  readonly selectedMembers = computed(() => this.data.members().filter(member => this.selectedMemberIds().has(member.id)));
   readonly today = signal(todayISO());
-  readonly results = computed(() => filterMembers(this.data.members(), this.query(), this.status()));
+  readonly results = computed(() => {
+    const members = filterMembers(this.data.members(), this.query(), this.status());
+    const sort = this.memberSort();
+    return [...members].sort((a,b) => sort === 'status'
+      ? a.status.localeCompare(b.status) || a.name.localeCompare(b.name, 'pt-BR')
+      : sort === 'birthday'
+        ? (a.birthDate || '9999-99-99').slice(5).localeCompare((b.birthDate || '9999-99-99').slice(5)) || a.name.localeCompare(b.name, 'pt-BR')
+        : a.name.localeCompare(b.name, 'pt-BR'));
+  });
   readonly memberTotalPages = computed(() => Math.max(1, Math.ceil(this.results().length / this.memberPageSize)));
   readonly memberCurrentPage = computed(() => Math.min(this.memberPage(), this.memberTotalPages()));
   readonly pagedResults = computed(() => {
@@ -124,6 +136,7 @@ export class AppComponent {
         this.page.set(this.data.selected()&&!this.data.hasSocietyAccess()?'communication':'overview');
         this.query.set('');
         this.status.set('active');
+        this.memberSort.set('name');
         this.memberPage.set(1);
         this.member = emptyMember();
         this.editingId = null;
@@ -282,8 +295,9 @@ export class AppComponent {
   newMember(): void {
     this.cancelPostalLookup();
     this.member = emptyMember(); this.editingId = null;
+    this.memberDraftAvailable.set(this.hasMemberDraft());
     this.birth = {day:'',month:'',year:''}; this.received = {day:'',month:'',year:''};
-    this.fieldErrors.set({}); this.notice.set('');
+    this.fieldErrors.set({}); this.notice.set(''); this.memberDraftAvailable.set(false);
     this.navigate('member');
   }
 
@@ -312,6 +326,7 @@ export class AppComponent {
       await this.data.saveMember(this.member, editing);
       if (societyId !== this.data.selected()?.id) return;
       this.member = emptyMember(); this.editingId = null;
+      this.clearMemberDraft();
       this.busy.set(false);
       this.navigate('members');
       this.notice.set(editing ? 'Cadastro atualizado.' : 'Membro cadastrado.');
@@ -489,7 +504,7 @@ export class AppComponent {
   async generateExport(): Promise<void> {
     const society = this.data.selected();
     if (!society || !this.results().length || this.exportBusy()) return;
-    const members = [...this.results()];
+    const members = this.selectedMembers().length ? this.selectedMembers() : [...this.results()];
     this.exportBusy.set(true); this.dialogError.set('');
     try {
       await exportRoster(this.exportFormat(), society, members, this.filterDescription());
@@ -519,8 +534,19 @@ export class AppComponent {
     setTimeout(() => this.confirmation?.nativeElement.querySelector<HTMLElement>(kind === 'details' ? '#dialog-title' : 'button')?.focus());
   }
 
-  clearFilters(): void { this.query.set(''); this.status.set('active'); this.memberPage.set(1); }
+  clearFilters(): void { this.query.set(''); this.status.set('active'); this.memberSort.set('name'); this.memberPage.set(1); }
   goToMemberPage(page: number): void { this.memberPage.set(Math.max(1, Math.min(page, this.memberTotalPages()))); }
+  toggleMemberSelection(id: string): void { const next = new Set(this.selectedMemberIds()); next.has(id) ? next.delete(id) : next.add(id); this.selectedMemberIds.set(next); }
+  pageFullySelected(): boolean { return this.pagedResults().length > 0 && this.pagedResults().every(member => this.selectedMemberIds().has(member.id)); }
+  togglePageSelection(): void { const next = new Set(this.selectedMemberIds()); if (this.pageFullySelected()) this.pagedResults().forEach(member => next.delete(member.id)); else this.pagedResults().forEach(member => next.add(member.id)); this.selectedMemberIds.set(next); }
+  clearMemberSelection(): void { this.selectedMemberIds.set(new Set()); }
+  async bulkSetStatus(status: 'active'|'inactive'): Promise<void> { const members = this.selectedMembers(); if (!members.length || this.busy()) return; this.busy.set(true); this.error.set(''); try { await Promise.all(members.filter(member => member.status !== status).map(member => this.data.setStatus(member, status))); this.notice.set(`${members.length} ${members.length === 1 ? 'membro atualizado' : 'membros atualizados'}.`); this.clearMemberSelection(); } catch { this.error.set('Não foi possível atualizar todos os membros selecionados. Tente novamente.'); } finally { this.busy.set(false); } }
+  saveMemberDraft(): void { if (this.editingId || typeof localStorage === 'undefined' || !this.data.selected()?.id) return; try { localStorage.setItem(this.memberDraftKey(), JSON.stringify({member:this.member,birth:this.birth,received:this.received})); } catch { /* optional storage */ } }
+  restoreMemberDraft(): void { try { const raw = localStorage.getItem(this.memberDraftKey()); if (!raw) return; const draft = JSON.parse(raw) as {member: MemberInput; birth: DateParts; received: DateParts}; const blank = emptyMember(); this.member = {...blank,...draft.member,address:{...blank.address,...draft.member.address}}; this.birth = draft.birth || this.parts(this.member.birthDate); this.received = draft.received || this.parts(this.member.receivedDate); this.memberDraftAvailable.set(false); } catch { this.clearMemberDraft(); } }
+  discardMemberDraft(): void { this.clearMemberDraft(); this.memberDraftAvailable.set(false); }
+  private hasMemberDraft(): boolean { try { return typeof localStorage !== 'undefined' && !!localStorage.getItem(this.memberDraftKey()); } catch { return false; } }
+  private clearMemberDraft(): void { try { localStorage.removeItem(this.memberDraftKey()); } catch { /* optional storage */ } }
+  private memberDraftKey(): string { return `ecluniva:member-draft:${this.data.selected()?.id || 'unknown'}`; }
   filterDescription(): string { return `Busca: ${this.query().trim() || 'todos os nomes'} · Status: ${this.statusLabel(this.status())}`; }
   statusLabel(status: string): string { return status === 'active' ? 'Ativos' : status === 'inactive' ? 'Inativos' : 'Todos'; }
   initials(name: string): string { return name.trim().split(/\s+/).slice(0,2).map(part => part[0]).join('').toUpperCase(); }
