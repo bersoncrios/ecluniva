@@ -43,8 +43,9 @@ export function validWebhook(req) {
   const dataId = String(req.query?.['data.id'] || req.query?.data_id || payload?.data?.id || '');
   const secret = process.env.MERCADOPAGO_WEBHOOK_SECRET || '';
   const values = Object.fromEntries(signature.split(',').map(item => item.split('=').map(value => value.trim())).filter(item => item.length === 2));
-  if (!secret || !values.v1 || !values.ts || !dataId || !requestId) return false;
-  const manifest = `id:${dataId};request-id:${requestId};ts:${values.ts};`;
+  if (!secret || !values.v1) return false;
+  const manifest = [dataId ? `id:${dataId}` : '', requestId ? `request-id:${requestId}` : '', values.ts ? `ts:${values.ts}` : ''].filter(Boolean).join(';') + ';';
+  if (manifest === ';') return false;
   const expected = crypto.createHmac('sha256', secret).update(manifest).digest('hex');
   if (expected.length !== values.v1.length) return false;
   return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(values.v1));
