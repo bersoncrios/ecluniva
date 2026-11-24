@@ -3834,7 +3834,9 @@ app-board {
 .promotion-dialog-actions .button { min-width:130px; }
 .button.danger { background:#a8463d; color:#fff; border-color:#a8463d; }
 .danger-text { color:#a8463d !important; }
+.audit-pagination { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:16px; padding-top:14px; border-top:1px solid var(--line); color:var(--muted); font-size:13px; }
 @media(max-width:560px) { .modal-backdrop { align-items:end; padding:10px; } .promotion-dialog { max-height:calc(100dvh - 20px); padding:20px 16px; border-radius:16px; } .promotion-dialog-actions { display:grid; grid-template-columns:1fr 1fr; } .promotion-dialog-actions .button { width:100%; min-width:0; } }
+@media(max-width:560px) { .audit-pagination { align-items:stretch; flex-direction:column; } .audit-pagination .button { width:100%; } .audit-pagination span { text-align:center; } }
 
 /* The component stylesheet has a more specific mobile grid; keep the title
    column explicit so long society names never collapse to one character. */
