@@ -57,6 +57,8 @@ export class AppComponent {
   readonly selectedMemberIds = signal<Set<string>>(new Set());
   readonly selectionMode = signal(false);
   readonly memberDraftAvailable = signal(false);
+  readonly memberStep = signal(1);
+  readonly memberStepCount = 5;
   readonly selectedMembers = computed(() => this.data.members().filter(member => this.selectedMemberIds().has(member.id)));
   readonly today = signal(todayISO());
   readonly results = computed(() => {
@@ -298,7 +300,7 @@ export class AppComponent {
     this.member = emptyMember(); this.editingId = null;
     this.memberDraftAvailable.set(this.hasMemberDraft());
     this.birth = {day:'',month:'',year:''}; this.received = {day:'',month:'',year:''};
-    this.fieldErrors.set({}); this.notice.set(''); this.memberDraftAvailable.set(false);
+    this.fieldErrors.set({}); this.notice.set(''); this.memberStep.set(1);
     this.navigate('member');
   }
 
@@ -308,7 +310,7 @@ export class AppComponent {
       office:member.office,address:{...member.address},phone:member.phone,email:member.email,status:member.status,notes:member.notes };
     this.editingId = member.id;
     this.birth = this.parts(member.birthDate); this.received = this.parts(member.receivedDate);
-    this.fieldErrors.set({}); this.notice.set('');
+    this.fieldErrors.set({}); this.notice.set(''); this.memberStep.set(1);
     this.navigate('member');
   }
 
@@ -335,6 +337,17 @@ export class AppComponent {
       if (societyId === this.data.selected()?.id) this.error.set(error instanceof Error ? error.message : 'Não foi possível salvar. Seus dados continuam no formulário. Tente novamente.');
     } finally { this.busy.set(false); }
   }
+
+  continueMemberStep(): void {
+    if (this.memberStep() === 1) {
+      const errors = validateMember(this.member, this.today());
+      const stepErrors: Record<string,string> = {};
+      for (const key of ['name', 'birthDate'] as const) if (errors[key]) stepErrors[key] = errors[key];
+      if (Object.keys(stepErrors).length) { this.fieldErrors.set(stepErrors); setTimeout(() => document.getElementById(stepErrors.name ? 'name' : 'birthDate')?.focus()); return; }
+    }
+    if (this.memberStep() < this.memberStepCount) { this.fieldErrors.set({}); this.memberStep.update(step => step + 1); setTimeout(() => document.querySelector<HTMLElement>('.member-form .form-section:not([hidden]) input, .member-form .form-section:not([hidden]) textarea')?.focus()); }
+  }
+  previousMemberStep(): void { if (this.memberStep() > 1) { this.fieldErrors.set({}); this.memberStep.update(step => step - 1); } }
 
   openBoardForMember(): void {
     if (!this.editingId || this.busy() || this.exportBusy()) return;

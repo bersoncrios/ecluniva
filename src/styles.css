@@ -3754,7 +3754,14 @@ app-board {
 .draft-banner > div:first-child { display:grid; gap:4px; }
 .draft-banner span { color:var(--muted); font-size:13px; }
 .draft-actions { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+.member-stepper { display:grid; gap:10px; margin-bottom:18px; padding:14px 16px; border:1px solid var(--line); border-radius:12px; background:#fff; }
+.member-stepper-meta { display:flex; align-items:center; justify-content:space-between; gap:12px; color:var(--muted); font-size:13px; }
+.member-stepper-meta strong { color:var(--ink); font-size:15px; }
+.member-stepper-track { height:6px; overflow:hidden; border-radius:999px; background:#e6eee8; }
+.member-stepper-track span { display:block; height:100%; border-radius:inherit; background:var(--green); transition:width .2s ease; }
+.member-form .form-section[hidden] { display:none; }
 @media(max-width:767px) { .bulk-actions, .draft-banner { align-items:stretch; flex-direction:column; } .bulk-actions strong { margin-right:0; } .bulk-actions .button, .draft-actions .button { width:100%; justify-content:center; } }
+@media(max-width:767px) { .member-stepper-meta { align-items:flex-start; flex-direction:column; gap:4px; } .member-form-footer .form-actions { display:grid; grid-template-columns:1fr 1fr; } .member-form-footer .form-actions .button:last-child { grid-column:1 / -1; } }
 
 /* Final mobile navigation contract: four direct destinations plus Mais. */
 @media(max-width:1023px) {
