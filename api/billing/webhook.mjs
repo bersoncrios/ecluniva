@@ -20,10 +20,14 @@ function subscriptionDates(subscription) {
 export default async function handler(req, res) {
   if (req.method !== 'POST') return json(res, 405, { error: 'Método não permitido.' });
   if (!validWebhook(req)) return json(res, 401, { error: 'Assinatura inválida.' });
+  let webhookEvent;
   try {
     const type = req.body?.type || req.query?.type;
     const id = req.body?.data?.id || req.query?.['data.id'] || req.query?.data_id;
     if (!id) return json(res, 200, { received: true });
+    const eventId = String(req.body?.id || req.headers['x-request-id'] || `${type || 'unknown'}-${id}`).replace(/[^A-Za-z0-9_-]/g, '_').slice(0, 128);
+    webhookEvent = db().collection('billingWebhookEvents').doc(eventId);
+    await webhookEvent.set({ type: String(type || ''), resourceId: String(id), status: 'received', receivedAt: new Date() }, { merge: true });
     if (type === 'subscription_preapproval' || type === 'subscription_authorized_payment' || type === 'payment') {
       let subscription;
       if (type === 'subscription_preapproval') {
@@ -56,7 +60,12 @@ export default async function handler(req, res) {
         } else {
         const intents = await store.collection('billingCheckoutIntents').where('payerEmail', '==', email).get();
         const cutoff = Date.now() - 24 * 60 * 60 * 1000;
-        const candidates = intents.docs.filter(item => item.data().planId === subscription.preapproval_plan_id && item.data().status === 'pending' && item.data().createdAt?.toDate?.().getTime() >= cutoff);
+        const recentPending = item => { const createdAt = item.data().createdAt?.toDate?.()?.getTime?.() || 0; return item.data().planId === subscription.preapproval_plan_id && item.data().status === 'pending' && createdAt >= cutoff; };
+        let candidates = intents.docs.filter(recentPending);
+        if (!candidates.length) {
+          const fallbackIntents = await store.collection('billingCheckoutIntents').get();
+          candidates = fallbackIntents.docs.filter(recentPending);
+        }
         const current = await Promise.all(candidates.map(async intent => {
           const data = intent.data();
           const billingRef = store.doc(`users/${data.uid}/billing/${data.societyId}`);
@@ -68,7 +77,7 @@ export default async function handler(req, res) {
           const { intent, data, billingRef } = matches[0];
           const society = await store.doc(`societies/${data.societyId}`).get();
           const account = await admin.auth().getUser(data.uid);
-          if (society.exists && society.data()?.ownerId === data.uid && account.email?.toLowerCase() === email) {
+          if (society.exists && society.data()?.ownerId === data.uid && (!email || account.email?.toLowerCase() === email || candidates.length === 1)) {
             await saveBillingState(store, billingRef, { plan, status: subscription.status, subscriptionId: subscription.id, payerEmail: email, ...dates, updatedAt: new Date() });
             await intent.ref.update({ status: 'completed', subscriptionId: subscription.id, completedAt: new Date() });
           }
@@ -76,9 +85,11 @@ export default async function handler(req, res) {
         }
       }
     }
+    await webhookEvent?.set({ status: 'processed', processedAt: new Date() }, { merge: true });
     return json(res, 200, { received: true });
   } catch (error) {
     console.error('Falha ao processar webhook do Mercado Pago:', error);
+    await webhookEvent?.set({ status: 'error', error: error instanceof Error ? error.message : String(error), failedAt: new Date() }, { merge: true }).catch(() => {});
     return json(res, 500, { error: 'Falha ao processar a notificação.' });
   }
 }
