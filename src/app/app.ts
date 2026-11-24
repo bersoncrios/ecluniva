@@ -55,6 +55,7 @@ export class AppComponent {
   readonly memberPage = signal(1);
   readonly memberPageSize = 10;
   readonly selectedMemberIds = signal<Set<string>>(new Set());
+  readonly selectionMode = signal(false);
   readonly memberDraftAvailable = signal(false);
   readonly selectedMembers = computed(() => this.data.members().filter(member => this.selectedMemberIds().has(member.id)));
   readonly today = signal(todayISO());
@@ -540,6 +541,7 @@ export class AppComponent {
   pageFullySelected(): boolean { return this.pagedResults().length > 0 && this.pagedResults().every(member => this.selectedMemberIds().has(member.id)); }
   togglePageSelection(): void { const next = new Set(this.selectedMemberIds()); if (this.pageFullySelected()) this.pagedResults().forEach(member => next.delete(member.id)); else this.pagedResults().forEach(member => next.add(member.id)); this.selectedMemberIds.set(next); }
   clearMemberSelection(): void { this.selectedMemberIds.set(new Set()); }
+  toggleSelectionMode(): void { const next = !this.selectionMode(); this.selectionMode.set(next); if (!next) this.clearMemberSelection(); }
   async bulkSetStatus(status: 'active'|'inactive'): Promise<void> { const members = this.selectedMembers(); if (!members.length || this.busy()) return; this.busy.set(true); this.error.set(''); try { await Promise.all(members.filter(member => member.status !== status).map(member => this.data.setStatus(member, status))); this.notice.set(`${members.length} ${members.length === 1 ? 'membro atualizado' : 'membros atualizados'}.`); this.clearMemberSelection(); } catch { this.error.set('Não foi possível atualizar todos os membros selecionados. Tente novamente.'); } finally { this.busy.set(false); } }
   saveMemberDraft(): void { if (this.editingId || typeof localStorage === 'undefined' || !this.data.selected()?.id) return; try { localStorage.setItem(this.memberDraftKey(), JSON.stringify({member:this.member,birth:this.birth,received:this.received})); } catch { /* optional storage */ } }
   restoreMemberDraft(): void { try { const raw = localStorage.getItem(this.memberDraftKey()); if (!raw) return; const draft = JSON.parse(raw) as {member: MemberInput; birth: DateParts; received: DateParts}; const blank = emptyMember(); this.member = {...blank,...draft.member,address:{...blank.address,...draft.member.address}}; this.birth = draft.birth || this.parts(this.member.birthDate); this.received = draft.received || this.parts(this.member.receivedDate); this.memberDraftAvailable.set(false); } catch { this.clearMemberDraft(); } }

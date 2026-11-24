@@ -386,9 +386,9 @@
             </select></div><div class="status-filter sort-filter"><label for="member-sort">Ordenar por</label><select id="member-sort" [ngModel]="memberSort()" (ngModelChange)="memberSort.set($event); memberPage.set(1)"><option value="name">Nome</option><option value="birthday">Aniversário</option><option value="status">Status</option></select></div><button class="button secondary export-button" (click)="openExport()"
             [disabled]="!results().length"
             [attr.aria-describedby]="!results().length ? 'export-empty-help' : null"><app-icon
-              name="download" />Exportar rol</button>
+              name="download" />Exportar rol</button><button type="button" class="button secondary selection-toggle" (click)="toggleSelectionMode()" [attr.aria-pressed]="selectionMode()"><app-icon name="check" />{{ selectionMode() ? 'Concluir seleção' : 'Selecionar membros' }}</button>
         </div>
-        @if (selectedMemberIds().size) { <div class="bulk-actions" role="region" aria-label="Ações para membros selecionados"><strong>{{ selectedMemberIds().size }} selecionado(s)</strong><button type="button" class="button secondary" (click)="bulkSetStatus('active')" [disabled]="busy()">Marcar ativos</button><button type="button" class="button secondary" (click)="bulkSetStatus('inactive')" [disabled]="busy()">Marcar inativos</button><button type="button" class="text-button" (click)="clearMemberSelection()">Limpar seleção</button></div> }
+        @if (selectionMode() && selectedMemberIds().size) { <div class="bulk-actions" role="region" aria-label="Ações para membros selecionados"><strong>{{ selectedMemberIds().size }} selecionado(s)</strong><button type="button" class="button secondary" (click)="bulkSetStatus('active')" [disabled]="busy()">Marcar ativos</button><button type="button" class="button secondary" (click)="bulkSetStatus('inactive')" [disabled]="busy()">Marcar inativos</button><button type="button" class="text-button" (click)="clearMemberSelection()">Limpar seleção</button></div> }
         <div class="results-meta" aria-live="polite">
           <p><strong>{{ results().length }}</strong> {{ results().length === 1 ? 'membro encontrado' : 'membros
             encontrados' }}@if (results().length > memberPageSize) { <span> · exibindo {{ memberRangeStart() }}–{{ memberRangeEnd() }}</span> }</p>@if (query() || status() !== 'active' || memberSort() !== 'name') { <button class="text-button"
@@ -397,14 +397,14 @@
         @if (results().length) { <table class="members-table">
           <thead>
             <tr>
-              <th scope="col" class="selection-column"><input type="checkbox" [checked]="pageFullySelected()" (change)="togglePageSelection()" aria-label="Selecionar página atual"></th><th scope="col">Nome</th>
+              @if (selectionMode()) { <th scope="col" class="selection-column"><input type="checkbox" [checked]="pageFullySelected()" (change)="togglePageSelection()" aria-label="Selecionar página atual"></th> }<th scope="col">Nome</th>
               <th scope="col">Contato</th>
               <th scope="col">Status</th>
               <th scope="col"><span class="sr-only">Ações</span></th>
             </tr>
           </thead>
           <tbody>@for (item of pagedResults(); track item.id) { <tr>
-              <td class="selection-column"><input type="checkbox" [checked]="selectedMemberIds().has(item.id)" (change)="toggleMemberSelection(item.id)" [attr.aria-label]="'Selecionar ' + item.name"></td><td>
+              @if (selectionMode()) { <td class="selection-column"><input type="checkbox" [checked]="selectedMemberIds().has(item.id)" (change)="toggleMemberSelection(item.id)" [attr.aria-label]="'Selecionar ' + item.name"></td> }<td>
                 <div class="member-name"><span class="person-initial">{{ initials(item.name) }}</span><strong>{{
                     item.name }}</strong></div>
               </td>
@@ -417,7 +417,7 @@
             </tr> }</tbody>
         </table>
         <div class="mobile-members">@for (item of pagedResults(); track item.id) { <article class="member-card">
-            <div class="member-card-top"><input type="checkbox" [checked]="selectedMemberIds().has(item.id)" (change)="toggleMemberSelection(item.id)" [attr.aria-label]="'Selecionar ' + item.name"><span class="person-initial">{{ initials(item.name) }}</span><strong>{{
+            <div class="member-card-top">@if (selectionMode()) { <input type="checkbox" [checked]="selectedMemberIds().has(item.id)" (change)="toggleMemberSelection(item.id)" [attr.aria-label]="'Selecionar ' + item.name"> }<span class="person-initial">{{ initials(item.name) }}</span><strong>{{
                 item.name }}</strong><span class="badge" [class.inactive]="item.status === 'inactive'">{{ item.status
                 === 'active' ? 'Ativo' : 'Inativo' }}</span></div>
             <div class="member-card-contact">

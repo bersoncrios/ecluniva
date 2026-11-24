@@ -3690,6 +3690,7 @@ app-board {
 }
 
 .bulk-actions { display:flex; align-items:center; flex-wrap:wrap; gap:10px; padding:12px 14px; margin:0 0 14px; border:1px solid #b9d8c5; border-radius:12px; background:var(--mint); }
+.selection-toggle { white-space: nowrap; }
 .bulk-actions strong { margin-right:auto; color:var(--green); }
 .selection-column { width:44px; text-align:center !important; }
 .selection-column input[type="checkbox"], .member-card-top input[type="checkbox"] { width:18px; height:18px; accent-color:var(--green); }
