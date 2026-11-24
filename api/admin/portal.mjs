@@ -3,6 +3,7 @@ import { db, json, verifyUser } from '../billing/_shared.mjs';
 
 const planPrices = { essential: 9.90, professional: 29.90, institutional: 79.90 };
 const planNames = { free: 'Grátis', essential: 'Essencial', professional: 'Profissional', institutional: 'Institucional' };
+const promotionalPlans = ['essential', 'professional', 'institutional'];
 
 async function requireAdmin(req) {
   const token = await verifyUser(req);
@@ -18,6 +19,27 @@ export default async function handler(req, res) {
     const store = db();
     if (req.method === 'POST') {
       const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
+      if (body.action === 'grantPromotion' || body.action === 'revokePromotion') {
+        if (body.action === 'grantPromotion') {
+          const plan = String(body.plan || ''), reason = String(body.reason || '').trim(), societyId = String(body.societyId || ''), email = String(body.email || '').trim().toLowerCase();
+          const durationDays = Number(body.durationDays);
+          if (!promotionalPlans.includes(plan) || !/^[^/]{1,128}$/.test(societyId) || !email || !Number.isInteger(durationDays) || durationDays < 1 || durationDays > 365 || reason.length < 3 || reason.length > 500) return json(res, 400, { error: 'Informe plano, sociedade, duração de 1 a 365 dias e um motivo válido.' });
+          let account;
+          try { account = await admin.auth().getUserByEmail(email); } catch { return json(res, 404, { error: 'Não encontrei um usuário com este e-mail.' }); }
+          const societyRef = store.doc(`societies/${societyId}`), society = await societyRef.get();
+          if (!society.exists || society.data()?.ownerId !== account.uid) return json(res, 400, { error: 'A sociedade não pertence ao usuário informado.' });
+          const grantRef = store.collection(`users/${account.uid}/promotionalAccess`).doc();
+          const now = new Date(), expiresAt = new Date(now.getTime() + durationDays * 86400000);
+          await store.runTransaction(async transaction => { transaction.set(grantRef, { societyId, plan, active: true, startsAt: now, expiresAt, grantedBy: token.uid, reason, createdAt: now, updatedAt: now }); transaction.set(store.collection('adminAuditEvents').doc(), { type: 'promotion_granted', actorId: token.uid, target: account.uid, societyId, summary: `Acesso promocional ${planNames[plan]} concedido por ${durationDays} dias`, createdAt: now }); });
+          return json(res, 201, { ok: true, promotion: { id: grantRef.id, userId: account.uid, email: account.email || email, societyId, plan, planName: planNames[plan], active: true, expiresAt: expiresAt.toISOString(), reason } });
+        }
+        const promotionId = String(body.promotionId || ''), userId = String(body.userId || '');
+        if (!/^[A-Za-z0-9_-]{1,128}$/.test(promotionId) || !/^[A-Za-z0-9_-]{1,128}$/.test(userId)) return json(res, 400, { error: 'Benefício promocional inválido.' });
+        const ref = store.doc(`users/${userId}/promotionalAccess/${promotionId}`), current = await ref.get();
+        if (!current.exists || current.data()?.active !== true) return json(res, 404, { error: 'Benefício promocional não encontrado ou já revogado.' });
+        const now = new Date(); await store.runTransaction(async transaction => { transaction.update(ref, { active: false, revokedAt: now, revokedBy: token.uid, updatedAt: now }); transaction.set(store.collection('adminAuditEvents').doc(), { type: 'promotion_revoked', actorId: token.uid, target: userId, societyId: current.data()?.societyId || '', summary: `Acesso promocional ${planNames[current.data()?.plan] || 'temporário'} revogado`, createdAt: now }); });
+        return json(res, 200, { ok: true });
+      }
       const threadId = typeof body.threadId === 'string' ? body.threadId : '';
       const message = typeof body.message === 'string' ? body.message.trim() : '';
       if (!/^[A-Za-z0-9_-]{1,128}$/.test(threadId)) return json(res, 400, { error: 'Atendimento inválido.' });
@@ -54,9 +76,9 @@ export default async function handler(req, res) {
       return json(res, 201, { message: item });
     }
 
-    const [billingSnapshots, societySnapshots, threadsSnapshot, auditsSnapshot] = await Promise.all([
+    const [billingSnapshots, societySnapshots, threadsSnapshot, auditsSnapshot, promotionSnapshots] = await Promise.all([
       store.collectionGroup('billing').get(), store.collection('societies').get(), store.collection('supportThreads').get(),
-      store.collection('adminAuditEvents').orderBy('createdAt', 'desc').limit(50).get(),
+      store.collection('adminAuditEvents').orderBy('createdAt', 'desc').limit(50).get(), store.collectionGroup('promotionalAccess').get(),
     ]);
     const societyById = new Map(societySnapshots.docs.map(item => [item.id, item.data()]));
     const uidSet = new Set(billingSnapshots.docs.map(item => item.ref.parent.parent?.id).filter(Boolean));
@@ -71,7 +93,11 @@ export default async function handler(req, res) {
     const attention = subscriptions.filter(item => ['pending', 'paused', 'cancelled', 'cancelled_by_user', 'rejected'].includes(item.status));
     const threads = threadsSnapshot.docs.map(doc => ({ id: doc.id, userName: doc.data().userName || '', userEmail: doc.data().userEmail || '', status: doc.data().status || 'open', rating: doc.data().rating || null, feedback: doc.data().feedback || '', updatedAt: doc.data().updatedAt?.toDate?.()?.toISOString?.() || null, unreadByAdmin: doc.data().unreadByAdmin === true, messages: doc.data().messages || [] })).sort((a, b) => Number(b.unreadByAdmin) - Number(a.unreadByAdmin) || (b.updatedAt || '').localeCompare(a.updatedAt || ''));
     const audits = auditsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), createdAt: doc.data().createdAt?.toDate?.()?.toISOString?.() || null }));
-    return json(res, 200, { stats: { societies: societySnapshots.size, subscriptions: subscriptions.length, active: active.length, pending: subscriptions.filter(item => item.status === 'pending').length, mrrEstimate: mrr }, subscriptions, attention, threads, audits });
+    const promotionUserIds = new Set(promotionSnapshots.docs.map(item => item.ref.parent.parent?.id).filter(Boolean));
+    const promotionAccounts = await Promise.all([...promotionUserIds].map(async uid => { try { return [uid, await admin.auth().getUser(uid)]; } catch { return [uid, null]; } }));
+    const promotionUsers = new Map(promotionAccounts);
+    const promotions = promotionSnapshots.docs.map(item => { const data = item.data(), userId = item.ref.parent.parent?.id || ''; return { id: item.id, userId, email: promotionUsers.get(userId)?.email || '', societyId: String(data.societyId || ''), plan: String(data.plan || 'free'), planName: planNames[data.plan] || planNames.free, active: data.active === true, expiresAt: data.expiresAt?.toDate?.()?.toISOString?.() || null, reason: String(data.reason || ''), grantedBy: String(data.grantedBy || ''), createdAt: data.createdAt?.toDate?.()?.toISOString?.() || null }; }).sort((a, b) => Number(b.active) - Number(a.active) || (b.expiresAt || '').localeCompare(a.expiresAt || ''));
+    return json(res, 200, { stats: { societies: societySnapshots.size, subscriptions: subscriptions.length, active: active.length, pending: subscriptions.filter(item => item.status === 'pending').length, mrrEstimate: mrr }, subscriptions, attention, threads, audits, promotions });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Não foi possível abrir o painel administrativo.';
     return json(res, message.includes('restrito') ? 403 : 401, { error: message });
