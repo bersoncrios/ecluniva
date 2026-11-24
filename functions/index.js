@@ -51,7 +51,7 @@ export const mercadoPagoWebhook = onRequest({ secrets: [mpToken, mpWebhookSecret
       const invoice = type === 'subscription_authorized_payment' ? await mercado(`/authorized_payments/${id}`) : null;
       const subscription = invoice?.preapproval_id ? await mercado(`/preapproval/${invoice.preapproval_id}`) : await mercado(`/preapproval/${id}`);
       const match = String(subscription.external_reference || '').match(/^quadrei:([^:]+):([^:]+):([^:]+)$/);
-      if (match) { const [, uid, societyId, plan] = match; await db.doc(`users/${uid}/billing/${societyId}`).set({ plan, status: subscription.status, subscriptionId: subscription.id, updatedAt: FieldValue.serverTimestamp() }, { merge: true }); }
+      if (match) { const [, uid, societyId, plan] = match; await db.doc(`users/${uid}/billing/${societyId}`).set({ plan, status: subscription.status, subscriptionId: subscription.id, nextPaymentAt: subscription.next_payment_date || null, expiresAt: subscription.date_end || subscription.auto_recurring?.end_date || null, updatedAt: FieldValue.serverTimestamp() }, { merge: true }); }
     }
     return send(res, 200, { received: true });
   } catch { return send(res, 200, { received: true }); }

@@ -54,7 +54,7 @@ export default async function handler(req, res) {
     await store.runTransaction(async transaction => {
       const [currentBilling, currentIntent] = await Promise.all([transaction.get(billingRef), transaction.get(intentRef)]);
       if (currentBilling.data()?.checkoutIntentId !== intentId || (currentIntent.data()?.status !== 'pending' && !(currentIntent.data()?.status === 'completed' && currentIntent.data()?.subscriptionId === resolvedSubscriptionId))) throw new Error('A tentativa de assinatura foi alterada. Atualize a página e tente novamente.');
-      transaction.set(billingRef, { plan, status: 'authorized', subscriptionId: resolvedSubscriptionId, payerEmail, updatedAt: new Date() }, { merge: true });
+      transaction.set(billingRef, { plan, status: 'authorized', subscriptionId: resolvedSubscriptionId, payerEmail, nextPaymentAt: subscription.next_payment_date || null, expiresAt: subscription.date_end || subscription.auto_recurring?.end_date || null, updatedAt: new Date() }, { merge: true });
       transaction.update(intentRef, { status: 'completed', subscriptionId: resolvedSubscriptionId, completedAt: new Date() });
     });
     return json(res, 200, { synchronized: true, plan, status: 'authorized' });

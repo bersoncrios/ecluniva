@@ -86,7 +86,7 @@ export default async function handler(req, res) {
     const userById = new Map(authUsers);
     const subscriptions = billingSnapshots.docs.map(doc => {
       const billing = doc.data(), societyId = doc.id, ownerId = doc.ref.parent.parent?.id || '', society = societyById.get(societyId), plan = billing.plan || 'free';
-      return { id: doc.ref.path, societyId, societyName: society ? `${society.type} · ${society.name}` : 'Sociedade não encontrada', churchName: society?.churchName || '', ownerId, ownerEmail: userById.get(ownerId)?.email || '', plan, planName: planNames[plan] || planNames.free, status: String(billing.status || 'unknown'), subscriptionId: String(billing.subscriptionId || ''), updatedAt: billing.updatedAt?.toDate?.()?.toISOString?.() || null };
+      return { id: doc.ref.path, societyId, societyName: society ? `${society.type} · ${society.name}` : 'Sociedade não encontrada', churchName: society?.churchName || '', ownerId, ownerEmail: userById.get(ownerId)?.email || '', plan, planName: planNames[plan] || planNames.free, status: String(billing.status || 'unknown'), subscriptionId: String(billing.subscriptionId || ''), nextPaymentAt: billing.nextPaymentAt?.toDate?.()?.toISOString?.() || billing.nextPaymentAt || null, expiresAt: billing.expiresAt?.toDate?.()?.toISOString?.() || billing.expiresAt || null, updatedAt: billing.updatedAt?.toDate?.()?.toISOString?.() || null };
     }).filter(row => row.status !== 'unknown').sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''));
     const active = subscriptions.filter(item => item.status === 'authorized');
     const mrr = active.reduce((sum, item) => sum + (planPrices[item.plan] || 0), 0);
