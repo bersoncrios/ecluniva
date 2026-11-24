@@ -34,11 +34,12 @@ export default async function handler(req, res) {
       } catch (invoiceError) {
         if (!(invoiceError instanceof Error) || !invoiceError.message.startsWith('Mercado Pago 404:')) throw invoiceError;
         const results = await mercado(`/authorized_payments/search?payment_id=${encodeURIComponent(subscriptionId)}`);
-        invoice = (results.results || []).find(item => String(item.payment?.id) === subscriptionId);
+        invoice = (results.results || []).find(item => String(item.id || item.payment_id || item.payment?.id) === subscriptionId);
         if (!invoice) return json(res, 404, { error: 'O número informado não corresponde a uma assinatura ou fatura de assinatura encontrada nesta conta Mercado Pago.' });
       }
-      if (!invoice.preapproval_id) return json(res, 404, { error: 'Esse ID é de uma cobrança sem assinatura vinculada. Informe o ID da assinatura (preapproval_id).' });
-      subscription = await mercado(`/preapproval/${encodeURIComponent(String(invoice.preapproval_id))}`);
+      const preapprovalId = invoice.preapproval_id || invoice.payment?.preapproval_id || invoice.preapproval?.id;
+      if (!preapprovalId) return json(res, 404, { error: 'Esse ID é de uma cobrança sem assinatura vinculada. Informe o ID da assinatura (preapproval_id).' });
+      subscription = await mercado(`/preapproval/${encodeURIComponent(String(preapprovalId))}`);
     }
     const resolvedSubscriptionId = String(subscription.id || '');
     if (!resolvedSubscriptionId || subscription.preapproval_plan_id !== intent.planId) return json(res, 400, { error: `A assinatura encontrada está vinculada a outro plano. Confira o ID do plano ${intent.plan} configurado na Vercel.` });

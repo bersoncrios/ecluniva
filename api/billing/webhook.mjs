@@ -24,11 +24,23 @@ export default async function handler(req, res) {
     const type = req.body?.type || req.query?.type;
     const id = req.body?.data?.id || req.query?.['data.id'] || req.query?.data_id;
     if (!id) return json(res, 200, { received: true });
-    if (type === 'subscription_preapproval' || type === 'subscription_authorized_payment') {
-      const invoice = type === 'subscription_authorized_payment' ? await mercado(`/authorized_payments/${id}`) : null;
-      const subscription = type === 'subscription_authorized_payment' && invoice?.preapproval_id
-        ? await mercado(`/preapproval/${invoice.preapproval_id}`)
-        : await mercado(`/preapproval/${id}`);
+    if (type === 'subscription_preapproval' || type === 'subscription_authorized_payment' || type === 'payment') {
+      let subscription;
+      if (type === 'subscription_preapproval') {
+        subscription = await mercado(`/preapproval/${id}`);
+      } else {
+        const resource = type === 'subscription_authorized_payment'
+          ? await mercado(`/authorized_payments/${id}`)
+          : await mercado(`/v1/payments/${id}`);
+        let preapprovalId = resource?.preapproval_id || resource?.payment?.preapproval_id || resource?.metadata?.preapproval_id;
+        if (!preapprovalId && type === 'payment') {
+          const authorized = await mercado(`/authorized_payments/search?payment_id=${encodeURIComponent(id)}`);
+          const invoice = (authorized.results || []).find(item => String(item.id || item.payment_id || item.payment?.id) === String(id));
+          preapprovalId = invoice?.preapproval_id || invoice?.payment?.preapproval_id;
+        }
+        if (!preapprovalId) return json(res, 200, { received: true });
+        subscription = await mercado(`/preapproval/${encodeURIComponent(String(preapprovalId))}`);
+      }
       const plan = Object.entries(plans).find(([, item]) => item.id && item.id === subscription.preapproval_plan_id)?.[0];
       const email = String(subscription.payer_email || '').trim().toLowerCase();
       if (plan && email) {
