@@ -3807,3 +3807,34 @@ app-board {
     .public-society-posts { padding-inline:12px; }
     .social-action { display:none; }
 }
+
+/* The component stylesheet has a more specific mobile grid; keep the title
+   column explicit so long society names never collapse to one character. */
+@media(max-width:700px) {
+    .public-society-header {
+        display: grid !important;
+        grid-template-columns: 54px minmax(0, 1fr) !important;
+        grid-template-areas: "mark heading" "share share" !important;
+        width: 100%;
+    }
+    .public-society-header .public-society-mark { grid-area: mark; }
+    .public-society-header .public-society-heading {
+        grid-area: heading;
+        width: 100%;
+        min-width: 0;
+    }
+    .public-society-header .public-share {
+        grid-area: share;
+        width: 100%;
+    }
+    .public-society-header h1 {
+        width: 100%;
+        min-width: 0;
+        word-break: normal;
+        overflow-wrap: anywhere;
+        hyphens: none;
+    }
+}
+@media(max-width:380px) {
+    .public-society-header { grid-template-columns: 48px minmax(0, 1fr) !important; }
+}
