@@ -36,7 +36,11 @@ export function json(res, status, body) {
 export function validWebhook(req) {
   const signature = String(req.headers['x-signature'] || '');
   const requestId = String(req.headers['x-request-id'] || '');
-  const dataId = String(req.query?.['data.id'] || req.query?.data_id || req.body?.data?.id || '');
+  let payload = req.body || {};
+  if (typeof payload === 'string') {
+    try { payload = JSON.parse(payload); } catch { payload = {}; }
+  }
+  const dataId = String(req.query?.['data.id'] || req.query?.data_id || payload?.data?.id || '');
   const secret = process.env.MERCADOPAGO_WEBHOOK_SECRET || '';
   const values = Object.fromEntries(signature.split(',').map(item => item.split('=').map(value => value.trim())).filter(item => item.length === 2));
   if (!secret || !values.v1 || !values.ts || !dataId || !requestId) return false;

@@ -22,10 +22,14 @@ export default async function handler(req, res) {
   if (!validWebhook(req)) return json(res, 401, { error: 'Assinatura inválida.' });
   let webhookEvent;
   try {
-    const type = req.body?.type || req.query?.type;
-    const id = req.body?.data?.id || req.query?.['data.id'] || req.query?.data_id;
+    let payload = req.body || {};
+    if (typeof payload === 'string') {
+      try { payload = JSON.parse(payload); } catch { payload = {}; }
+    }
+    const type = payload?.type || req.query?.type;
+    const id = payload?.data?.id || req.query?.['data.id'] || req.query?.data_id;
     if (!id) return json(res, 200, { received: true });
-    const eventId = String(req.body?.id || req.headers['x-request-id'] || `${type || 'unknown'}-${id}`).replace(/[^A-Za-z0-9_-]/g, '_').slice(0, 128);
+    const eventId = String(payload?.id || req.headers['x-request-id'] || `${type || 'unknown'}-${id}`).replace(/[^A-Za-z0-9_-]/g, '_').slice(0, 128);
     webhookEvent = db().collection('billingWebhookEvents').doc(eventId);
     await webhookEvent.set({ type: String(type || ''), resourceId: String(id), status: 'received', receivedAt: new Date() }, { merge: true });
     if (type === 'subscription_preapproval' || type === 'subscription_authorized_payment' || type === 'payment') {
