@@ -178,6 +178,7 @@ export class AppComponent {
   skipToMain(event:Event):void{if(!this.presenceEntry())return;event.preventDefault();const main=document.getElementById('main');main?.setAttribute('tabindex','-1');main?.focus();}
   reloadApp():void{location.reload();}
   currentPlanName():string{return this.planLabels[this.billing.plan()];}
+  currentPlanValidity():string{const end=this.billing.planEndsAt();if(end===null)return '';const days=Math.ceil((end-Date.now())/86400000);return days<=0?'Expira hoje':`${days} ${days===1?'dia':'dias'} restantes`;}
   openGuide(event:Event):void{event.preventDefault();this.showFaq.set(false);this.showGuide.set(true);history.pushState({},'','#como-usar');window.scrollTo({top:0,behavior:'instant'});}
   openFaq(event:Event):void{event.preventDefault();this.showGuide.set(false);this.showFaq.set(true);history.pushState({},'','#faq');window.scrollTo({top:0,behavior:'instant'});}
   openLegal(kind:LegalDocument,event?:Event):void{event?.preventDefault();this.showGuide.set(false);this.showFaq.set(false);this.legalDocument.set(kind);history.pushState({},'',kind==='terms'?'#termos':'#privacidade');window.scrollTo({top:0,behavior:'instant'});}

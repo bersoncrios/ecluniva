@@ -222,7 +222,7 @@
             data.selected()?.churchName }}</span></div>
       </div>
       <details class="header-actions"><summary><app-icon name="grid" /><span>Ações</span></summary><div class="header-actions-menu">@if(data.isOwner()){<button class="button secondary" type="button" (click)="beginSocietyEdit()">Editar sociedade</button>}@if(data.hasSocietyAccess()){<button class="button secondary" type="button" (click)="navigate('public')">Página pública</button>}</div></details>
-      @if(data.isOwner()){<button class="app-plan-indicator" type="button" (click)="navigate('billing')" aria-label="Plano atual: {{currentPlanName()}}. Abrir assinatura"><app-icon name="card" /><span><small>PLANO ATUAL</small><strong>{{currentPlanName()}}</strong></span><app-icon name="arrow" /></button>}
+      @if(data.isOwner()){<button class="app-plan-indicator" type="button" (click)="navigate('billing')" aria-label="Plano atual: {{currentPlanName()}}. Abrir assinatura"><app-icon name="card" /><span><small>PLANO ATUAL</small><strong>{{currentPlanName()}}</strong>@if(currentPlanValidity()){<small class="plan-remaining">{{currentPlanValidity()}}</small>}</span><app-icon name="arrow" /></button>}
       <details class="account-menu">
         <summary><span class="avatar">{{ initials(data.user()?.displayName || data.user()?.email || 'Conta')
             }}</span><span>Conta e sociedade</span></summary>
