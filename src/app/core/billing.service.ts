@@ -1,14 +1,16 @@
 import { Injectable, Injector, effect, inject, runInInjectionContext, signal } from '@angular/core';
 import { Firestore, collection, doc, onSnapshot, Unsubscribe } from '@angular/fire/firestore';
+import { Auth } from '@angular/fire/auth';
 import { DataService } from './data.service';
 import { PLAN_LIMITS, PlanKey, QuotaKey, planFromStatus, quotaMessage } from './plans';
 @Injectable({providedIn:'root'})
 export class BillingService {
-  private readonly firestore=inject(Firestore); private readonly injector=inject(Injector); private readonly data=inject(DataService); private unsubscribe?:Unsubscribe;
+  private readonly firestore=inject(Firestore); private readonly injector=inject(Injector); private readonly data=inject(DataService); private readonly auth=inject(Auth); private unsubscribe?:Unsubscribe;
   readonly plan=signal<PlanKey>('free');
   readonly planEndsAt=signal<number|null>(null);
   private dateMillis(value:unknown):number|null{if(typeof value==='number'&&Number.isFinite(value))return value;if(typeof value==='string'){const parsed=Date.parse(value);return Number.isFinite(parsed)?parsed:null;}const date=(value as {toDate?:()=>Date}|null)?.toDate?.();return date instanceof Date&&!Number.isNaN(date.getTime())?date.getTime():null;}
   constructor(){effect(onCleanup=>{const user=this.data.user(),society=this.data.selected();this.unsubscribe?.();this.plan.set('free');this.planEndsAt.set(null);if(!user||!society||society.ownerId!==user.uid)return;let paidPlan:PlanKey='free',paidEndAt:number|null=null,paidNextAt:number|null=null,promoPlan:PlanKey='free',promoEndAt:number|null=null;const apply=()=>{const promotional=promoPlan!=='free';this.plan.set(promotional?promoPlan:paidPlan);this.planEndsAt.set(promotional?promoEndAt:(paidEndAt??paidNextAt));};const paidUnsubscribe=runInInjectionContext(this.injector,()=>onSnapshot(doc(this.firestore,`users/${user.uid}/billing/${society.id}`),snap=>{const data=snap.exists()?snap.data():null;paidPlan=data?.['status']==='authorized'?planFromStatus(data['plan']):'free';paidEndAt=paidPlan!=='free'?this.dateMillis(data?.['expiresAt']):null;paidNextAt=paidPlan!=='free'?this.dateMillis(data?.['nextPaymentAt']):null;apply();},()=>{paidPlan='free';paidEndAt=null;paidNextAt=null;apply();}));const promoUnsubscribe=runInInjectionContext(this.injector,()=>onSnapshot(collection(this.firestore,`users/${user.uid}/promotionalAccess`),snap=>{const now=Date.now();const valid=snap.docs.map(item=>item.data()).filter(item=>item['societyId']===society.id&&item['active']===true).filter(item=>(this.dateMillis(item['expiresAt'])||0)>now).sort((a,b)=>(this.dateMillis(b['expiresAt'])||0)-(this.dateMillis(a['expiresAt'])||0))[0];promoPlan=valid?planFromStatus(valid['plan']):'free';promoEndAt=valid?this.dateMillis(valid['expiresAt']):null;apply();},()=>{promoPlan='free';promoEndAt=null;apply();}));this.unsubscribe=()=>{paidUnsubscribe();promoUnsubscribe();};onCleanup(()=>this.unsubscribe?.());});}
   limit(quota:QuotaKey):number|null{return PLAN_LIMITS[this.plan()][quota];}
+  async refreshPlanDates():Promise<void>{const user=this.auth.currentUser,society=this.data.selected();if(!user||!society||society.ownerId!==user.uid)return;try{const token=await user.getIdToken();await fetch('/api/billing/refresh',{method:'POST',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},body:JSON.stringify({societyId:society.id})});}catch{}}
   assert(quota:QuotaKey,used:number):void{const limit=this.limit(quota);if(limit!==null&&used>=limit)throw new Error(quotaMessage(quota,limit));}
 }

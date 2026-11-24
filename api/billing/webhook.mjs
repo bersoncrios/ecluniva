@@ -10,6 +10,13 @@ async function saveBillingState(store, billingRef, next) {
   }
 }
 
+function subscriptionDates(subscription) {
+  return {
+    nextPaymentAt: subscription.next_payment_date || subscription.auto_recurring?.next_payment_date || null,
+    expiresAt: subscription.date_end || subscription.auto_recurring?.end_date || null,
+  };
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return json(res, 405, { error: 'Método não permitido.' });
   if (!validWebhook(req)) return json(res, 401, { error: 'Assinatura inválida.' });
@@ -25,13 +32,14 @@ export default async function handler(req, res) {
       const plan = Object.entries(plans).find(([, item]) => item.id && item.id === subscription.preapproval_plan_id)?.[0];
       const email = String(subscription.payer_email || '').trim().toLowerCase();
       if (plan && email) {
+        const dates = subscriptionDates(subscription);
         const store = db();
         const known = await store.collection('billingCheckoutIntents').where('subscriptionId', '==', subscription.id).limit(1).get();
         if (!known.empty) {
           const intent = known.docs[0], data = intent.data();
           const account = await admin.auth().getUser(data.uid);
           if (account.email?.toLowerCase() === email) {
-            await saveBillingState(store, store.doc(`users/${data.uid}/billing/${data.societyId}`), { plan, status: subscription.status, subscriptionId: subscription.id, payerEmail: email, nextPaymentAt: subscription.next_payment_date || null, expiresAt: subscription.date_end || subscription.auto_recurring?.end_date || null, updatedAt: new Date() });
+            await saveBillingState(store, store.doc(`users/${data.uid}/billing/${data.societyId}`), { plan, status: subscription.status, subscriptionId: subscription.id, payerEmail: email, ...dates, updatedAt: new Date() });
           }
         } else {
         const intents = await store.collection('billingCheckoutIntents').where('payerEmail', '==', email).get();
@@ -49,7 +57,7 @@ export default async function handler(req, res) {
           const society = await store.doc(`societies/${data.societyId}`).get();
           const account = await admin.auth().getUser(data.uid);
           if (society.exists && society.data()?.ownerId === data.uid && account.email?.toLowerCase() === email) {
-            await saveBillingState(store, billingRef, { plan, status: subscription.status, subscriptionId: subscription.id, payerEmail: email, nextPaymentAt: subscription.next_payment_date || null, expiresAt: subscription.date_end || subscription.auto_recurring?.end_date || null, updatedAt: new Date() });
+            await saveBillingState(store, billingRef, { plan, status: subscription.status, subscriptionId: subscription.id, payerEmail: email, ...dates, updatedAt: new Date() });
             await intent.ref.update({ status: 'completed', subscriptionId: subscription.id, completedAt: new Date() });
           }
         }
