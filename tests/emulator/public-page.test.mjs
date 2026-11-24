@@ -2,7 +2,7 @@ import {after,before,beforeEach,test} from 'node:test';
 import {readFileSync} from 'node:fs';
 import assert from 'node:assert/strict';
 import {initializeTestEnvironment,assertSucceeds,assertFails} from '@firebase/rules-unit-testing';
-import {doc,setDoc,getDoc,getDocs,collection,query,where,serverTimestamp} from 'firebase/firestore';
+import {doc,setDoc,getDoc,getDocs,collection,query,where,serverTimestamp,deleteDoc} from 'firebase/firestore';
 
 if(!process.env.FIRESTORE_EMULATOR_HOST)throw new Error('Use o emulador local.');
 const [host,port]=process.env.FIRESTORE_EMULATOR_HOST.split(':');let env,ownerDb,publicDb;
@@ -14,3 +14,4 @@ after(async()=>env?.cleanup());
 beforeEach(async()=>{await env.clearFirestore();await env.withSecurityRulesDisabled(async context=>{const db=context.firestore();await setDoc(doc(db,'societies/own'),{ownerId:'owner',name:'Esperança',churchName:'Igreja',type:'UPH',createdAt:serverTimestamp(),updatedAt:serverTimestamp()});});});
 test('essential society can publish page and public visitor reads only published content',async()=>{await env.withSecurityRulesDisabled(async context=>setDoc(doc(context.firestore(),'users/owner/billing/own'),{status:'authorized',plan:'essential'}));await assertSucceeds(setDoc(page(ownerDb),pageData()));await assertSucceeds(setDoc(post(ownerDb),postData()));await assertSucceeds(getDocs(query(collection(publicDb,'publicPages'),where('slug','==','uph-esperanca'),where('published','==',true))));await assertSucceeds(getDocs(query(collection(publicDb,'publicPages/own/posts'),where('status','==','published'))));});
 test('free society cannot create a public page',async()=>{await env.withSecurityRulesDisabled(async context=>setDoc(doc(context.firestore(),'users/owner/billing/own'),{status:'authorized',plan:'free'}));await assertFails(setDoc(page(ownerDb),pageData()));});
+test('owner can update and delete public posts while visitors cannot',async()=>{await env.withSecurityRulesDisabled(async context=>setDoc(doc(context.firestore(),'users/owner/billing/own'),{status:'authorized',plan:'essential'}));await assertSucceeds(setDoc(page(ownerDb),pageData()));await assertSucceeds(setDoc(post(ownerDb),postData()));await assertSucceeds(setDoc(post(ownerDb),{...postData(),title:'Reunião atualizada',createdAt:(await getDoc(post(ownerDb))).data().createdAt}));await assertSucceeds(deleteDoc(post(ownerDb)));await assertFails(deleteDoc(post(publicDb)));});

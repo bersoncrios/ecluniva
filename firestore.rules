@@ -419,7 +419,7 @@ service cloud.firestore {
           && request.resource.data.createdAt == request.time;
         allow update: if ownsSociety(pageId) && eligiblePublicPage(pageId) && validPublicPost(request.resource.data,postId)
           && request.resource.data.createdAt == resource.data.createdAt;
-        allow delete: if false;
+        allow delete: if ownsSociety(pageId) && eligiblePublicPage(pageId);
       }
     }
 
