@@ -174,7 +174,11 @@ test('MVP browser journey, responsive layout and actual exports against local em
   await page.locator('.sidebar').getByRole('button',{name:'Membros',exact:true}).click();
   await page.getByLabel('Buscar por nome',{exact:true}).fill('');
   await page.getByLabel('Status',{exact:true}).selectOption('all');
-  await waitFor(async()=>await page.locator('.members-table tbody tr').count()===46,'List did not include all emulator-seeded members');
+  await waitFor(async()=>await page.locator('.members-table tbody tr').count()===20,'First member page did not render the configured page size');
+  assert.ok((await page.locator('.results-meta').textContent()).includes('46'),'Member counter did not preserve the filtered total');
+  await page.getByRole('button',{name:'Próxima',exact:true}).click();
+  await waitFor(async()=>await page.locator('.members-table tbody tr').count()===20,'Next member page did not render');
+  await page.getByRole('button',{name:'Anterior',exact:true}).click();
   for(const width of [320,390,1440]) await noOverflow(page,width);
   await page.setViewportSize({width:390,height:900});
   await page.screenshot({path:path.join(artifacts,`${unique}-roster-mobile.png`),fullPage:true});

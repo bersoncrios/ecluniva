@@ -376,11 +376,11 @@
         <div class="roster-toolbar">
           <div class="search-field"><label for="search">Buscar por nome</label>
             <div class="input-with-icon"><app-icon name="search" /><input id="search" type="search"
-                placeholder="Digite o nome de um membro" [ngModel]="query()" (ngModelChange)="query.set($event)"
+                placeholder="Digite o nome de um membro" [ngModel]="query()" (ngModelChange)="query.set($event); memberPage.set(1)"
                 autocomplete="off"></div>
           </div>
           <div class="status-filter"><label for="status">Status</label><select id="status" [ngModel]="status()"
-              (ngModelChange)="status.set($event)">
+              (ngModelChange)="status.set($event); memberPage.set(1)">
               <option value="active">Ativos</option>
               <option value="inactive">Inativos</option>
               <option value="all">Todos</option>
@@ -391,7 +391,7 @@
         </div>
         <div class="results-meta" aria-live="polite">
           <p><strong>{{ results().length }}</strong> {{ results().length === 1 ? 'membro encontrado' : 'membros
-            encontrados' }}</p>@if (query() || status() !== 'active') { <button class="text-button"
+            encontrados' }}@if (results().length > memberPageSize) { <span> · exibindo {{ memberRangeStart() }}–{{ memberRangeEnd() }}</span> }</p>@if (query() || status() !== 'active') { <button class="text-button"
             (click)="clearFilters()">Limpar filtros</button> }
         </div>
         @if (results().length) { <table class="members-table">
@@ -403,7 +403,7 @@
               <th scope="col"><span class="sr-only">Ações</span></th>
             </tr>
           </thead>
-          <tbody>@for (item of results(); track item.id) { <tr>
+          <tbody>@for (item of pagedResults(); track item.id) { <tr>
               <td>
                 <div class="member-name"><span class="person-initial">{{ initials(item.name) }}</span><strong>{{
                     item.name }}</strong></div>
@@ -416,7 +416,7 @@
                   [attr.aria-label]="'Editar ' + item.name"><app-icon name="edit" />Editar</button></td>
             </tr> }</tbody>
         </table>
-        <div class="mobile-members">@for (item of results(); track item.id) { <article class="member-card">
+        <div class="mobile-members">@for (item of pagedResults(); track item.id) { <article class="member-card">
             <div class="member-card-top"><span class="person-initial">{{ initials(item.name) }}</span><strong>{{
                 item.name }}</strong><span class="badge" [class.inactive]="item.status === 'inactive'">{{ item.status
                 === 'active' ? 'Ativo' : 'Inativo' }}</span></div>
@@ -425,7 +425,12 @@
               <p>{{ item.email || 'E-mail não informado' }}</p>
             </div><button class="text-button" (click)="viewMember(item)" [attr.aria-label]="'Ver detalhes de ' + item.name">Ver detalhes<app-icon name="arrow" /></button><button class="text-button" (click)="editMember(item)"
               [attr.aria-label]="'Editar ' + item.name">Editar cadastro<app-icon name="arrow" /></button>
-          </article> }</div> } @else { <div class="empty-state"><span class="empty-icon"><app-icon
+          </article> }</div>
+        @if (memberTotalPages() > 1) { <nav class="member-pagination" aria-label="Paginação do rol de membros">
+          <button type="button" class="button secondary" (click)="goToMemberPage(memberCurrentPage() - 1)" [disabled]="memberCurrentPage() === 1">Anterior</button>
+          <span aria-live="polite">Página {{ memberCurrentPage() }} de {{ memberTotalPages() }}</span>
+          <button type="button" class="button secondary" (click)="goToMemberPage(memberCurrentPage() + 1)" [disabled]="memberCurrentPage() === memberTotalPages()">Próxima</button>
+        </nav> } } @else { <div class="empty-state"><span class="empty-icon"><app-icon
               [name]="data.members().length ? 'search' : 'people'" /></span>
           <h2>{{ data.members().length ? 'Nenhum membro encontrado com estes filtros.' : 'Ainda não há membros
             cadastrados.' }}</h2>

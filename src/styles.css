@@ -27,9 +27,21 @@
     box-sizing: border-box
 }
 
+html {
+    overflow-x: hidden;
+    scroll-behavior: smooth
+}
+
 body {
     margin: 0;
-    min-width: 320px
+    min-width: 320px;
+    overflow-x: hidden
+}
+
+img,
+svg,
+canvas {
+    max-width: 100%
 }
 
 button,
@@ -291,7 +303,10 @@ input[type=radio] {
     line-height: 1.45;
     text-decoration: none;
     transition: background .16s, box-shadow .16s;
-    flex-shrink: 0
+    flex-shrink: 0;
+    max-width: 100%;
+    white-space: normal;
+    text-align: center
 }
 
 .button:hover:not(:disabled) {
@@ -1017,13 +1032,14 @@ input[type=radio] {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 20px
+    gap: 20px;
+    min-width: 0
 }
 
 .app-plan-indicator{display:flex;align-items:center;gap:10px;min-height:46px;padding:6px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--green);cursor:pointer;text-align:left;flex-shrink:0}
-.app-plan-indicator>span{display:grid;gap:2px}
+.app-plan-indicator>span{display:grid;gap:2px;min-width:0}
 .app-plan-indicator small{font-size:9px;letter-spacing:.08em;color:var(--muted)}
-.app-plan-indicator strong{font-size:12px}
+.app-plan-indicator strong{font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:150px}
 .app-plan-indicator>app-icon:last-child{width:15px;height:15px;color:var(--muted)}
 .app-plan-indicator:hover{background:var(--mint);border-color:#c5d3c9}
 
@@ -1770,6 +1786,22 @@ input[type=radio] {
     display: none
 }
 
+.member-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 18px 25px 24px;
+    border-top: 1px solid var(--line);
+    color: var(--muted);
+    font-size: 13px
+}
+
+.member-pagination .button {
+    min-height: 42px;
+    padding-inline: 14px
+}
+
 /* Member form */
 .back-link {
     font-size: 11px;
@@ -1954,6 +1986,10 @@ input[type=radio] {
     gap: 10px;
     margin-top: 28px;
     flex-wrap: wrap
+}
+
+.dialog-actions > * {
+    min-width: 0
 }
 
 .dialog-actions .button {
@@ -2423,7 +2459,8 @@ input[type=radio] {
     }
 
     .page-heading>.button {
-        font-size: 13px
+        font-size: 13px;
+        width: 100%
     }
 
     .eyebrow {
@@ -2582,6 +2619,17 @@ input[type=radio] {
         font-size: 11px
     }
 
+    .member-pagination {
+        gap: 10px;
+        padding: 18px 20px 24px
+    }
+
+    .member-pagination .button {
+        flex: 1;
+        min-width: 0;
+        padding-inline: 8px
+    }
+
     .members-table {
         display: none
     }
@@ -2736,7 +2784,7 @@ input[type=radio] {
 
     .member-form-footer .form-actions {
         display: grid;
-        grid-template-columns: 1fr 1fr
+        grid-template-columns: repeat(2, minmax(0, 1fr))
     }
 
     .member-form-footer>.button {
@@ -2766,12 +2814,13 @@ input[type=radio] {
 
     .dialog-actions {
         display: grid;
-        grid-template-columns: 1fr 1fr
+        grid-template-columns: repeat(2, minmax(0, 1fr))
     }
 
     .dialog-actions .button {
         padding-inline: 10px;
-        font-size: 12px
+        font-size: 12px;
+        width: 100%
     }
 
     .workspace-footer {
@@ -2902,6 +2951,10 @@ input[type=radio] {
 
     .month-tag {
         font-size: 10px
+    }
+
+    .dialog-actions {
+        grid-template-columns: minmax(0, 1fr)
     }
 }
 
@@ -3246,3 +3299,36 @@ app-board {
 .faq-help{display:flex;align-items:center;justify-content:space-between;gap:20px;background:var(--mint);border-radius:14px;padding:23px;margin-top:38px;font-size:16px;font-weight:650}
 .faq-help .button{display:inline-flex;align-items:center;gap:8px}
 @media(max-width:600px){.landing-header nav>a.faq-link{display:inline-flex}.landing-header nav{gap:8px}.landing-header nav>a.guide-link,.landing-header nav>a.faq-link{font-size:10px}.landing-header nav .button{font-size:10px;padding:9px}.faq-main{margin:14px auto 44px}.faq-heading{text-align:left}.faq-heading p{font-size:14px}.faq-help{align-items:stretch;flex-direction:column}.faq-help .button{justify-content:center}}
+
+/* Final narrow-screen guardrails for content introduced by feature modules. */
+@media(max-width:767px) {
+    .communication-tabs {
+        grid-template-columns: repeat(auto-fit, minmax(min(140px, 100%), 1fr)) !important
+    }
+
+    .notice-card button,
+    .page-heading > .button {
+        width: 100%
+    }
+
+    .minute-actions > *,
+    .notice-downloads > * {
+        min-width: 0;
+        max-width: 100%
+    }
+
+    .minute-actions .button,
+    .notice-downloads .button {
+        white-space: normal
+    }
+
+    .support-compose > div {
+        align-items: stretch;
+        flex-wrap: wrap;
+        gap: 10px
+    }
+
+    .support-compose > div .button {
+        width: 100%
+    }
+}

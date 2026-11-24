@@ -51,8 +51,19 @@ export class AppComponent {
   readonly boardMemberId = signal<string|null>(null);
   readonly query = signal('');
   readonly status = signal<'all'|'active'|'inactive'>('active');
+  readonly memberPage = signal(1);
+  readonly memberPageSize = 10;
   readonly today = signal(todayISO());
   readonly results = computed(() => filterMembers(this.data.members(), this.query(), this.status()));
+  readonly memberTotalPages = computed(() => Math.max(1, Math.ceil(this.results().length / this.memberPageSize)));
+  readonly memberCurrentPage = computed(() => Math.min(this.memberPage(), this.memberTotalPages()));
+  readonly pagedResults = computed(() => {
+    const page = this.memberCurrentPage();
+    const start = (page - 1) * this.memberPageSize;
+    return this.results().slice(start, start + this.memberPageSize);
+  });
+  readonly memberRangeStart = computed(() => this.results().length ? (this.memberCurrentPage() - 1) * this.memberPageSize + 1 : 0);
+  readonly memberRangeEnd = computed(() => Math.min(this.memberRangeStart() + this.memberPageSize - 1, this.results().length));
   readonly summary = computed(() => summarize(this.data.members()));
   readonly birthdays = computed(() => birthdayEvents(this.data.members(), this.today()));
   readonly notice = signal('');
@@ -113,6 +124,7 @@ export class AppComponent {
         this.page.set(this.data.selected()&&!this.data.hasSocietyAccess()?'communication':'overview');
         this.query.set('');
         this.status.set('active');
+        this.memberPage.set(1);
         this.member = emptyMember();
         this.editingId = null;
         this.fieldErrors.set({});
@@ -507,7 +519,8 @@ export class AppComponent {
     setTimeout(() => this.confirmation?.nativeElement.querySelector<HTMLElement>(kind === 'details' ? '#dialog-title' : 'button')?.focus());
   }
 
-  clearFilters(): void { this.query.set(''); this.status.set('active'); }
+  clearFilters(): void { this.query.set(''); this.status.set('active'); this.memberPage.set(1); }
+  goToMemberPage(page: number): void { this.memberPage.set(Math.max(1, Math.min(page, this.memberTotalPages()))); }
   filterDescription(): string { return `Busca: ${this.query().trim() || 'todos os nomes'} · Status: ${this.statusLabel(this.status())}`; }
   statusLabel(status: string): string { return status === 'active' ? 'Ativos' : status === 'inactive' ? 'Inativos' : 'Todos'; }
   initials(name: string): string { return name.trim().split(/\s+/).slice(0,2).map(part => part[0]).join('').toUpperCase(); }
